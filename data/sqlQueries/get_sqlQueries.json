@@ -1,0 +1,312 @@
+{
+  "queries": [
+    {
+      "name": "metaobject_query",
+      "query": "SELECT * FROM metaobject m WHERE m.uuid = $1 "
+    },
+    {
+      "name": "metaobject_existence",
+      "query": "select EXISTS (SELECT * FROM metaobject m WHERE m.uuid = $1)"
+    },
+    {
+      "name": "scene_types_query",
+      "query": "SELECT * FROM metaobject m, scene_type st WHERE m.uuid = st.uuid_metaobject"
+    },
+    {
+      "name": "attribute_type_role_query",
+      "query": "SELECT * FROM role r, metaobject m WHERE r.uuid_metaobject = m.uuid AND r.uuid_attribute_type = $1 "
+    },
+    {
+      "name": "relationclass_roles_query",
+      "query": "SELECT * FROM role r, metaobject m, relationclass rc WHERE r.uuid_metaobject = m.uuid AND ((rc.role_from = $1 AND rc.role_from=r.uuid_metaobject) OR (rc.role_to = $2 AND rc.role_to=r.uuid_metaobject))"
+    },
+    {
+      "name": "class_roles_query",
+      "query": "SELECT * FROM role r, metaobject m, class c WHERE r.uuid_metaobject = m.uuid AND c.uuid_metaobject = $1 "
+    },
+    {
+      "name": "class_ports_query",
+      "query": "SELECT * FROM port p WHERE p.uuid_class = $1 "
+    },
+    {
+      "name": "scene_ports_query",
+      "query": "SELECT * FROM port p where p.uuid_scene_type = $1 "
+    },
+    {
+      "name": "role_uuid_query",
+      "query": "SELECT * FROM role r, metaobject m where r.uuid_metaobject = m.uuid and r.uuid_metaobject = $1 "
+    },
+    {
+      "name": "port_uuid_query",
+      "query": "SELECT * FROM port r, metaobject m where r.uuid_metaobject = m.uuid and r.uuid_metaobject = $1 "
+    },
+    {
+      "name": "relationclass_query",
+      "query": "SELECT * FROM metaobject m, class c, contains_classes cc, relationclass r WHERE m.uuid=c.uuid_metaobject AND c.uuid_metaobject=cc.uuid_class AND c.uuid_metaobject = r.uuid_class AND cc.uuid_scene_type =$1 "
+    },
+    {
+      "name": "bendpoints_relClass_query",
+      "query": "SELECT * FROM relationclass r WHERE r.uuid_class = $1 "
+    },
+    {
+      "name": "role_class_ref_query",
+      "query": "SELECT * FROM role_class_reference rc WHERE rc.uuid_role = $1 "
+    },
+    {
+      "name": "role_relclass_ref_query",
+      "query": "SELECT * FROM role_relationclass_reference rc WHERE rc.uuid_role = $1 "
+    },
+    {
+      "name": "role_scenetype_ref_query",
+      "query": "SELECT * FROM role_scene_reference rs WHERE rs.uuid_role = $1 "
+    },
+    {
+      "name": "role_port_ref_query",
+      "query": "SELECT * FROM role_port_reference rp WHERE rp.uuid_role = $1 "
+    },
+    {
+      "name": "classes_scene_query",
+      "query": "SELECT * FROM metaobject m, class c, contains_classes cc WHERE m.uuid=c.uuid_metaobject AND c.uuid_metaobject=cc.uuid_class AND m.uuid NOT IN (SELECT uuid_class FROM relationclass) AND cc.uuid_scene_type =$1 "
+    },
+    {
+      "name": "decomposableClasses_uuid_query",
+      "query": "SELECT * FROM metaobject m, decomposable_class dc, class c WHERE m.uuid = dc.uuid_class AND dc.uuid_class=c.uuid_metaobject AND c.uuid_metaobject =$1 "
+    },
+    {
+      "name": "decomposableClasses_scene_query",
+      "query": "SELECT * FROM metaobject m, class c, decomposable_class dc, contains_classes cc WHERE m.uuid=dc.uuid_class AND m.uuid=c.uuid_metaobject AND c.uuid_metaobject=cc.uuid_class AND m.uuid NOT IN (SELECT uuid_class FROM relationclass) AND cc.uuid_scene_type =$1 "
+    },
+    {
+      "name": "aggregatableClasses_uuid_query",
+      "query": "SELECT * FROM metaobject m, aggregator_class ac, class c WHERE m.uuid = ac.uuid_class AND ac.uuid_class=c.uuid_metaobject AND c.uuid_metaobject =$1 "
+    },
+    {
+      "name": "aggregatableClasses_scene_query",
+      "query": "SELECT * FROM metaobject m, class c, decomposable_class dc, contains_classes cc WHERE m.uuid=dc.uuid_class AND m.uuid=c.uuid_metaobject AND c.uuid_metaobject=cc.uuid_class AND m.uuid NOT IN (SELECT uuid_class FROM relationclass) AND cc.uuid_scene_type =$1 "
+    },
+    {
+      "name": "class_attributes_query",
+      "query": "SELECT * FROM metaobject m, attribute a, class_has_attributes ca WHERE m.uuid = a.uuid_metaobject AND ca.uuid_attribute = a.uuid_metaobject AND ca.uuid_class = $1 "
+    },
+    {
+      "name": "port_attributes_query",
+      "query": "SELECT * FROM metaobject m, attribute a, port_has_attributes ca WHERE m.uuid = a.uuid_metaobject AND ca.uuid_attribute = a.uuid_metaobject AND ca.uuid_port = $1 "
+    },
+    {
+      "name": "attribute_uuid_query",
+      "query": "SELECT * FROM metaobject m, attribute a WHERE m.uuid = a.uuid_metaobject AND a.uuid_metaobject = $1 "
+    },
+    {
+      "name": "attribute_type_uuid_query",
+      "query": "SELECT * FROM metaobject m, attribute_type at2 WHERE m.uuid = at2.uuid_metaobject AND at2.uuid_metaobject = $1 "
+    },
+    {
+      "name": "scene_type_attributes_query",
+      "query": "SELECT * FROM metaobject m, attribute a, scene_has_attributes sa WHERE m.uuid = a.uuid_metaobject AND sa.uuid_attribute = a.uuid_metaobject AND sa.uuid_scene_type = $1 "
+    },
+    {
+      "name": "class_uuid_query",
+      "query": "SELECT * FROM metaobject m, class c WHERE m.uuid = c.uuid_metaobject AND c.uuid_metaobject = $1 "
+    },
+    {
+      "name": "relationclass_uuid_query",
+      "query": "SELECT * FROM metaobject m, class c, relationclass rc WHERE m.uuid = c.uuid_metaobject AND rc.uuid_class = c.uuid_metaobject AND c.uuid_metaobject = $1 "
+    },
+    {
+      "name": "attribute_type_query",
+      "query": "SELECT uuid, name, pre_defined, default_value, regex_value FROM metaobject m, attribute a, attribute_type AT WHERE m.uuid = AT.uuid_metaobject AND a.attribute_type_uuid = AT.uuid_metaobject AND a.uuid_metaobject = $1 "
+    },
+    {
+      "name": "scene_type_query",
+      "query": "SELECT * FROM metaobject m, scene_type st WHERE m.uuid = st.uuid_metaobject AND m.uuid = $1 "
+    },
+    {
+      "name": "instance_scene_query",
+      "query": "SELECT * FROM instance_object io, scene_instance si WHERE io.uuid=si.uuid_instance_object AND io.uuid = $1 "
+    },
+    {
+      "name": "instance_scenes_query",
+      "query": "SELECT * FROM instance_object io, scene_instance si WHERE io.uuid=si.uuid_instance_object AND io.uuid = $1 "
+    },
+    {
+      "name": "instance_classe_query",
+      "query": "select * from instance_object io, class_instance ci where io.uuid=ci.uuid_instance_object AND uuid_instance_object = $1 "
+    },
+    {
+      "name": "instance_relationclass_query",
+      "query": "select * from instance_object io, relationclass_instance ri, class_instance ci where io.uuid=ci.uuid_instance_object AND ri.uuid_class_instance=ci.uuid_instance_object AND ri.uuid_class_instance =$1 "
+    },
+    {
+      "name": "instance_object_uuid_query",
+      "query": "select * from instance_object io where io.uuid = $1 "
+    },
+    {
+      "name": "instance_attribute_uuid_query",
+      "query": "select * from instance_object io, attribute_instance ai where ai.uuid_instance_object = io.uuid  and io.uuid =$1 "
+    },
+    {
+      "name": "instance_attribute_by_class_uuid_query",
+      "query": "select ai.uuid_instance_object from attribute_instance ai where ai.assigned_uuid_class_instance = $1 "
+    },
+    {
+      "name": "instance_attribute_by_port_uuid_query",
+      "query": "select ai.uuid_instance_object from attribute_instance ai where ai.assigned_uuid_port_instance = $1 "
+    },
+    {
+      "name": "instance_attribute_by_scene_uuid_query",
+      "query": "select ai.uuid_instance_object from attribute_instance ai where ai.assigned_uuid_scene_instance = $1 "
+    },
+    {
+      "name": "instance_port_uuid_query",
+      "query": "select * from port_instance pi2, instance_object io where io.uuid = pi2.uuid_instance_object and io.uuid = $1 "
+    },
+    {
+      "name": "instance_role_uuid_query",
+      "query": "select * from role_instance ri, instance_object io where io.uuid = ri.uuid_instance_object and io.uuid = $1 "
+    },
+    {
+      "name": "instance_port_by_class_uuid_query",
+      "query": "SELECT * from port_instance pi2 where pi2.uuid_class_instance = $1 "
+    },
+    {
+      "name": "instance_classes_for_scene_instance_query",
+      "query": "select ci.uuid_instance_object from scene_instance si, class_instance ci, assigned_to_scene ats where ci.uuid_relationclass IS NULL and ats.uuid_class_instance = ci.uuid_instance_object and ats.uuid_scene_instance = si.uuid_instance_object and si.uuid_instance_object =$1 "
+    },
+    {
+      "name": "instance_relationclasses_for_scene_instance_query",
+      "query": "select ri.uuid_class_instance from scene_instance si, relationclass_instance ri , assigned_to_scene ats where ats.uuid_class_instance = ri.uuid_class_instance and ats.uuid_scene_instance = si.uuid_instance_object and si.uuid_instance_object =$1 "
+    },
+    {
+      "name": "instance_port_for_scene_instance_query",
+      "query": "select * from port_instance pi2 where pi2.uuid_scene_instance = $1 "
+    },
+    {
+      "name": "instance_role_for_scene_instance_query",
+      "query": "select * from role_instance where uuid_has_reference_scene_instance = $1 "
+    },
+    {
+      "name": "instance_role_for_relationclass_instance_query",
+      "query": "select * from role_instance where uuid_has_reference_relationclass_instance = $1 "
+    },
+    {
+      "name": "instance_role_for_class_instance_query",
+      "query": "select * from role_instance where uuid_has_reference_class_instance = $1 "
+    },
+    {
+      "name": "instance_role_for_port_instance_query",
+      "query": "select * from role_instance where uuid_has_reference_port_instance = $1 "
+    },
+    {
+      "name": "instance_role_for_attribute_instance_query",
+      "query": "select * from role_instance where uuid_has_reference_attribute_instance = $1 "
+    },
+    {
+      "name": "instance_scene_from_sceneType",
+      "query": "select * from scene_instance si, scene_type st where si.uuid_scene_type = st.uuid_metaobject and st.uuid_metaobject =$1 "
+    },
+    {
+      "name": "instance_bendpoints_from_relationClass_query",
+      "query": "select * from class_instance where class_instance.uuid_relationclass_bendpoint = $1 "
+    },
+    {
+      "name": "related_instance_of_meta_query",
+      "query": "select uuid_instance_object from scene_instance where uuid_scene_type = $1 UNION select uuid_instance_object from class_instance where uuid_class = $1 and uuid_relationclass IS NULL Union select uuid_instance_object from attribute_instance where uuid_attribute = $1 union select uuid_instance_object from port_instance where uuid_port = $1 Union select uuid_instance_object from class_instance where uuid_relationclass = $1 "
+    },
+    {
+      "name": "related_scene_instance_of_meta_query",
+      "query": "select uuid_instance_object from scene_instance"
+    },
+    {
+      "name": "related_class_instance_of_meta_query",
+      "query": "select uuid_instance_object from class_instance"
+    },
+    {
+      "name": "related_attribute_instance_of_meta_query",
+      "query": "select uuid_instance_object from attribute_instance"
+    },
+    {
+      "name": "related_port_instance_of_meta_query",
+      "query": "select uuid_instance_object from port_instance"
+    },
+    {
+      "name": "related_relationclass_instance_of_meta_query",
+      "query": "select uuid_class_instance from relationclass_instance"
+    },
+    {
+      "name": "rule_by_metaobject_uuid_query",
+      "query": "SELECT * FROM generic_constraint gc WHERE gc.assigned_uuid_metaobject = $1 "
+    },
+    {
+      "name": "rule_by_metaobject_uuid_filter_query",
+      "query": "SELECT * FROM generic_constraint gc WHERE (gc.assigned_uuid_metaobject = $1 OR gc.uuid = $1) AND gc.name like $2"
+    },
+    {
+      "name": "rule_by_uuid_query",
+      "query": "SELECT * FROM generic_constraint gc WHERE gc.uuid = $1 "
+    },
+    {
+      "name": "get_metauuid_from_instanceuuid",
+      "query": "SELECT * From (select si.uuid_scene_type as uuid, 'scene_type' as source from scene_instance si where si.uuid_instance_object = $1 union select ci.uuid_class as uuid, 'class' as source from class_instance ci where ci.uuid_instance_object = $1 and ci.uuid_relationclass IS NULL union select ai.uuid_attribute as uuid, 'attribute' as source from attribute_instance ai where ai.uuid_instance_object = $1 union select ri.uuid_role as uuid, 'role' as source from role_instance ri where ri.uuid_instance_object = $1 union select pi.uuid_port as uuid, 'port' as source from port_instance pi where pi.uuid_instance_object = $1 union select ci.uuid_relationclass as uuid, 'relationclass' as source from class_instance ci where ci.uuid_instance_object = $1 and ci.uuid_relationclass IS NOT NULL) as msumcu"
+    },
+    {
+      "name": "get_metatype_from_uuid",
+      "query": "Select *from (select si.uuid_metaobject as uuid, 'scene_type' as source from scene_type si where si.uuid_metaobject = $1 Union select ci.uuid_metaobject as uuid, 'class' as source from class ci left join relationclass r on ci.uuid_metaobject = r.uuid_class where r.uuid_class is null and ci.uuid_metaobject = $1 Union select ai.uuid_metaobject as uuid, 'attribute' as source from attribute ai where ai.uuid_metaobject = $1 Union select ri.uuid_metaobject as uuid, 'role' as source from role ri where ri.uuid_metaobject = $1 Union select pi.uuid_metaobject as uuid, 'port' as source from port pi where pi.uuid_metaobject = $1 Union select ci.uuid_class as uuid, 'relationclass' as source from relationclass ci where ci.uuid_class = $1 Union select at2.uuid_metaobject as uuid, 'attribute_type' as source from attribute_type at2 where at2.uuid_metaobject = $1) as msumcu limit 1"
+    },
+    {
+      "name": "get_attributes_from_attribute_table_uuid",
+      "query": "select at2.uuid_metaobject, at2.attribute_type_uuid,at2.multi_valued, hta.sequence from attribute atr inner join has_table_attribute hta on atr.attribute_type_uuid = hta.uuid_attribute_type inner join attribute at2 on at2.uuid_metaobject = hta.uuid_attribute where atr.uuid_metaobject = $1 order by hta.sequence"
+    },
+    {
+      "name": "get_attributes_from_attributeType_table_uuid",
+      "query": "select * from attribute atr where uuid_metaobject in ( select hta.uuid_attribute from attribute atr, has_table_attribute hta where hta.uuid_attribute_type = atr.attribute_type_uuid and atr.attribute_type_uuid = $1 order by hta.sequence)"
+    },
+    {
+      "name": "get_sequence_attr_by_attrType_uuid",
+      "query": "select hta.sequence, hta.uuid_attribute from has_table_attribute hta where hta.uuid_attribute_type = $1 order by hta.sequence"
+    },
+    {
+      "name": "get_attributes_table_from_attribute_uuid",
+      "query": "select * from attribute_instance where table_attribute_reference = $1 order by table_row"
+    },
+    {
+      "name": "get_relationclass_if_role_from_or_to",
+      "query": "select * from relationclass_instance where uuid_role_instance_from = $1 or uuid_role_instance_to = $1 "
+    },
+    {
+      "name": "get_all_delete_right_uuid_from_user_group",
+      "query": "select hdr.uuid_metaobject, hdr.uuid_instance_object from user_group join has_delete_right hdr on user_group.uuid_metaobject = hdr.uuid_user_group and hdr.uuid_user_group = $1 "
+    },
+    {
+      "name": "addon_right_read_check",
+      "query": "AND (EXISTS(SELECT 1 from has_read_right har join has_user_user_group huug on har.uuid_user_group = huug.uuid_user_group where (har.uuid_instance_object = $1 or har.uuid_metaobject = $1) and huug.uuid_user = $2) OR ( $2 = 'ff892138-77e0-47fe-a323-3fe0e1bf0240' )) "
+    },
+    {
+      "name": "read_check",
+      "query": "SELECT 1 WHERE EXISTS ( SELECT 1 FROM has_read_right har JOIN has_user_user_group huug ON har.uuid_user_group = huug.uuid_user_group WHERE (har.uuid_instance_object = $1 OR har.uuid_metaobject = $1) AND huug.uuid_user = $2) OR $2 = 'ff892138-77e0-47fe-a323-3fe0e1bf0240';"
+    },
+    {
+      "name": "addon_right_write_check",
+      "query": "AND (EXISTS(SELECT 1 from has_write_right har join has_user_user_group huug on har.uuid_user_group = huug.uuid_user_group where (har.uuid_instance_object = $1 or har.uuid_metaobject = $1) and huug.uuid_user = $2) OR ( $2 = 'ff892138-77e0-47fe-a323-3fe0e1bf0240' )) "
+    },
+    {
+      "name": "write_check",
+      "query": "SELECT 1 WHERE EXISTS ( SELECT 1 FROM has_write_right har JOIN has_user_user_group huug ON har.uuid_user_group = huug.uuid_user_group WHERE (har.uuid_instance_object = $1 OR har.uuid_metaobject = $1) AND huug.uuid_user = $2) OR $2 = 'ff892138-77e0-47fe-a323-3fe0e1bf0240';"
+    },
+    {
+      "name": "addon_right_delete_check",
+      "query": "AND (EXISTS(SELECT 1 from has_delete_right har join has_user_user_group huug on har.uuid_user_group = huug.uuid_user_group where (har.uuid_instance_object = $1 or har.uuid_metaobject = $1) and huug.uuid_user = $2) OR ( $2 = 'ff892138-77e0-47fe-a323-3fe0e1bf0240' )) returning * ;"
+    },
+    {
+      "name": "delete_check",
+      "query": "SELECT 1 WHERE EXISTS ( SELECT 1 FROM has_delete_right har JOIN has_user_user_group huug ON har.uuid_user_group = huug.uuid_user_group WHERE (har.uuid_instance_object = $1 OR har.uuid_metaobject = $1) AND huug.uuid_user = $2) OR $2 = 'ff892138-77e0-47fe-a323-3fe0e1bf0240';"
+    },
+    {
+      "name": "meta_create_check",
+      "query": "SELECT 1 WHERE EXISTS (SELECT 1 FROM user_group ug JOIN has_user_user_group huug ON ug.uuid_metaobject = huug.uuid_user_group WHERE ug.$1 = true AND huug.uuid_user = $2) OR $2 = 'ff892138-77e0-47fe-a323-3fe0e1bf0240';"
+    },
+    {
+      "name": "instanciate_check",
+      "query": "SELECT 1 WHERE EXISTS ( SELECT 1 FROM can_create_instances har JOIN has_user_user_group huug ON har.uuid_user_group = huug.uuid_user_group WHERE har.uuid_metaobject = $1 AND huug.uuid_user = $2) OR $2 = 'ff892138-77e0-47fe-a323-3fe0e1bf0240';"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "queries": [
+    {
+      "name": "search_metaobject",
+      "query": "select uuid from metaobject m where m.uuid = $1;"
+    },
+    {
+      "name": "search_instanceobject",
+      "query": "select uuid from instance_object io where io.uuid = $1;"
+    }
+  ]
+}

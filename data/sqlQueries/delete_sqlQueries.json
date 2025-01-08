@@ -1,0 +1,136 @@
+{
+  "queries": [
+    {
+      "name": "delete_metaobject",
+      "query": "DELETE FROM metaobject WHERE uuid = $1 returning uuid "
+    },
+    {
+      "name": "delete_sceneTypes",
+      "query": "DELETE FROM metaobject USING scene_type WHERE scene_type.uuid_metaobject = uuid AND uuid = $1 returning uuid "
+    },
+    {
+      "name": "delete_attributes_for_class",
+      "query": "delete from metaobject using class_has_attributes where uuid = class_has_attributes.uuid_class AND class_has_attributes.uuid_class = $1 returning uuid "
+    },
+    {
+      "name": "delete_attributes_for_scene",
+      "query": "delete from metaobject using scene_has_attributes where uuid = scene_has_attributes.uuid_scene_type AND scene_has_attributes.uuid_scene_type = $1 returning uuid "
+    },
+    {
+      "name": "delete_classes_for_scene",
+      "query": "delete from metaobject using contains_classes where uuid = contains_classes.uuid_scene_type AND contains_classes.uuid_scene_type = $1 returning uuid "
+    },
+    {
+      "name": "delete_relationclasses_for_scene",
+      "query": "delete from metaobject using contains_classes, relationclass where (cc.uuid_scene_type = $1 and contains_classes.uuid_class = relationclass.uuid_class and metaobject.uuid= contains_classes.uuid_class ) returning uuid "
+    },
+    {
+      "name": "delete_port_for_scene",
+      "query": "delete from metaobject using port where port.uuid_scene_type = uuid AND port.uuid_scene_type = $1 returning uuid "
+    },
+    {
+      "name": "delete_instance_scene",
+      "query": "DELETE FROM instance_object USING scene_instance WHERE scene_instance.uuid_instance_object = uuid and uuid = $1 returning uuid "
+    },
+    {
+      "name": "delete_instance_class",
+      "query": "DELETE FROM instance_object USING class_instance WHERE class_instance.uuid_instance_object = uuid and uuid = $1 returning uuid "
+    },
+    {
+      "name": "delete_instance_relationclass",
+      "query": "DELETE FROM instance_object USING relationclass_instance WHERE relationclass_instance.uuid_class_instance = uuid and uuid = $1 returning uuid "
+    },
+    {
+      "name": "delete_instance_role",
+      "query": "DELETE FROM instance_object USING role_instance WHERE role_instance.uuid_instance_object = uuid and uuid = $1 "
+    },
+    {
+      "name": "delete_instance_role_by_scene_instance",
+      "query": "DELETE FROM instance_object USING role_instance WHERE role_instance.uuid_instance_object = uuid and uuid_has_reference_scene_instance = $1 "
+    },
+    {
+      "name": "delete_instance_role_by_class_instance",
+      "query": "DELETE FROM instance_object USING role_instance WHERE role_instance.uuid_instance_object = uuid and uuid_has_reference_class_instance = $1 "
+    },
+    {
+      "name": "delete_instance_role_by_attribute_instance",
+      "query": "DELETE FROM instance_object USING role_instance WHERE role_instance.uuid_instance_object = uuid and uuid_has_reference_attribute_instance = $1 "
+    },
+    {
+      "name": "delete_instance_role_by_relationclass_instance",
+      "query": "DELETE FROM instance_object USING role_instance WHERE role_instance.uuid_instance_object = uuid and uuid_has_reference_relationclass_instance = $1 "
+    },
+    {
+      "name": "delete_instance_role_by_port_instance",
+      "query": "DELETE FROM instance_object USING role_instance WHERE role_instance.uuid_instance_object = uuid and uuid_has_reference_port_instance = $1 "
+    },
+    {
+      "name": "delete_instance_port",
+      "query": "DELETE FROM instance_object USING port_instance WHERE port_instance.uuid_instance_object = uuid and uuid = $1 returning uuid "
+    },
+    {
+      "name": "delete_instance_attribute",
+      "query": "DELETE FROM instance_object USING attribute_instance WHERE attribute_instance.uuid_instance_object = uuid and uuid = $1 returning uuid "
+    },
+    {
+      "name": "delete_instance_object",
+      "query": "DELETE FROM instance_object where uuid = $1 "
+    },
+    {
+      "name": "delete_meta_object",
+      "query": "DELETE FROM metaobject where uuid = $1 "
+    },
+    {
+      "name": "delete_metaobject_function",
+        "query": "SELECT delete_metaobject_by_uuid($1, $2) "
+    },
+    {
+      "name": "get_cascaded_delete_object",
+      "query": "select affected_uuid from logging.t_history th where operation = 'DELETE' and transaction in ( select th.transaction FROM logging.t_history th where th.affected_uuid = $1 order by th.tstamp DESC limit 1) "
+    },
+    {
+      "name": "delete_rule_uuid",
+      "query": "DELETE FROM generic_constraint WHERE uuid = $1 returning uuid "
+    },
+    {
+      "name": "empty_database_meta",
+      "query": "truncate metaobject cascade "
+    },
+    {
+      "name": "empty_database_instance",
+      "query": "truncate instance_object cascade "
+    },
+    {
+      "name": "get_deleted_cascade",
+      "query": "truncate instance_object cascade "
+    },
+    {
+      "name": "delete_all_metaobjects_database",
+      "query": "truncate attribute_type cascade; truncate attribute cascade; truncate relationclass cascade; truncate class cascade; truncate port cascade; truncate role cascade; truncate scene_type cascade; truncate instance_object cascade; truncate logging.t_history cascade "
+    },
+    {
+      "name": "delete_all_instancesObjects_database",
+      "query": "truncate instance_object cascade; "
+    },
+    {
+      "name": "delete_read_right_to_user_group",
+      "query": "delete from has_read_right where uuid_metaobject = $1 "
+    },
+    {
+      "name": "delete_write_right_to_user_group",
+      "query": "delete from has_write_right where uuid_metaobject = $1 "
+    },
+    {
+      "name": "delete_delete_right_to_user_group",
+      "query": "delete from has_delete_right where uuid_metaobject = $1 "
+    },
+    {
+      "name": "delete_user_group",
+      "query": "delete from user_group where uuid_metaobject = $1 "
+    },
+    {
+      "name": "delete_user_from_user_group",
+      "query": "delete from has_user_user_group where uuid_user_group = $1 and uuid_user = $2 "
+    }
+  ]
+}

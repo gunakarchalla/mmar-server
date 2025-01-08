@@ -1,0 +1,10 @@
+{
+  "user": "api",
+  "host": "127.0.0.1",
+  "database": "api",
+  "password": "root",
+  "port": 5432,
+  "max": 300,
+  "idleTimeoutMillis": 30000,
+  "connectionTimeoutMillis": 20000
+}

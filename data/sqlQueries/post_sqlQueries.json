@@ -1,0 +1,256 @@
+{
+  "queries": [
+    {
+      "name": "create_metaObject",
+      "query": "INSERT INTO metaobject (Name) VALUES ($1) returning UUID "
+    },
+    {
+      "name": "create_metaObject_with_uuid",
+      "query": "INSERT INTO metaobject (UUID, Name) VALUES ($1, $2) returning UUID "
+    },
+    {
+      "name": "connect_metaobject_attributeType",
+      "query": "insert into attribute_type (uuid_metaobject, pre_defined, default_value) values ($1,$2,$3) returning uuid_metaobject "
+    },
+    {
+      "name": "update_attributeType",
+      "query": "UPDATE attribute_type set pre_defined = coalesce ($1, pre_defined), regex_value = coalesce ($2, regex_value) where uuid_metaobject = $3 "
+    },
+    {
+      "name": "connect_role_attribute_type",
+      "query": "UPDATE role set uuid_attribute_type=$1 where role.uuid_metaobject=$2 "
+    },
+    {
+      "name": "create_attributeType",
+      "query": "insert into attribute_type (uuid_metaobject) values ($1) "
+    },
+    {
+      "name": "connect_metaobject_class",
+      "query": "insert into class (uuid_metaobject, is_abstract,is_reusable) values ($1,$2,$3) returning uuid_metaobject "
+    },
+    {
+      "name": "connect_class_scenetype",
+      "query": "insert into contains_classes (uuid_class, uuid_scene_type) values ($1,$2) "
+    },
+    {
+      "name": "create_class",
+      "query": "insert into class (uuid_metaobject, is_abstract,is_reusable) values ($1,$2,$3) "
+    },
+    {
+      "name": "update_class",
+      "query": "UPDATE class set is_abstract = coalesce($1, is_abstract), is_reusable =coalesce($2,is_reusable) where uuid_metaobject = $3 "
+    },
+    {
+      "name": "create_relationclass",
+      "query": "insert into relationclass (uuid_class, role_from, role_to, uuid_class_bendpoint) values ($1, $2, $3, $4) "
+    },
+    {
+      "name": "update_relationclass",
+      "query": "UPDATE relationclass set role_from = coalesce($1, role_from), role_to = coalesce($2, role_to), uuid_class_bendpoint = coalesce($3, uuid_class_bendpoint) where uuid_class = $4 "
+    },
+    {
+      "name": "create_port",
+      "query": "insert into port (uuid_metaobject , uuid_class , uuid_scene_type) values ($1, $2, $3) "
+    },
+    {
+      "name": "update_port",
+      "query": "UPDATE port set uuid_class = $1, uuid_scene_type = $2 where uuid_metaobject = $3 "
+    },
+    {
+      "name": "connect_attribute_sceneType",
+      "query": "insert into scene_has_attributes (uuid_scene_type,uuid_attribute) values ($1,$2) "
+    },
+    {
+      "name": "connect_attribute_port",
+      "query": "insert into port_has_attributes (uuid_port,uuid_attribute) values ($1,$2) "
+    },
+    {
+      "name": "connect_attribute_attributeType",
+      "query": "UPDATE attribute SET attribute_type_uuid = $1 WHERE uuid_metaobject = $2 "
+    },
+    {
+      "name": "connect_attribute_class",
+      "query": "INSERT INTO class_has_attributes (uuid_class , uuid_attribute) values ($1,$2) ON CONFLICT (uuid_class, uuid_attribute) DO nothing "
+    },
+    {
+      "name": "connect_attributeType_attribute",
+      "query": "INSERT INTO has_table_attribute (sequence, uuid_attribute_type, uuid_attribute) VALUES ($1, $2, $3) "
+    },
+    {
+      "name": "update_attribute_class",
+      "query": "INSERT INTO class_has_attributes (uuid_class , uuid_attribute) values ($1,$2) ON CONFLICT (uuid_class, uuid_attribute) DO nothing "
+    },
+    {
+      "name": "create_attribute",
+      "query": "INSERT INTO attribute (uuid_metaobject, multi_valued, attribute_type_uuid) VALUES ($1, $2, $3) "
+    },
+    {
+      "name": "update_metaObject",
+      "query": "UPDATE metaobject set name = coalesce($1, name), description =coalesce($2,description), coordinates_2d =coalesce($3,coordinates_2d), absolute_coordinate_3d = coalesce ($4, absolute_coordinate_3d), relative_coordinate_3d =coalesce ($5,relative_coordinate_3d), geometry = coalesce ($6,geometry) where uuid = $7 "
+    },
+    {
+      "name": "update_attribute",
+      "query": "UPDATE attribute set multi_valued= coalesce($1, multi_valued), default_value=coalesce($2, default_value), default_value=coalesce($2, default_value), attribute_type_uuid = coalesce($3, attribute_type_uuid) where uuid_metaobject = $4 "
+    },
+    {
+      "name": "update_roleClassRef",
+      "query": "update role_class_reference set min = coalesce ($1, min), max=coalesce ($2, max)where uuid_role =$3 and uuid_class = $4 "
+    },
+    {
+      "name": "create_roleClassRef",
+      "query": "insert into role_class_reference (min, max,uuid_role,uuid_class) values ($1,$2,$3,$4) ON CONFLICT (uuid_class, uuid_role) DO UPDATE set min = EXCLUDED.min, max = EXCLUDED.max "
+    },
+    {
+      "name": "create_roleSceneRef",
+      "query": "insert into role_scene_reference (min, max,uuid_role,uuid_scene_type) values ($1,$2,$3,$4) ON CONFLICT (uuid_scene_type, uuid_role) DO UPDATE set min = EXCLUDED.min, max = EXCLUDED.max "
+    },
+    {
+      "name": "update_roleSceneRef",
+      "query": "update role_scene_reference set min = coalesce ($1, min), max=coalesce ($2, max)where uuid_role =$3 and uuid_scene_type =$4 "
+    },
+    {
+      "name": "create_rolePortRef",
+      "query": "insert into role_port_reference (min, max,uuid_role,uuid_port) values ($1,$2,$3,$4) ON CONFLICT (uuid_port, uuid_role) DO UPDATE set min = EXCLUDED.min, max = EXCLUDED.max "
+    },
+    {
+      "name": "update_rolePortRef",
+      "query": "update role_port_reference set min = coalesce ($1, min), max=coalesce ($2, max)where uuid_role =$3 and uuid_port=$4 "
+    },
+    {
+      "name": "create_roleRelClassRef",
+      "query": "insert into role_relationclass_reference (min, max,uuid_role,uuid_relationclass) values ($1,$2,$3,$4) ON CONFLICT (uuid_relationclass, uuid_role) DO UPDATE set min = EXCLUDED.min, max = EXCLUDED.max "
+    },
+    {
+      "name": "update_roleRelClassRef",
+      "query": "update role_relationclass_reference set min = coalesce ($1, min), max=coalesce ($2, max)where uuid_role =$3 and uuid_relationclass = $4 "
+    },
+    {
+      "name": "create_role",
+      "query": "insert into role (uuid_metaobject) values ($1) "
+    },
+    {
+      "name": "create_sceneType",
+      "query": "insert into scene_type (uuid_metaobject) values ($1) "
+    },
+    {
+      "name": "update_sceneType",
+      "query": "TODO"
+    },
+    {
+      "name": "create_object_instance",
+      "query": "INSERT INTO instance_object (UUID) VALUES (DEFAULT) returning UUID "
+    },
+    {
+      "name": "create_object_instance_bulk",
+      "query": "INSERT INTO instance_object (UUID, coordinates_2d,absolute_coordinate_3d,relative_coordinate_3d,rotation,geometry,visibility,custom_variables,name,description) VALUES ($1) "
+    },
+    {
+      "name": "create_object_instance_with_uuid",
+      "query": "INSERT INTO instance_object (uuid) VALUES ($1) returning uuid "
+    },
+    {
+      "name": "update_object_instance",
+      "query": "UPDATE instance_object set coordinates_2d =coalesce($2,coordinates_2d), absolute_coordinate_3d = coalesce ($3, absolute_coordinate_3d), relative_coordinate_3d =coalesce ($4,relative_coordinate_3d), geometry = coalesce ($5,geometry), visibility = coalesce ($6,visibility), custom_variables = coalesce ($7,custom_variables), name =coalesce($8,name), description =coalesce($9,description), rotation =coalesce($10,rotation) where uuid = $1 "
+    },
+    {
+      "name": "create_scene_instance",
+      "query": "insert into scene_instance (uuid_instance_object, uuid_scene_type) values ($1, $2) returning uuid_instance_object "
+    },
+    {
+      "name": "create_attribute_instance",
+      "query": "insert into attribute_instance (uuid_instance_object,uuid_attribute) values ($1,$2) returning uuid_instance_object "
+    },
+    {
+      "name": "update_attribute_instance",
+      "query": "update attribute_instance set is_propagated=coalesce($1,is_propagated),value=coalesce($2,value), assigned_uuid_scene_instance=coalesce($3,assigned_uuid_scene_instance), assigned_uuid_class_instance=coalesce($4,assigned_uuid_class_instance), assigned_uuid_port_instance=coalesce($5,assigned_uuid_port_instance), table_attribute_reference=coalesce($6,table_attribute_reference), table_row=coalesce($7,table_row), role_instance_from=coalesce($8,role_instance_from) where uuid_instance_object = $9 "
+    },
+    {
+      "name": "connect_attribute_instance_to_scene",
+      "query": "update attribute_instance set assigned_uuid_scene_instance = $1 where uuid_instance_object = $2 "
+    },
+    {
+      "name": "connect_attribute_instance_to_class",
+      "query": "update attribute_instance set assigned_uuid_class_instance = $1 where uuid_instance_object = $2 "
+    },
+    {
+      "name": "connect_attribute_instance_to_port",
+      "query": "update attribute_instance set assigned_uuid_port_instance = $1 where uuid_instance_object = $2 "
+    },
+    {
+      "name": "create_class_instance",
+      "query": "insert into class_instance (uuid_instance_object, uuid_class) values ($1,$2) returning uuid_instance_object "
+    },
+    {
+      "name": "create_class_instances_bulk",
+      "query": "insert into class_instance (uuid_instance_object, uuid_class) values ($1) "
+    },
+    {
+      "name": "update_class_instance",
+      "query": "update class_instance set uuid_relationclass=coalesce($2,uuid_relationclass), uuid_decomposable_class=coalesce($3,uuid_decomposable_class), uuid_aggregator_class=coalesce($4,uuid_aggregator_class), uuid_relationclass_bendpoint=coalesce($5,uuid_relationclass_bendpoint) where uuid_instance_object = $1 "
+    },
+    {
+      "name": "connect_class_instance_to_scene",
+      "query": "insert into assigned_to_scene (uuid_class_instance, uuid_scene_instance) values ($1,$2) "
+    },
+    {
+      "name": "create_port_instance",
+      "query": "insert into port_instance (uuid_instance_object,uuid_port) values ($1,$2) returning uuid_instance_object "
+    },
+    {
+      "name": "update_port_instance",
+      "query": "update port_instance set uuid_class_instance=coalesce($1,uuid_class_instance), uuid_scene_instance=coalesce($2,uuid_scene_instance) where uuid_instance_object = $3 "
+    },
+    {
+      "name": "create_role_instance",
+      "query": "insert into role_instance (uuid_instance_object, uuid_role) values ($1,$2) returning uuid_instance_object "
+    },
+    {
+      "name": "update_role_instance",
+      "query": "update role_instance set uuid_has_reference_class_instance=coalesce($1,uuid_has_reference_class_instance), uuid_has_reference_port_instance=coalesce($2,uuid_has_reference_port_instance), uuid_has_reference_scene_instance=coalesce($3,uuid_has_reference_scene_instance), uuid_has_reference_attribute_instance=coalesce($4,uuid_has_reference_attribute_instance), uuid_has_reference_relationclass_instance=coalesce($5,uuid_has_reference_relationclass_instance) where uuid_instance_object = $6 "
+    },
+    {
+      "name": "create_relationClass_instance",
+      "query": "insert into relationclass_instance (uuid_class_instance, uuid_role_instance_from,uuid_role_instance_to) values ($1,$2,$3) returning uuid_class_instance "
+    },
+    {
+      "name": "update_relationClass_instance",
+      "query": "update relationclass_instance set uuid_role_instance_from=coalesce($2,uuid_role_instance_from),uuid_role_instance_to=coalesce($3,uuid_role_instance_to), line_points=coalesce($4,line_points) where uuid_class_instance = $1 "
+    },
+    {
+      "name": "update_rule",
+      "query": "UPDATE generic_constraint set name = coalesce ($1, name), value = coalesce ($2, value), assigned_uuid_metaobject = coalesce ($3, assigned_uuid_metaobject) where uuid = $4 "
+    },
+    {
+      "name": "create_rule",
+      "query": "INSERT INTO generic_constraint (uuid, name, value, assigned_uuid_metaobject) VALUES (gen_random_uuid (),$1, $2, $3) RETURNING uuid "
+    },
+    {
+      "name": "create_rule_with_uuid",
+      "query": "INSERT INTO generic_constraint (uuid, name, value, assigned_uuid_metaobject) VALUES ($1,$2, $3, $4) RETURNING uuid "
+    },
+    {
+      "name": "update_has_table_attribute",
+      "query": "UPDATE has_table_attribute set sequence = coalesce ($3, sequence) where uuid_attribute = $2 AND uuid_attribute_type = $1 "
+    },
+    {
+      "name": "create_user_group",
+      "query": "insert into user_group (uuid_metaobject) values ($1) returning uuid_metaobject "
+    },
+    {
+      "name": "add_read_right_to_user_group",
+      "query": "INSERT INTO has_read_right (uuid_user_group, uuid_metaobject) VALUES ($1, $2) "
+    },
+    {
+      "name": "add_write_right_to_user_group",
+      "query": "INSERT INTO has_write_right (uuid_user_group, uuid_metaobject) VALUES ($1, $2) "
+    },
+    {
+      "name": "add_delete_right_to_user_group",
+      "query": "INSERT INTO has_delete_right (uuid_user_group, uuid_metaobject) VALUES ($1, $2) "
+    },
+    {
+      "name": "add_user_to_user_group",
+      "query": "insert into has_user_user_group (uuid_user, uuid_user_group) values ($1, $2) "
+    }
+  ]
+}

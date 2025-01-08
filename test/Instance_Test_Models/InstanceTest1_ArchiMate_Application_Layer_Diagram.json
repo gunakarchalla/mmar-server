@@ -1,0 +1,1542 @@
+{
+  "uuid": "d6724280-3270-4b02-bac9-a65f166e2456",
+  "coordinates_2d": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  "relative_coordinate_3d": null,
+  "custom_variables": {},
+  "uuid_scene_type": "69898db3-3f22-40e7-b425-ec4ef7e8bf29",
+  "class_instances": [
+    {
+      "uuid": "89ff046e-06dc-49ec-a704-dff7d7b64039",
+      "coordinates_2d": {
+        "x": -2,
+        "y": 4.1,
+        "z": -7
+      },
+      "relative_coordinate_3d": null,
+      "custom_variables": {
+        "x_rel": {
+          "value": -0.34730503291784437
+        },
+        "y_rel": {
+          "value": 0.1280667465850329
+        },
+        "z_rel": {
+          "value": 0.020000000000000004
+        },
+        "scale": {
+          "x": 1.6616949152542368,
+          "y": 1.6616949152542368,
+          "z": 1
+        }
+      },
+      "uuid_class": "e45c84b7-8968-4307-901f-c469a0b218a3",
+      "attribute_instance": [
+        {
+          "uuid": "9d70498a-495b-4520-852e-309e26ba329b",
+          "coordinates_2d": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "relative_coordinate_3d": null,
+          "custom_variables": {},
+          "uuid_attribute": "ba58fd59-af2c-40ba-adef-b994160b3335",
+          "assigned_uuid_scene_instance": null,
+          "assigned_uuid_class_instance": "89ff046e-06dc-49ec-a704-dff7d7b64039",
+          "value": "Description in Application_event 0.237",
+          "creation_time": "2022-09-30T12:28:53.964Z",
+          "modification_time": "2022-09-30T12:29:53.920Z",
+          "geometry": null,
+          "absolute_coordinate_3d": null,
+          "visibility": null,
+          "name": "Description",
+          "description": null,
+          "uuid_instance_object": "9d70498a-495b-4520-852e-309e26ba329b",
+          "uuid_reference_attribute": null,
+          "is_propagated": null,
+          "assigned_uuid_port_instance": null
+        },
+        {
+          "uuid": "683339e1-a4d1-4541-a086-13d81ecbf165",
+          "coordinates_2d": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "relative_coordinate_3d": null,
+          "custom_variables": {},
+          "uuid_attribute": "d6632c72-89fa-4210-9d01-18e911505608",
+          "assigned_uuid_scene_instance": null,
+          "assigned_uuid_class_instance": "89ff046e-06dc-49ec-a704-dff7d7b64039",
+          "value": "Request for\na Quotation",
+          "creation_time": "2022-09-30T12:28:53.969Z",
+          "modification_time": "2022-09-30T12:29:53.923Z",
+          "geometry": null,
+          "absolute_coordinate_3d": null,
+          "visibility": null,
+          "name": "Name",
+          "description": null,
+          "uuid_instance_object": "683339e1-a4d1-4541-a086-13d81ecbf165",
+          "uuid_reference_attribute": null,
+          "is_propagated": null,
+          "assigned_uuid_port_instance": null
+        }
+      ],
+      "port_instance": [],
+      "creation_time": "2022-09-30T12:28:53.962Z",
+      "modification_time": "2022-09-30T12:29:53.917Z",
+      "geometry": null,
+      "absolute_coordinate_3d": null,
+      "visibility": null,
+      "name": "Application_event_89ff046e-06dc-49ec-a704-dff7d7b64039",
+      "description": null,
+      "uuid_instance_object": "89ff046e-06dc-49ec-a704-dff7d7b64039",
+      "uuid_relationclass": null,
+      "uuid_decomposable_class": null,
+      "uuid_aggregator_class": null,
+      "uuid_assigned_relationclass_instance": null,
+      "uuid_relationclass_bendpoint": null
+    },
+    {
+      "uuid": "9bb2def2-c4d1-4d79-b82a-d35f5f02aa21",
+      "coordinates_2d": {
+        "x": 1.1,
+        "y": 4.1,
+        "z": -7
+      },
+      "relative_coordinate_3d": null,
+      "custom_variables": {
+        "x_rel": {
+          "value": -0.3351297156766091
+        },
+        "y_rel": {
+          "value": 0.11990566132610227
+        },
+        "z_rel": {
+          "value": 0.020000000000000004
+        },
+        "scale": {
+          "x": 1.6382714872029953,
+          "y": 1.6382714872029953,
+          "z": 1
+        }
+      },
+      "uuid_class": "4b0f7650-1c0f-4393-ae31-e8732e23a408",
+      "attribute_instance": [
+        {
+          "uuid": "4374b3c5-e7cb-4148-879d-45b498bf011a",
+          "coordinates_2d": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "relative_coordinate_3d": null,
+          "custom_variables": {},
+          "uuid_attribute": "d6632c72-89fa-4210-9d01-18e911505608",
+          "assigned_uuid_scene_instance": null,
+          "assigned_uuid_class_instance": "9bb2def2-c4d1-4d79-b82a-d35f5f02aa21",
+          "value": "Obtain Travel \nInsurance",
+          "creation_time": "2022-09-30T12:28:53.933Z",
+          "modification_time": "2022-09-30T12:29:53.912Z",
+          "geometry": null,
+          "absolute_coordinate_3d": null,
+          "visibility": null,
+          "name": "Name",
+          "description": null,
+          "uuid_instance_object": "4374b3c5-e7cb-4148-879d-45b498bf011a",
+          "uuid_reference_attribute": null,
+          "is_propagated": null,
+          "assigned_uuid_port_instance": null
+        },
+        {
+          "uuid": "ac937698-7491-4d2d-992c-2dbcf7e9a8c4",
+          "coordinates_2d": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "relative_coordinate_3d": null,
+          "custom_variables": {},
+          "uuid_attribute": "ba58fd59-af2c-40ba-adef-b994160b3335",
+          "assigned_uuid_scene_instance": null,
+          "assigned_uuid_class_instance": "9bb2def2-c4d1-4d79-b82a-d35f5f02aa21",
+          "value": "Description in Application_process 0.781",
+          "creation_time": "2022-09-30T12:28:53.939Z",
+          "modification_time": "2022-09-30T12:29:53.914Z",
+          "geometry": null,
+          "absolute_coordinate_3d": null,
+          "visibility": null,
+          "name": "Description",
+          "description": null,
+          "uuid_instance_object": "ac937698-7491-4d2d-992c-2dbcf7e9a8c4",
+          "uuid_reference_attribute": null,
+          "is_propagated": null,
+          "assigned_uuid_port_instance": null
+        }
+      ],
+      "port_instance": [],
+      "creation_time": "2022-09-30T12:28:53.929Z",
+      "modification_time": "2022-09-30T12:29:53.908Z",
+      "geometry": null,
+      "absolute_coordinate_3d": null,
+      "visibility": null,
+      "name": "Application_process_9bb2def2-c4d1-4d79-b82a-d35f5f02aa21",
+      "description": null,
+      "uuid_instance_object": "9bb2def2-c4d1-4d79-b82a-d35f5f02aa21",
+      "uuid_relationclass": null,
+      "uuid_decomposable_class": null,
+      "uuid_aggregator_class": null,
+      "uuid_assigned_relationclass_instance": null,
+      "uuid_relationclass_bendpoint": null
+    },
+    {
+      "uuid": "2ec8d9e4-e95b-4762-9e91-87e06db1ed3d",
+      "coordinates_2d": {
+        "x": -0.1,
+        "y": 2.2,
+        "z": -7
+      },
+      "relative_coordinate_3d": null,
+      "custom_variables": {
+        "x_rel": {
+          "value": -0.4040388952936459
+        },
+        "y_rel": {
+          "value": 0.06717277329444782
+        },
+        "z_rel": {
+          "value": 0.020000000000000004
+        },
+        "scale": {
+          "x": 1.7058823529411762,
+          "y": 1.7058823529411762,
+          "z": 1
+        }
+      },
+      "uuid_class": "59abffc1-d66b-4a15-ab3d-57f02edf0f57",
+      "attribute_instance": [
+        {
+          "uuid": "d97b66f9-2357-4a1a-9580-04fbf2e1f43d",
+          "coordinates_2d": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "relative_coordinate_3d": null,
+          "custom_variables": {},
+          "uuid_attribute": "d6632c72-89fa-4210-9d01-18e911505608",
+          "assigned_uuid_scene_instance": null,
+          "assigned_uuid_class_instance": "2ec8d9e4-e95b-4762-9e91-87e06db1ed3d",
+          "value": "Get Quotation",
+          "creation_time": "2022-09-30T12:28:53.995Z",
+          "modification_time": "2022-09-30T12:29:53.929Z",
+          "geometry": null,
+          "absolute_coordinate_3d": null,
+          "visibility": null,
+          "name": "Name",
+          "description": null,
+          "uuid_instance_object": "d97b66f9-2357-4a1a-9580-04fbf2e1f43d",
+          "uuid_reference_attribute": null,
+          "is_propagated": null,
+          "assigned_uuid_port_instance": null
+        },
+        {
+          "uuid": "5eab9dff-2e95-4599-ac0a-586eed58fffa",
+          "coordinates_2d": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "relative_coordinate_3d": null,
+          "custom_variables": {},
+          "uuid_attribute": "ba58fd59-af2c-40ba-adef-b994160b3335",
+          "assigned_uuid_scene_instance": null,
+          "assigned_uuid_class_instance": "2ec8d9e4-e95b-4762-9e91-87e06db1ed3d",
+          "value": "Description in Application_service 0.529",
+          "creation_time": "2022-09-30T12:28:53.989Z",
+          "modification_time": "2022-09-30T12:29:53.931Z",
+          "geometry": null,
+          "absolute_coordinate_3d": null,
+          "visibility": null,
+          "name": "Description",
+          "description": null,
+          "uuid_instance_object": "5eab9dff-2e95-4599-ac0a-586eed58fffa",
+          "uuid_reference_attribute": null,
+          "is_propagated": null,
+          "assigned_uuid_port_instance": null
+        }
+      ],
+      "port_instance": [],
+      "creation_time": "2022-09-30T12:28:53.987Z",
+      "modification_time": "2022-09-30T12:29:53.926Z",
+      "geometry": null,
+      "absolute_coordinate_3d": null,
+      "visibility": null,
+      "name": "Application_service_2ec8d9e4-e95b-4762-9e91-87e06db1ed3d",
+      "description": null,
+      "uuid_instance_object": "2ec8d9e4-e95b-4762-9e91-87e06db1ed3d",
+      "uuid_relationclass": null,
+      "uuid_decomposable_class": null,
+      "uuid_aggregator_class": null,
+      "uuid_assigned_relationclass_instance": null,
+      "uuid_relationclass_bendpoint": null
+    },
+    {
+      "uuid": "6aa3338a-60fb-4225-ab1b-6f759e98a6b9",
+      "coordinates_2d": {
+        "x": 2.5,
+        "y": 2.2,
+        "z": -7
+      },
+      "relative_coordinate_3d": null,
+      "custom_variables": {
+        "x_rel": {
+          "value": -0.43667851182193
+        },
+        "y_rel": {
+          "value": 0.12177209265013471
+        },
+        "z_rel": {
+          "value": 0.020000000000000004
+        },
+        "scale": {
+          "x": 1.680376344086021,
+          "y": 1.680376344086021,
+          "z": 1
+        }
+      },
+      "uuid_class": "59abffc1-d66b-4a15-ab3d-57f02edf0f57",
+      "attribute_instance": [
+        {
+          "uuid": "3840e7c2-e4bc-4244-a664-9d9f071a7da9",
+          "coordinates_2d": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "relative_coordinate_3d": null,
+          "custom_variables": {},
+          "uuid_attribute": "ba58fd59-af2c-40ba-adef-b994160b3335",
+          "assigned_uuid_scene_instance": null,
+          "assigned_uuid_class_instance": "6aa3338a-60fb-4225-ab1b-6f759e98a6b9",
+          "value": "Description in Application_service 0.438",
+          "creation_time": "2022-09-30T12:28:54.014Z",
+          "modification_time": "2022-09-30T12:29:53.938Z",
+          "geometry": null,
+          "absolute_coordinate_3d": null,
+          "visibility": null,
+          "name": "Description",
+          "description": null,
+          "uuid_instance_object": "3840e7c2-e4bc-4244-a664-9d9f071a7da9",
+          "uuid_reference_attribute": null,
+          "is_propagated": null,
+          "assigned_uuid_port_instance": null
+        },
+        {
+          "uuid": "8df7e82b-27c9-4b09-b630-13c36bc1b94b",
+          "coordinates_2d": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "relative_coordinate_3d": null,
+          "custom_variables": {},
+          "uuid_attribute": "d6632c72-89fa-4210-9d01-18e911505608",
+          "assigned_uuid_scene_instance": null,
+          "assigned_uuid_class_instance": "6aa3338a-60fb-4225-ab1b-6f759e98a6b9",
+          "value": "Purchase Quoted\nInsurance",
+          "creation_time": "2022-09-30T12:28:54.019Z",
+          "modification_time": "2022-09-30T12:29:53.940Z",
+          "geometry": null,
+          "absolute_coordinate_3d": null,
+          "visibility": null,
+          "name": "Name",
+          "description": null,
+          "uuid_instance_object": "8df7e82b-27c9-4b09-b630-13c36bc1b94b",
+          "uuid_reference_attribute": null,
+          "is_propagated": null,
+          "assigned_uuid_port_instance": null
+        }
+      ],
+      "port_instance": [],
+      "creation_time": "2022-09-30T12:28:54.012Z",
+      "modification_time": "2022-09-30T12:29:53.935Z",
+      "geometry": null,
+      "absolute_coordinate_3d": null,
+      "visibility": null,
+      "name": "Application_service_6aa3338a-60fb-4225-ab1b-6f759e98a6b9",
+      "description": null,
+      "uuid_instance_object": "6aa3338a-60fb-4225-ab1b-6f759e98a6b9",
+      "uuid_relationclass": null,
+      "uuid_decomposable_class": null,
+      "uuid_aggregator_class": null,
+      "uuid_assigned_relationclass_instance": null,
+      "uuid_relationclass_bendpoint": null
+    },
+    {
+      "uuid": "61e78c59-36fa-4db3-8310-4a319ffab685",
+      "coordinates_2d": {
+        "x": -0.1,
+        "y": 0.5,
+        "z": -7
+      },
+      "relative_coordinate_3d": null,
+      "custom_variables": {
+        "x_rel": {
+          "value": -0.49520057134111395
+        },
+        "y_rel": {
+          "value": 0.0527937152477443
+        },
+        "z_rel": {
+          "value": 0.020000000000000004
+        },
+        "scale": {
+          "x": 1.7053941908713683,
+          "y": 1.7053941908713683,
+          "z": 1
+        }
+      },
+      "uuid_class": "db1b52de-d36d-40e8-9d00-82297f9c8951",
+      "attribute_instance": [
+        {
+          "uuid": "bd1de468-72b5-4a4b-91ef-716cee586221",
+          "coordinates_2d": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "relative_coordinate_3d": null,
+          "custom_variables": {},
+          "uuid_attribute": "ba58fd59-af2c-40ba-adef-b994160b3335",
+          "assigned_uuid_scene_instance": null,
+          "assigned_uuid_class_instance": "61e78c59-36fa-4db3-8310-4a319ffab685",
+          "value": "Description in Application_function 0.196",
+          "creation_time": "2022-09-30T12:28:54.037Z",
+          "modification_time": "2022-09-30T12:29:53.946Z",
+          "geometry": null,
+          "absolute_coordinate_3d": null,
+          "visibility": null,
+          "name": "Description",
+          "description": null,
+          "uuid_instance_object": "bd1de468-72b5-4a4b-91ef-716cee586221",
+          "uuid_reference_attribute": null,
+          "is_propagated": null,
+          "assigned_uuid_port_instance": null
+        },
+        {
+          "uuid": "39677262-eae7-4e4b-a338-ba43b02f0471",
+          "coordinates_2d": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "relative_coordinate_3d": null,
+          "custom_variables": {},
+          "uuid_attribute": "d6632c72-89fa-4210-9d01-18e911505608",
+          "assigned_uuid_scene_instance": null,
+          "assigned_uuid_class_instance": "61e78c59-36fa-4db3-8310-4a319ffab685",
+          "value": "Transfer Quotation",
+          "creation_time": "2022-09-30T12:28:54.042Z",
+          "modification_time": "2022-09-30T12:29:53.948Z",
+          "geometry": null,
+          "absolute_coordinate_3d": null,
+          "visibility": null,
+          "name": "Name",
+          "description": null,
+          "uuid_instance_object": "39677262-eae7-4e4b-a338-ba43b02f0471",
+          "uuid_reference_attribute": null,
+          "is_propagated": null,
+          "assigned_uuid_port_instance": null
+        }
+      ],
+      "port_instance": [],
+      "creation_time": "2022-09-30T12:28:54.035Z",
+      "modification_time": "2022-09-30T12:29:53.943Z",
+      "geometry": null,
+      "absolute_coordinate_3d": null,
+      "visibility": null,
+      "name": "Application_function_61e78c59-36fa-4db3-8310-4a319ffab685",
+      "description": null,
+      "uuid_instance_object": "61e78c59-36fa-4db3-8310-4a319ffab685",
+      "uuid_relationclass": null,
+      "uuid_decomposable_class": null,
+      "uuid_aggregator_class": null,
+      "uuid_assigned_relationclass_instance": null,
+      "uuid_relationclass_bendpoint": null
+    },
+    {
+      "uuid": "204e70e6-a12d-45ea-9afd-b21340760d9e",
+      "coordinates_2d": {
+        "x": 2.5,
+        "y": 0.5,
+        "z": -7
+      },
+      "relative_coordinate_3d": null,
+      "custom_variables": {
+        "x_rel": {
+          "value": -0.4756314927472908
+        },
+        "y_rel": {
+          "value": 0.053610715955959884
+        },
+        "z_rel": {
+          "value": 0.020000000000000004
+        },
+        "scale": {
+          "x": 1.6794048296609487,
+          "y": 1.6794048296609487,
+          "z": 1
+        }
+      },
+      "uuid_class": "db1b52de-d36d-40e8-9d00-82297f9c8951",
+      "attribute_instance": [
+        {
+          "uuid": "0b579709-3d19-4c55-836a-ee86b83a4b32",
+          "coordinates_2d": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "relative_coordinate_3d": null,
+          "custom_variables": {},
+          "uuid_attribute": "d6632c72-89fa-4210-9d01-18e911505608",
+          "assigned_uuid_scene_instance": null,
+          "assigned_uuid_class_instance": "204e70e6-a12d-45ea-9afd-b21340760d9e",
+          "value": "Finalize Purchase",
+          "creation_time": "2022-09-30T12:28:54.060Z",
+          "modification_time": "2022-09-30T12:29:53.954Z",
+          "geometry": null,
+          "absolute_coordinate_3d": null,
+          "visibility": null,
+          "name": "Name",
+          "description": null,
+          "uuid_instance_object": "0b579709-3d19-4c55-836a-ee86b83a4b32",
+          "uuid_reference_attribute": null,
+          "is_propagated": null,
+          "assigned_uuid_port_instance": null
+        },
+        {
+          "uuid": "c784756a-e758-4be8-8189-4461606c7427",
+          "coordinates_2d": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "relative_coordinate_3d": null,
+          "custom_variables": {},
+          "uuid_attribute": "ba58fd59-af2c-40ba-adef-b994160b3335",
+          "assigned_uuid_scene_instance": null,
+          "assigned_uuid_class_instance": "204e70e6-a12d-45ea-9afd-b21340760d9e",
+          "value": "Description in Application_function 0.683",
+          "creation_time": "2022-09-30T12:28:54.065Z",
+          "modification_time": "2022-09-30T12:29:53.956Z",
+          "geometry": null,
+          "absolute_coordinate_3d": null,
+          "visibility": null,
+          "name": "Description",
+          "description": null,
+          "uuid_instance_object": "c784756a-e758-4be8-8189-4461606c7427",
+          "uuid_reference_attribute": null,
+          "is_propagated": null,
+          "assigned_uuid_port_instance": null
+        }
+      ],
+      "port_instance": [],
+      "creation_time": "2022-09-30T12:28:54.057Z",
+      "modification_time": "2022-09-30T12:29:53.951Z",
+      "geometry": null,
+      "absolute_coordinate_3d": null,
+      "visibility": null,
+      "name": "Application_function_204e70e6-a12d-45ea-9afd-b21340760d9e",
+      "description": null,
+      "uuid_instance_object": "204e70e6-a12d-45ea-9afd-b21340760d9e",
+      "uuid_relationclass": null,
+      "uuid_decomposable_class": null,
+      "uuid_aggregator_class": null,
+      "uuid_assigned_relationclass_instance": null,
+      "uuid_relationclass_bendpoint": null
+    },
+    {
+      "uuid": "4abbd650-4dc4-400e-9863-6687365c4fb9",
+      "coordinates_2d": {
+        "x": 1.14,
+        "y": -1.17,
+        "z": -7
+      },
+      "relative_coordinate_3d": null,
+      "custom_variables": {
+        "x_rel": {
+          "value": -0.4851990979176253
+        },
+        "y_rel": {
+          "value": 0.08880541249424775
+        },
+        "z_rel": {
+          "value": 0.020000000000000004
+        },
+        "scale": {
+          "x": 1.6590038314176248,
+          "y": 1.6590038314176248,
+          "z": 1
+        }
+      },
+      "uuid_class": "db1b52de-d36d-40e8-9d00-82297f9c8951",
+      "attribute_instance": [
+        {
+          "uuid": "03a18a62-a851-46e8-9bc8-a28a2726d27d",
+          "coordinates_2d": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "relative_coordinate_3d": null,
+          "custom_variables": {},
+          "uuid_attribute": "ba58fd59-af2c-40ba-adef-b994160b3335",
+          "assigned_uuid_scene_instance": null,
+          "assigned_uuid_class_instance": "4abbd650-4dc4-400e-9863-6687365c4fb9",
+          "value": "Description in Application_function 0.469",
+          "creation_time": "2022-09-30T12:28:54.082Z",
+          "modification_time": "2022-09-30T12:29:53.962Z",
+          "geometry": null,
+          "absolute_coordinate_3d": null,
+          "visibility": null,
+          "name": "Description",
+          "description": null,
+          "uuid_instance_object": "03a18a62-a851-46e8-9bc8-a28a2726d27d",
+          "uuid_reference_attribute": null,
+          "is_propagated": null,
+          "assigned_uuid_port_instance": null
+        },
+        {
+          "uuid": "508847cf-1ec0-41bc-8c0c-9c5557f18b2a",
+          "coordinates_2d": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "relative_coordinate_3d": null,
+          "custom_variables": {},
+          "uuid_attribute": "d6632c72-89fa-4210-9d01-18e911505608",
+          "assigned_uuid_scene_instance": null,
+          "assigned_uuid_class_instance": "4abbd650-4dc4-400e-9863-6687365c4fb9",
+          "value": "Purchase Travel\nInsurance",
+          "creation_time": "2022-09-30T12:28:54.087Z",
+          "modification_time": "2022-09-30T12:29:53.964Z",
+          "geometry": null,
+          "absolute_coordinate_3d": null,
+          "visibility": null,
+          "name": "Name",
+          "description": null,
+          "uuid_instance_object": "508847cf-1ec0-41bc-8c0c-9c5557f18b2a",
+          "uuid_reference_attribute": null,
+          "is_propagated": null,
+          "assigned_uuid_port_instance": null
+        }
+      ],
+      "port_instance": [],
+      "creation_time": "2022-09-30T12:28:54.080Z",
+      "modification_time": "2022-09-30T12:29:53.959Z",
+      "geometry": null,
+      "absolute_coordinate_3d": null,
+      "visibility": null,
+      "name": "Application_function_4abbd650-4dc4-400e-9863-6687365c4fb9",
+      "description": null,
+      "uuid_instance_object": "4abbd650-4dc4-400e-9863-6687365c4fb9",
+      "uuid_relationclass": null,
+      "uuid_decomposable_class": null,
+      "uuid_aggregator_class": null,
+      "uuid_assigned_relationclass_instance": null,
+      "uuid_relationclass_bendpoint": null
+    }
+  ],
+  "role_instances": [],
+  "attribute_instances": [],
+  "port_instances": [],
+  "relationclasses_instances": [
+    {
+      "uuid": "af078cd7-a344-46cd-b51c-d7deef66717b",
+      "coordinates_2d": {
+        "x": -1.3,
+        "y": 4.2,
+        "z": -3
+      },
+      "relative_coordinate_3d": null,
+      "custom_variables": {},
+      "uuid_class": "f758f6f0-a5c7-478f-a6eb-9bebbc6265f1",
+      "attribute_instance": [
+        {
+          "uuid": "6f831653-379a-4151-b2ef-e5321a35129c",
+          "coordinates_2d": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "relative_coordinate_3d": null,
+          "custom_variables": {},
+          "uuid_attribute": "d6632c72-89fa-4210-9d01-18e911505608",
+          "assigned_uuid_scene_instance": null,
+          "assigned_uuid_class_instance": "af078cd7-a344-46cd-b51c-d7deef66717b",
+          "value": "Name in Triggering",
+          "creation_time": "2022-09-30T12:28:54.104Z",
+          "modification_time": "2022-09-30T12:29:53.970Z",
+          "geometry": null,
+          "absolute_coordinate_3d": null,
+          "visibility": null,
+          "name": "Name",
+          "description": null,
+          "uuid_instance_object": "6f831653-379a-4151-b2ef-e5321a35129c",
+          "uuid_reference_attribute": null,
+          "is_propagated": null,
+          "assigned_uuid_port_instance": null
+        }
+      ],
+      "port_instance": [],
+      "line_points": [
+        {
+          "UUID": "89ff046e-06dc-49ec-a704-dff7d7b64039",
+          "Point": {
+            "x": -1.97,
+            "y": 4.19,
+            "z": -3
+          }
+        },
+        {
+          "UUID": "9bb2def2-c4d1-4d79-b82a-d35f5f02aa21",
+          "Point": {
+            "x": 1.12,
+            "y": 4.15,
+            "z": -3
+          }
+        }
+      ],
+      "creation_time": "2022-09-30T12:28:54.101Z",
+      "modification_time": "2022-09-30T12:29:53.967Z",
+      "geometry": null,
+      "absolute_coordinate_3d": null,
+      "visibility": null,
+      "name": "Triggering_af078cd7-a344-46cd-b51c-d7deef66717b",
+      "description": null,
+      "uuid_instance_object": "af078cd7-a344-46cd-b51c-d7deef66717b",
+      "uuid_relationclass": "f758f6f0-a5c7-478f-a6eb-9bebbc6265f1",
+      "uuid_role_instance_from": "90c4e809-66d2-41bc-afdc-958b37716179",
+      "uuid_role_instance_to": "a4d4cb5a-e48e-40fc-a84a-c1dc44c75c10",
+      "uuid_decomposable_class": null,
+      "uuid_aggregator_class": null,
+      "uuid_assigned_relationclass_instance": "af078cd7-a344-46cd-b51c-d7deef66717b",
+      "uuid_relationclass_bendpoint": null,
+      "role_instance_from": {
+        "uuid": "90c4e809-66d2-41bc-afdc-958b37716179",
+        "coordinates_2d": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "relative_coordinate_3d": null,
+        "custom_variables": {},
+        "uuid_role": "41003ba1-27ba-4e10-b167-72099e988156",
+        "uuid_instance_object": "90c4e809-66d2-41bc-afdc-958b37716179",
+        "uuid_relationclass": null,
+        "uuid_attribute_instance": null,
+        "uuid_has_reference_class_instance": null,
+        "uuid_has_reference_port_instance": null,
+        "uuid_has_reference_scene_instance": null,
+        "uuid_has_reference_attribute_instance": null,
+        "uuid_has_reference_relationclass_instance": null,
+        "creation_time": "2022-09-30T12:28:54.115Z",
+        "modification_time": "2022-09-30T12:28:54.135Z",
+        "geometry": null,
+        "absolute_coordinate_3d": null,
+        "visibility": null,
+        "name": null,
+        "description": null
+      },
+      "role_instance_to": {
+        "uuid": "a4d4cb5a-e48e-40fc-a84a-c1dc44c75c10",
+        "coordinates_2d": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "relative_coordinate_3d": null,
+        "custom_variables": {},
+        "uuid_role": "1ec11888-3b4e-4ca4-b180-4644e168c388",
+        "uuid_instance_object": "a4d4cb5a-e48e-40fc-a84a-c1dc44c75c10",
+        "uuid_relationclass": null,
+        "uuid_attribute_instance": null,
+        "uuid_has_reference_class_instance": null,
+        "uuid_has_reference_port_instance": null,
+        "uuid_has_reference_scene_instance": null,
+        "uuid_has_reference_attribute_instance": null,
+        "uuid_has_reference_relationclass_instance": null,
+        "creation_time": "2022-09-30T12:28:54.120Z",
+        "modification_time": "2022-09-30T12:28:54.137Z",
+        "geometry": null,
+        "absolute_coordinate_3d": null,
+        "visibility": null,
+        "name": null,
+        "description": null
+      }
+    },
+    {
+      "uuid": "0a5c13bd-d9f7-4a50-bc16-70cadd3ba621",
+      "coordinates_2d": {
+        "x": -0.5,
+        "y": 0.9,
+        "z": -3
+      },
+      "relative_coordinate_3d": null,
+      "custom_variables": {},
+      "uuid_class": "47d65922-3b43-4307-bad0-8c477f839d2a",
+      "attribute_instance": [
+        {
+          "uuid": "074ae7a5-b7c2-4450-a326-1d957ec34b5e",
+          "coordinates_2d": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "relative_coordinate_3d": null,
+          "custom_variables": {},
+          "uuid_attribute": "d6632c72-89fa-4210-9d01-18e911505608",
+          "assigned_uuid_scene_instance": null,
+          "assigned_uuid_class_instance": "0a5c13bd-d9f7-4a50-bc16-70cadd3ba621",
+          "value": "Name in Composition",
+          "creation_time": "2022-09-30T12:28:54.143Z",
+          "modification_time": "2022-09-30T12:29:53.978Z",
+          "geometry": null,
+          "absolute_coordinate_3d": null,
+          "visibility": null,
+          "name": "Name",
+          "description": null,
+          "uuid_instance_object": "074ae7a5-b7c2-4450-a326-1d957ec34b5e",
+          "uuid_reference_attribute": null,
+          "is_propagated": null,
+          "assigned_uuid_port_instance": null
+        }
+      ],
+      "port_instance": [],
+      "line_points": [
+        {
+          "UUID": "61e78c59-36fa-4db3-8310-4a319ffab685",
+          "Point": {
+            "x": -0.18,
+            "y": 0.53,
+            "z": -3
+          }
+        },
+        {
+          "UUID": "4abbd650-4dc4-400e-9863-6687365c4fb9",
+          "Point": {
+            "x": -0.64,
+            "y": -2.48,
+            "z": -3
+          }
+        }
+      ],
+      "creation_time": "2022-09-30T12:28:54.141Z",
+      "modification_time": "2022-09-30T12:29:53.975Z",
+      "geometry": null,
+      "absolute_coordinate_3d": null,
+      "visibility": null,
+      "name": "Composition_0a5c13bd-d9f7-4a50-bc16-70cadd3ba621",
+      "description": null,
+      "uuid_instance_object": "0a5c13bd-d9f7-4a50-bc16-70cadd3ba621",
+      "uuid_relationclass": "47d65922-3b43-4307-bad0-8c477f839d2a",
+      "uuid_role_instance_from": "aa097b2d-c8be-487f-bd6e-e10e90e8b3e2",
+      "uuid_role_instance_to": "419e3dbf-badb-405a-badc-fe024cd9ea91",
+      "uuid_decomposable_class": null,
+      "uuid_aggregator_class": null,
+      "uuid_assigned_relationclass_instance": "0a5c13bd-d9f7-4a50-bc16-70cadd3ba621",
+      "uuid_relationclass_bendpoint": null,
+      "role_instance_from": {
+        "uuid": "aa097b2d-c8be-487f-bd6e-e10e90e8b3e2",
+        "coordinates_2d": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "relative_coordinate_3d": null,
+        "custom_variables": {},
+        "uuid_role": "bc441e9e-2170-4c67-bcb6-290d8b836b01",
+        "uuid_instance_object": "aa097b2d-c8be-487f-bd6e-e10e90e8b3e2",
+        "uuid_relationclass": null,
+        "uuid_attribute_instance": null,
+        "uuid_has_reference_class_instance": null,
+        "uuid_has_reference_port_instance": null,
+        "uuid_has_reference_scene_instance": null,
+        "uuid_has_reference_attribute_instance": null,
+        "uuid_has_reference_relationclass_instance": null,
+        "creation_time": "2022-09-30T12:28:54.154Z",
+        "modification_time": "2022-09-30T12:28:54.171Z",
+        "geometry": null,
+        "absolute_coordinate_3d": null,
+        "visibility": null,
+        "name": null,
+        "description": null
+      },
+      "role_instance_to": {
+        "uuid": "419e3dbf-badb-405a-badc-fe024cd9ea91",
+        "coordinates_2d": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "relative_coordinate_3d": null,
+        "custom_variables": {},
+        "uuid_role": "6400d66d-6207-4987-9564-e736676d2519",
+        "uuid_instance_object": "419e3dbf-badb-405a-badc-fe024cd9ea91",
+        "uuid_relationclass": null,
+        "uuid_attribute_instance": null,
+        "uuid_has_reference_class_instance": null,
+        "uuid_has_reference_port_instance": null,
+        "uuid_has_reference_scene_instance": null,
+        "uuid_has_reference_attribute_instance": null,
+        "uuid_has_reference_relationclass_instance": null,
+        "creation_time": "2022-09-30T12:28:54.158Z",
+        "modification_time": "2022-09-30T12:28:54.173Z",
+        "geometry": null,
+        "absolute_coordinate_3d": null,
+        "visibility": null,
+        "name": null,
+        "description": null
+      }
+    },
+    {
+      "uuid": "843a3545-4eb7-43b3-9ded-5f107d2e60bc",
+      "coordinates_2d": {
+        "x": 1.4,
+        "y": 3.1,
+        "z": -3
+      },
+      "relative_coordinate_3d": null,
+      "custom_variables": {},
+      "uuid_class": "28495e97-88c6-4bb8-aeb9-9361bb07c3c4",
+      "attribute_instance": [
+        {
+          "uuid": "bcba693a-b933-4f18-ac8d-3bab46918092",
+          "coordinates_2d": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "relative_coordinate_3d": null,
+          "custom_variables": {},
+          "uuid_attribute": "d6632c72-89fa-4210-9d01-18e911505608",
+          "assigned_uuid_scene_instance": null,
+          "assigned_uuid_class_instance": "843a3545-4eb7-43b3-9ded-5f107d2e60bc",
+          "value": "Name in Serving",
+          "creation_time": "2022-09-30T12:28:54.181Z",
+          "modification_time": "2022-09-30T12:29:53.985Z",
+          "geometry": null,
+          "absolute_coordinate_3d": null,
+          "visibility": null,
+          "name": "Name",
+          "description": null,
+          "uuid_instance_object": "bcba693a-b933-4f18-ac8d-3bab46918092",
+          "uuid_reference_attribute": null,
+          "is_propagated": null,
+          "assigned_uuid_port_instance": null
+        }
+      ],
+      "port_instance": [],
+      "line_points": [
+        {
+          "UUID": "6aa3338a-60fb-4225-ab1b-6f759e98a6b9",
+          "Point": {
+            "x": 1.06,
+            "y": 2.82,
+            "z": -3
+          }
+        },
+        {
+          "UUID": "9bb2def2-c4d1-4d79-b82a-d35f5f02aa21",
+          "Point": {
+            "x": 1.12,
+            "y": 4.15,
+            "z": -3
+          }
+        }
+      ],
+      "creation_time": "2022-09-30T12:28:54.179Z",
+      "modification_time": "2022-09-30T12:29:53.982Z",
+      "geometry": null,
+      "absolute_coordinate_3d": null,
+      "visibility": null,
+      "name": "Serving_843a3545-4eb7-43b3-9ded-5f107d2e60bc",
+      "description": null,
+      "uuid_instance_object": "843a3545-4eb7-43b3-9ded-5f107d2e60bc",
+      "uuid_relationclass": "28495e97-88c6-4bb8-aeb9-9361bb07c3c4",
+      "uuid_role_instance_from": "1ca094c6-734d-47ee-9b21-c5935e23b528",
+      "uuid_role_instance_to": "86a0fc33-5a33-43b9-9d62-84374c56b6c2",
+      "uuid_decomposable_class": null,
+      "uuid_aggregator_class": null,
+      "uuid_assigned_relationclass_instance": "843a3545-4eb7-43b3-9ded-5f107d2e60bc",
+      "uuid_relationclass_bendpoint": null,
+      "role_instance_from": {
+        "uuid": "1ca094c6-734d-47ee-9b21-c5935e23b528",
+        "coordinates_2d": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "relative_coordinate_3d": null,
+        "custom_variables": {},
+        "uuid_role": "302bcdb1-393c-4563-8671-7ef15fb2f067",
+        "uuid_instance_object": "1ca094c6-734d-47ee-9b21-c5935e23b528",
+        "uuid_relationclass": null,
+        "uuid_attribute_instance": null,
+        "uuid_has_reference_class_instance": null,
+        "uuid_has_reference_port_instance": null,
+        "uuid_has_reference_scene_instance": null,
+        "uuid_has_reference_attribute_instance": null,
+        "uuid_has_reference_relationclass_instance": null,
+        "creation_time": "2022-09-30T12:28:54.193Z",
+        "modification_time": "2022-09-30T12:28:54.211Z",
+        "geometry": null,
+        "absolute_coordinate_3d": null,
+        "visibility": null,
+        "name": null,
+        "description": null
+      },
+      "role_instance_to": {
+        "uuid": "86a0fc33-5a33-43b9-9d62-84374c56b6c2",
+        "coordinates_2d": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "relative_coordinate_3d": null,
+        "custom_variables": {},
+        "uuid_role": "c342a4d7-c0c3-4820-862e-3fb8ad18c32b",
+        "uuid_instance_object": "86a0fc33-5a33-43b9-9d62-84374c56b6c2",
+        "uuid_relationclass": null,
+        "uuid_attribute_instance": null,
+        "uuid_has_reference_class_instance": null,
+        "uuid_has_reference_port_instance": null,
+        "uuid_has_reference_scene_instance": null,
+        "uuid_has_reference_attribute_instance": null,
+        "uuid_has_reference_relationclass_instance": null,
+        "creation_time": "2022-09-30T12:28:54.197Z",
+        "modification_time": "2022-09-30T12:28:54.213Z",
+        "geometry": null,
+        "absolute_coordinate_3d": null,
+        "visibility": null,
+        "name": null,
+        "description": null
+      }
+    },
+    {
+      "uuid": "83df6a3f-4783-4692-8cdd-95edffb1735f",
+      "coordinates_2d": {
+        "x": -2,
+        "y": 3.1,
+        "z": -3
+      },
+      "relative_coordinate_3d": null,
+      "custom_variables": {},
+      "uuid_class": "28495e97-88c6-4bb8-aeb9-9361bb07c3c4",
+      "attribute_instance": [
+        {
+          "uuid": "e8177f6e-1a36-4c17-a9e5-363f0e76416f",
+          "coordinates_2d": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "relative_coordinate_3d": null,
+          "custom_variables": {},
+          "uuid_attribute": "d6632c72-89fa-4210-9d01-18e911505608",
+          "assigned_uuid_scene_instance": null,
+          "assigned_uuid_class_instance": "83df6a3f-4783-4692-8cdd-95edffb1735f",
+          "value": "Name in Serving",
+          "creation_time": "2022-09-30T12:28:54.220Z",
+          "modification_time": "2022-09-30T12:29:53.993Z",
+          "geometry": null,
+          "absolute_coordinate_3d": null,
+          "visibility": null,
+          "name": "Name",
+          "description": null,
+          "uuid_instance_object": "e8177f6e-1a36-4c17-a9e5-363f0e76416f",
+          "uuid_reference_attribute": null,
+          "is_propagated": null,
+          "assigned_uuid_port_instance": null
+        }
+      ],
+      "port_instance": [],
+      "line_points": [
+        {
+          "UUID": "2ec8d9e4-e95b-4762-9e91-87e06db1ed3d",
+          "Point": {
+            "x": -1.97,
+            "y": 2.81,
+            "z": -3
+          }
+        },
+        {
+          "UUID": "9bb2def2-c4d1-4d79-b82a-d35f5f02aa21",
+          "Point": {
+            "x": 1.12,
+            "y": 4.15,
+            "z": -3
+          }
+        }
+      ],
+      "creation_time": "2022-09-30T12:28:54.218Z",
+      "modification_time": "2022-09-30T12:29:53.990Z",
+      "geometry": null,
+      "absolute_coordinate_3d": null,
+      "visibility": null,
+      "name": "Serving_83df6a3f-4783-4692-8cdd-95edffb1735f",
+      "description": null,
+      "uuid_instance_object": "83df6a3f-4783-4692-8cdd-95edffb1735f",
+      "uuid_relationclass": "28495e97-88c6-4bb8-aeb9-9361bb07c3c4",
+      "uuid_role_instance_from": "4863ab42-4b52-4883-906c-a79b1f07555c",
+      "uuid_role_instance_to": "ad2c84d7-6d6d-4184-a957-35b9d253e97b",
+      "uuid_decomposable_class": null,
+      "uuid_aggregator_class": null,
+      "uuid_assigned_relationclass_instance": "83df6a3f-4783-4692-8cdd-95edffb1735f",
+      "uuid_relationclass_bendpoint": null,
+      "role_instance_from": {
+        "uuid": "4863ab42-4b52-4883-906c-a79b1f07555c",
+        "coordinates_2d": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "relative_coordinate_3d": null,
+        "custom_variables": {},
+        "uuid_role": "302bcdb1-393c-4563-8671-7ef15fb2f067",
+        "uuid_instance_object": "4863ab42-4b52-4883-906c-a79b1f07555c",
+        "uuid_relationclass": null,
+        "uuid_attribute_instance": null,
+        "uuid_has_reference_class_instance": null,
+        "uuid_has_reference_port_instance": null,
+        "uuid_has_reference_scene_instance": null,
+        "uuid_has_reference_attribute_instance": null,
+        "uuid_has_reference_relationclass_instance": null,
+        "creation_time": "2022-09-30T12:28:54.231Z",
+        "modification_time": "2022-09-30T12:28:54.248Z",
+        "geometry": null,
+        "absolute_coordinate_3d": null,
+        "visibility": null,
+        "name": null,
+        "description": null
+      },
+      "role_instance_to": {
+        "uuid": "ad2c84d7-6d6d-4184-a957-35b9d253e97b",
+        "coordinates_2d": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "relative_coordinate_3d": null,
+        "custom_variables": {},
+        "uuid_role": "c342a4d7-c0c3-4820-862e-3fb8ad18c32b",
+        "uuid_instance_object": "ad2c84d7-6d6d-4184-a957-35b9d253e97b",
+        "uuid_relationclass": null,
+        "uuid_attribute_instance": null,
+        "uuid_has_reference_class_instance": null,
+        "uuid_has_reference_port_instance": null,
+        "uuid_has_reference_scene_instance": null,
+        "uuid_has_reference_attribute_instance": null,
+        "uuid_has_reference_relationclass_instance": null,
+        "creation_time": "2022-09-30T12:28:54.236Z",
+        "modification_time": "2022-09-30T12:28:54.251Z",
+        "geometry": null,
+        "absolute_coordinate_3d": null,
+        "visibility": null,
+        "name": null,
+        "description": null
+      }
+    },
+    {
+      "uuid": "fda65fc2-cf60-4ece-8526-fc9dcb6fedcd",
+      "coordinates_2d": {
+        "x": -0.2,
+        "y": 0.9,
+        "z": -3
+      },
+      "relative_coordinate_3d": null,
+      "custom_variables": {},
+      "uuid_class": "fb7d3914-0abd-4602-acc3-d3555f724462",
+      "attribute_instance": [
+        {
+          "uuid": "740d8995-57e8-408d-9a73-ea9b7f7be565",
+          "coordinates_2d": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "relative_coordinate_3d": null,
+          "custom_variables": {},
+          "uuid_attribute": "d6632c72-89fa-4210-9d01-18e911505608",
+          "assigned_uuid_scene_instance": null,
+          "assigned_uuid_class_instance": "fda65fc2-cf60-4ece-8526-fc9dcb6fedcd",
+          "value": "Name in Realization",
+          "creation_time": "2022-09-30T12:28:54.257Z",
+          "modification_time": "2022-09-30T12:29:54.000Z",
+          "geometry": null,
+          "absolute_coordinate_3d": null,
+          "visibility": null,
+          "name": "Name",
+          "description": null,
+          "uuid_instance_object": "740d8995-57e8-408d-9a73-ea9b7f7be565",
+          "uuid_reference_attribute": null,
+          "is_propagated": null,
+          "assigned_uuid_port_instance": null
+        }
+      ],
+      "port_instance": [],
+      "line_points": [
+        {
+          "UUID": "61e78c59-36fa-4db3-8310-4a319ffab685",
+          "Point": {
+            "x": -0.18,
+            "y": 0.53,
+            "z": -3
+          }
+        },
+        {
+          "UUID": "2ec8d9e4-e95b-4762-9e91-87e06db1ed3d",
+          "Point": {
+            "x": -0.14,
+            "y": 2.25,
+            "z": -3
+          }
+        }
+      ],
+      "creation_time": "2022-09-30T12:28:54.255Z",
+      "modification_time": "2022-09-30T12:29:53.998Z",
+      "geometry": null,
+      "absolute_coordinate_3d": null,
+      "visibility": null,
+      "name": "Realization_fda65fc2-cf60-4ece-8526-fc9dcb6fedcd",
+      "description": null,
+      "uuid_instance_object": "fda65fc2-cf60-4ece-8526-fc9dcb6fedcd",
+      "uuid_relationclass": "fb7d3914-0abd-4602-acc3-d3555f724462",
+      "uuid_role_instance_from": "553cbc5e-356c-452b-9ffd-fe7c11cef2a9",
+      "uuid_role_instance_to": "a4163314-333a-46c4-9d1b-db7486b13d5a",
+      "uuid_decomposable_class": null,
+      "uuid_aggregator_class": null,
+      "uuid_assigned_relationclass_instance": "fda65fc2-cf60-4ece-8526-fc9dcb6fedcd",
+      "uuid_relationclass_bendpoint": null,
+      "role_instance_from": {
+        "uuid": "553cbc5e-356c-452b-9ffd-fe7c11cef2a9",
+        "coordinates_2d": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "relative_coordinate_3d": null,
+        "custom_variables": {},
+        "uuid_role": "6325d9c0-c636-4e22-b3c1-f535a1f57621",
+        "uuid_instance_object": "553cbc5e-356c-452b-9ffd-fe7c11cef2a9",
+        "uuid_relationclass": null,
+        "uuid_attribute_instance": null,
+        "uuid_has_reference_class_instance": null,
+        "uuid_has_reference_port_instance": null,
+        "uuid_has_reference_scene_instance": null,
+        "uuid_has_reference_attribute_instance": null,
+        "uuid_has_reference_relationclass_instance": null,
+        "creation_time": "2022-09-30T12:28:54.268Z",
+        "modification_time": "2022-09-30T12:28:54.286Z",
+        "geometry": null,
+        "absolute_coordinate_3d": null,
+        "visibility": null,
+        "name": null,
+        "description": null
+      },
+      "role_instance_to": {
+        "uuid": "a4163314-333a-46c4-9d1b-db7486b13d5a",
+        "coordinates_2d": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "relative_coordinate_3d": null,
+        "custom_variables": {},
+        "uuid_role": "0f1e6a58-e404-45b0-b725-49c02045fe33",
+        "uuid_instance_object": "a4163314-333a-46c4-9d1b-db7486b13d5a",
+        "uuid_relationclass": null,
+        "uuid_attribute_instance": null,
+        "uuid_has_reference_class_instance": null,
+        "uuid_has_reference_port_instance": null,
+        "uuid_has_reference_scene_instance": null,
+        "uuid_has_reference_attribute_instance": null,
+        "uuid_has_reference_relationclass_instance": null,
+        "creation_time": "2022-09-30T12:28:54.273Z",
+        "modification_time": "2022-09-30T12:28:54.288Z",
+        "geometry": null,
+        "absolute_coordinate_3d": null,
+        "visibility": null,
+        "name": null,
+        "description": null
+      }
+    },
+    {
+      "uuid": "674c8039-5aca-4c86-bbf3-f9c23c249f94",
+      "coordinates_2d": {
+        "x": 2.6,
+        "y": 0.8,
+        "z": -3
+      },
+      "relative_coordinate_3d": null,
+      "custom_variables": {},
+      "uuid_class": "fb7d3914-0abd-4602-acc3-d3555f724462",
+      "attribute_instance": [
+        {
+          "uuid": "3d2a8b92-0169-461d-a24b-d176c6554bfa",
+          "coordinates_2d": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "relative_coordinate_3d": null,
+          "custom_variables": {},
+          "uuid_attribute": "d6632c72-89fa-4210-9d01-18e911505608",
+          "assigned_uuid_scene_instance": null,
+          "assigned_uuid_class_instance": "674c8039-5aca-4c86-bbf3-f9c23c249f94",
+          "value": "Name in Realization",
+          "creation_time": "2022-09-30T12:28:54.295Z",
+          "modification_time": "2022-09-30T12:29:54.008Z",
+          "geometry": null,
+          "absolute_coordinate_3d": null,
+          "visibility": null,
+          "name": "Name",
+          "description": null,
+          "uuid_instance_object": "3d2a8b92-0169-461d-a24b-d176c6554bfa",
+          "uuid_reference_attribute": null,
+          "is_propagated": null,
+          "assigned_uuid_port_instance": null
+        }
+      ],
+      "port_instance": [],
+      "line_points": [
+        {
+          "UUID": "204e70e6-a12d-45ea-9afd-b21340760d9e",
+          "Point": {
+            "x": 2.45,
+            "y": 0.53,
+            "z": -3
+          }
+        },
+        {
+          "UUID": "6aa3338a-60fb-4225-ab1b-6f759e98a6b9",
+          "Point": {
+            "x": 2.44,
+            "y": 2.22,
+            "z": -3
+          }
+        }
+      ],
+      "creation_time": "2022-09-30T12:28:54.292Z",
+      "modification_time": "2022-09-30T12:29:54.005Z",
+      "geometry": null,
+      "absolute_coordinate_3d": null,
+      "visibility": null,
+      "name": "Realization_674c8039-5aca-4c86-bbf3-f9c23c249f94",
+      "description": null,
+      "uuid_instance_object": "674c8039-5aca-4c86-bbf3-f9c23c249f94",
+      "uuid_relationclass": "fb7d3914-0abd-4602-acc3-d3555f724462",
+      "uuid_role_instance_from": "2667f9ba-cfc8-4a82-a1af-aa2b9973db5d",
+      "uuid_role_instance_to": "90b5e14e-68cd-449e-a808-4469785e7f6f",
+      "uuid_decomposable_class": null,
+      "uuid_aggregator_class": null,
+      "uuid_assigned_relationclass_instance": "674c8039-5aca-4c86-bbf3-f9c23c249f94",
+      "uuid_relationclass_bendpoint": null,
+      "role_instance_from": {
+        "uuid": "2667f9ba-cfc8-4a82-a1af-aa2b9973db5d",
+        "coordinates_2d": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "relative_coordinate_3d": null,
+        "custom_variables": {},
+        "uuid_role": "6325d9c0-c636-4e22-b3c1-f535a1f57621",
+        "uuid_instance_object": "2667f9ba-cfc8-4a82-a1af-aa2b9973db5d",
+        "uuid_relationclass": null,
+        "uuid_attribute_instance": null,
+        "uuid_has_reference_class_instance": null,
+        "uuid_has_reference_port_instance": null,
+        "uuid_has_reference_scene_instance": null,
+        "uuid_has_reference_attribute_instance": null,
+        "uuid_has_reference_relationclass_instance": null,
+        "creation_time": "2022-09-30T12:28:54.306Z",
+        "modification_time": "2022-09-30T12:28:54.322Z",
+        "geometry": null,
+        "absolute_coordinate_3d": null,
+        "visibility": null,
+        "name": null,
+        "description": null
+      },
+      "role_instance_to": {
+        "uuid": "90b5e14e-68cd-449e-a808-4469785e7f6f",
+        "coordinates_2d": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "relative_coordinate_3d": null,
+        "custom_variables": {},
+        "uuid_role": "0f1e6a58-e404-45b0-b725-49c02045fe33",
+        "uuid_instance_object": "90b5e14e-68cd-449e-a808-4469785e7f6f",
+        "uuid_relationclass": null,
+        "uuid_attribute_instance": null,
+        "uuid_has_reference_class_instance": null,
+        "uuid_has_reference_port_instance": null,
+        "uuid_has_reference_scene_instance": null,
+        "uuid_has_reference_attribute_instance": null,
+        "uuid_has_reference_relationclass_instance": null,
+        "creation_time": "2022-09-30T12:28:54.310Z",
+        "modification_time": "2022-09-30T12:28:54.324Z",
+        "geometry": null,
+        "absolute_coordinate_3d": null,
+        "visibility": null,
+        "name": null,
+        "description": null
+      }
+    },
+    {
+      "uuid": "c403666c-dea9-466e-a411-ef3844a1fe44",
+      "coordinates_2d": {
+        "x": 2.4,
+        "y": 0.9,
+        "z": -3
+      },
+      "relative_coordinate_3d": null,
+      "custom_variables": {},
+      "uuid_class": "47d65922-3b43-4307-bad0-8c477f839d2a",
+      "attribute_instance": [
+        {
+          "uuid": "9cbf4eea-bec8-42c3-ae1f-a645ebdff8e9",
+          "coordinates_2d": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "relative_coordinate_3d": null,
+          "custom_variables": {},
+          "uuid_attribute": "d6632c72-89fa-4210-9d01-18e911505608",
+          "assigned_uuid_scene_instance": null,
+          "assigned_uuid_class_instance": "c403666c-dea9-466e-a411-ef3844a1fe44",
+          "value": "Name in Composition",
+          "creation_time": "2022-09-30T12:28:54.330Z",
+          "modification_time": "2022-09-30T12:29:54.016Z",
+          "geometry": null,
+          "absolute_coordinate_3d": null,
+          "visibility": null,
+          "name": "Name",
+          "description": null,
+          "uuid_instance_object": "9cbf4eea-bec8-42c3-ae1f-a645ebdff8e9",
+          "uuid_reference_attribute": null,
+          "is_propagated": null,
+          "assigned_uuid_port_instance": null
+        }
+      ],
+      "port_instance": [],
+      "line_points": [
+        {
+          "UUID": "204e70e6-a12d-45ea-9afd-b21340760d9e",
+          "Point": {
+            "x": 2.45,
+            "y": 0.53,
+            "z": -3
+          }
+        },
+        {
+          "UUID": "4abbd650-4dc4-400e-9863-6687365c4fb9",
+          "Point": {
+            "x": -0.64,
+            "y": -2.48,
+            "z": -3
+          }
+        }
+      ],
+      "creation_time": "2022-09-30T12:28:54.328Z",
+      "modification_time": "2022-09-30T12:29:54.013Z",
+      "geometry": null,
+      "absolute_coordinate_3d": null,
+      "visibility": null,
+      "name": "Composition_c403666c-dea9-466e-a411-ef3844a1fe44",
+      "description": null,
+      "uuid_instance_object": "c403666c-dea9-466e-a411-ef3844a1fe44",
+      "uuid_relationclass": "47d65922-3b43-4307-bad0-8c477f839d2a",
+      "uuid_role_instance_from": "7ee41441-d175-4dd3-b504-c3b00bc1e9c9",
+      "uuid_role_instance_to": "192f8806-a7c9-4b88-b42c-055bbb7ee760",
+      "uuid_decomposable_class": null,
+      "uuid_aggregator_class": null,
+      "uuid_assigned_relationclass_instance": "c403666c-dea9-466e-a411-ef3844a1fe44",
+      "uuid_relationclass_bendpoint": null,
+      "role_instance_from": {
+        "uuid": "7ee41441-d175-4dd3-b504-c3b00bc1e9c9",
+        "coordinates_2d": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "relative_coordinate_3d": null,
+        "custom_variables": {},
+        "uuid_role": "bc441e9e-2170-4c67-bcb6-290d8b836b01",
+        "uuid_instance_object": "7ee41441-d175-4dd3-b504-c3b00bc1e9c9",
+        "uuid_relationclass": null,
+        "uuid_attribute_instance": null,
+        "uuid_has_reference_class_instance": null,
+        "uuid_has_reference_port_instance": null,
+        "uuid_has_reference_scene_instance": null,
+        "uuid_has_reference_attribute_instance": null,
+        "uuid_has_reference_relationclass_instance": null,
+        "creation_time": "2022-09-30T12:28:54.340Z",
+        "modification_time": "2022-09-30T12:28:54.356Z",
+        "geometry": null,
+        "absolute_coordinate_3d": null,
+        "visibility": null,
+        "name": null,
+        "description": null
+      },
+      "role_instance_to": {
+        "uuid": "192f8806-a7c9-4b88-b42c-055bbb7ee760",
+        "coordinates_2d": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "relative_coordinate_3d": null,
+        "custom_variables": {},
+        "uuid_role": "6400d66d-6207-4987-9564-e736676d2519",
+        "uuid_instance_object": "192f8806-a7c9-4b88-b42c-055bbb7ee760",
+        "uuid_relationclass": null,
+        "uuid_attribute_instance": null,
+        "uuid_has_reference_class_instance": null,
+        "uuid_has_reference_port_instance": null,
+        "uuid_has_reference_scene_instance": null,
+        "uuid_has_reference_attribute_instance": null,
+        "uuid_has_reference_relationclass_instance": null,
+        "creation_time": "2022-09-30T12:28:54.344Z",
+        "modification_time": "2022-09-30T12:28:54.358Z",
+        "geometry": null,
+        "absolute_coordinate_3d": null,
+        "visibility": null,
+        "name": null,
+        "description": null
+      }
+    }
+  ],
+  "creation_time": "2022-09-30T12:28:53.925Z",
+  "modification_time": "2022-09-30T12:29:53.884Z",
+  "geometry": null,
+  "absolute_coordinate_3d": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  "visibility": null,
+  "name": "Application Layer 0.3",
+  "description": null,
+  "uuid_instance_object": "d6724280-3270-4b02-bac9-a65f166e2456"
+}
