@@ -9,6 +9,7 @@ import Metamodel_attributes_connection from "./Metamodel_attributes.connection";
 import Metamodel_ports_connection from "./Metamodel_ports.connection";
 import Metamodel_common_functions from "./Metamodel_common_functions.connection";
 import {BaseError, HTTP403NORIGHT,} from "../services/middleware/error_handling/standard_errors.middleware";
+import Metamodel_procedureConnection from "./Metamodel_procedure.connection";
 
 /**
  * @description - This is the class that handles the CRUD operations for the scene types.
@@ -85,6 +86,13 @@ class Metamodel_scenetypesConnection implements CRUD {
           userUuid,
         );
         if (Array.isArray(ports)) newScene.set_port(ports);
+
+        const procedures =  await Metamodel_procedureConnection.getAllByParentUuid(
+          client,
+          newScene.get_uuid(),
+          userUuid,
+        );
+        if (Array.isArray(procedures)) newScene.set_procedure(procedures);
       }
       return newScene;
     } catch (err) {
@@ -211,6 +219,8 @@ class Metamodel_scenetypesConnection implements CRUD {
         "DELETE FROM scene_has_attributes WHERE uuid_attribute = ANY($1) AND uuid_scene_type = $2";
       const disconnect_classes_query =
         "DELETE FROM contains_classes WHERE uuid_class = ANY($1) AND uuid_scene_type = $2";
+      const disconnect_procedure_query =
+        "DELETE FROM has_algorithm WHERE uuid_procedure = ANY($1) AND uuid_scene_type = $2";
 
       const updated_metaobj = await this.update(
         client,
@@ -301,6 +311,24 @@ class Metamodel_scenetypesConnection implements CRUD {
           port,
         );
       }
+
+      const proceduresDifference =
+        current_scenetype.get_procedures_difference(
+          newSceneType.get_procedure(),
+        );
+
+      for (const rc of proceduresDifference.modified) {
+        await Metamodel_procedureConnection.hardUpdate(
+          client,
+          rc.get_uuid(),
+          rc,
+          userUuid,
+        );
+      }
+      await client.query(disconnect_procedure_query, [
+        proceduresDifference.removed.map((el) => el.get_uuid()),
+        sceneTypeUuidToUpdate
+      ]);
 
       return await this.getByUuid(client, sceneTypeUuidToUpdate, userUuid);
     } catch (err) {
@@ -431,6 +459,28 @@ class Metamodel_scenetypesConnection implements CRUD {
           userUuid,
         );
       }
+
+      const proceduresDifference =
+        current_scenetype.get_procedures_difference(
+          newSceneType.get_procedure(),
+        );
+
+      await Metamodel_procedureConnection.postProceduresForSceneType(
+        client,
+        sceneTypeUuidToUpdate,
+        proceduresDifference.added,
+        userUuid,
+      );
+
+      for (const rc of proceduresDifference.modified) {
+        await Metamodel_procedureConnection.update(
+          client,
+          rc.get_uuid(),
+          rc,
+          userUuid,
+        );
+      }
+        
 
       return await this.getByUuid(client, sceneTypeUuidToUpdate, userUuid);
     } catch (err) {

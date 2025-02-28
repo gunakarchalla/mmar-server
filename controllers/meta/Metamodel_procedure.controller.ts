@@ -262,7 +262,7 @@ class Metamodel_procedureController {
             await client.query("BEGIN");
 
             const newProcedure = plainToInstance(Procedure, req.body);
-            const sc = await Metamodel_procedure_connection.postProcedureForSceneType(
+            const sc = await Metamodel_procedure_connection.postProceduresForSceneType(
                 await client,
                 req.params.uuid,
                 newProcedure,
