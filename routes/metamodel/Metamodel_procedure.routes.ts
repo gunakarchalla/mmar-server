@@ -147,7 +147,7 @@ procedureMetaRouter.get(
   #swagger.tags= [
     "Metamodel"
   ]
-  #swagger.summary= "Get all independent procedures (not linked to a scene type)"
+  #swagger.summary= "Get all procedures (not linked and linked to a scene type)"
   #swagger.responses[200]= {
     "description": "Successful operation",
     "content": {
@@ -164,6 +164,36 @@ procedureMetaRouter.get(
   }
   */
   "/procedures",
+  authenticate_token,
+  Metamodel_procedure_controller.get_procedures
+);
+
+// -----------------------------------------------------------------------------
+// For independent algorithms
+// -----------------------------------------------------------------------------
+
+procedureMetaRouter.get(
+  /*
+  #swagger.tags= [
+    "Metamodel"
+  ]
+  #swagger.summary= "Get all independent procedures (not linked to a scene type)"
+  #swagger.responses[200]= {
+    "description": "Successful operation",
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/Procedure"   
+
+          }
+        }
+      }
+    }
+  }
+  */
+  "/independent_procedures",
   authenticate_token,
   Metamodel_procedure_controller.get_independent_procedures
 );

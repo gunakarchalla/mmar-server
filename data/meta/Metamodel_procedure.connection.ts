@@ -40,6 +40,45 @@ class Metamodel_procedureConnection implements CRUD {
     }
 
     /**
+     * @description - This function gets all procedures.
+     * @param {PoolClient} client - The client to the database.
+     * @param {UUID} procedureUuid - The uuid of the procedure to get.
+     * @param {UUID} userUuid - The uuid of the user that is requesting the procedure.
+     * @returns {Promise<Procedure[]>} - The array of procedure if it exists, undefined otherwise.
+     * @throws {Error} - This function throws an error if there is an error getting the procedure.
+     * @memberof Metamodel_procedure_connection
+     * @async - This function is asynchronous, it must be called with the await keyword in front of it to get the inside of the promise.
+     * @export - This function is exported so that it can be used by other procedures.
+     * @method
+     */
+    async getAlgorithms(
+        client: PoolClient,
+        userUuid?: UUID
+    ): Promise<Procedure[] | BaseError> {
+        try {
+            const procedure_query =
+                'SELECT * FROM metaobject m, "procedure" p WHERE m.uuid = p.uuid_metaobject ';
+            const returnProcedure: Procedure[] = [];
+            const res_procedure = await client.query(procedure_query);
+            for (const pr of res_procedure.rows) {
+                const newProcedure = await this.getByUuid(
+                    client,
+                    pr.uuid,
+                    userUuid
+                );
+
+                if (newProcedure instanceof Procedure) {
+                    returnProcedure.push(newProcedure);
+                }
+            }
+            return returnProcedure;
+        } catch (err) {
+            throw new Error(`Error getting all the procedures: ${err}`);
+        }
+    }
+
+
+    /**
      * @description - This function gets the procedure by uuid.
      * @param {PoolClient} client - The client to the database.
      * @param {UUID} procedureUuid - The uuid of the procedure to get.
