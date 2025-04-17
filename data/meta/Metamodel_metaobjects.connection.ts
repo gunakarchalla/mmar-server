@@ -1,7 +1,7 @@
-import {PoolClient} from "pg";
-import {queries} from "../..";
-import {MetaObject, UUID} from "../../../mmar-global-data-structure";
-import {CRUD} from "../common/crud.interface";
+import { PoolClient } from "pg";
+import { queries } from "../..";
+import { MetaObject, UUID } from "../../../mmar-global-data-structure";
+import { CRUD } from "../common/crud.interface";
 import Metamodel_common_functions from "./Metamodel_common_functions.connection";
 import {
     BaseError,
@@ -239,7 +239,7 @@ class Metamodel_metaobjectsConnection implements CRUD {
         const restrictedUuids: { uuid: UUID; name: string; type: string }[] = [];
 
         // Base query to delete the object and return violations if any
-        let queryDel = "select * from delete_and_return_violation($1);";
+        let queryDel = "select delete_and_return_violation($1);";
         const queryParams = [uuidToDelete];
 
 
@@ -249,8 +249,14 @@ class Metamodel_metaobjectsConnection implements CRUD {
             if (res.rowCount == 0) return new HTTP403NORIGHT(`The user ${userUuid} has no right to delete the meta object ${uuidToDelete}`);
 
             // If a user UUID is provided, modify the query to include user-specific deletion checks
-            queryDel = "select * from delete_and_return_violation($1,$2)";
+            queryDel = "select delete_and_return_violation($1,$2)";
             queryParams.push(userUuid);
+        }
+
+        const metaobject_check = queries.getQuery_get("metaobject_query");
+        const resultMetaobject = await client.query(metaobject_check, [uuidToDelete]);
+        if (resultMetaobject.rowCount == 0) {
+            return new HTTP500Error(`The meta object ${uuidToDelete} does not exist`);
         }
 
         // Execute the query
@@ -292,7 +298,7 @@ class Metamodel_metaobjectsConnection implements CRUD {
         }
 
         // If there are UUIDs to return, return them, else return undefined
-        return returnUuids.length > 0 ? returnUuids : undefined;
+        return returnUuids[0] != undefined ? returnUuids : resultDel.rows[0].delete_and_return_violation as UUID[];
     }
 }
 
