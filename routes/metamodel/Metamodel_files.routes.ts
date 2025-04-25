@@ -52,6 +52,8 @@ fileRouter.get(
   }
 );
 
+fileRouter.get("/alluuids", Metamodel_file_controller.get_all_uuids);
+
 fileRouter.get(
   /*
   #swagger.tags = ['Files']
