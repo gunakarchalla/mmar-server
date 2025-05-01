@@ -256,6 +256,24 @@ class Metamodel_filesController {
             (await client).release();
         }
     };
+
+    public get_all_uuids: RequestHandler = async (req, res, next) => {
+        const client = await database_connection.getPool().connect();
+        try {
+            await client.query("BEGIN");
+            const queryResult = await client.query("SELECT uuid_metaobject FROM file;");
+            await client.query("COMMIT");
+
+            res.status(200).json({
+                uuids: queryResult.rows.map(row => row.uuid_metaobject),
+            });
+        } catch (err) {
+            await client.query("ROLLBACK");
+            next(err);
+        } finally {
+            client.release();
+        }
+    };
 }
 
 export default new Metamodel_filesController();
