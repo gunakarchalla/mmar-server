@@ -1,4 +1,4 @@
-import {Router} from "express";
+import { Router } from "express";
 import attributetypeMetaRouter from "./Metamodel_attributes_types.routes";
 import sceneTypeRouter from "./Metamodel_scenetypes.routes";
 import attributeMetaRouter from "./Metamodel_attributes.routes";
@@ -8,6 +8,7 @@ import roleMetaRouter from "./Metmodel_roles.routes";
 import portMetaRouter from "./Metamodel_ports.routes";
 import ruleMetaRouter from "./Metamodel_rules.routes";
 import procedureMetaRouter from "./Metamodel_procedure.routes";
+import fileMetaRouter from "./Metamodel_files.routes";
 
 /**
  * @description This function is used to create the routes for the metamodel
@@ -25,7 +26,7 @@ metamodelRouter.use(procedureMetaRouter);
 
 metamodelRouter.use(ruleMetaRouter);
 
-//metamodelRouter.use(fileRouter);
+metamodelRouter.use(fileMetaRouter);
 
 //TODO: implement in the v2
 

@@ -6,132 +6,136 @@
     <%- include('./partials/head.ejs'); %>
 
 </head>
+
 <body class="container">
 
-<header>
-    <%- include('./partials/header.ejs'); %>
-</header>
+    <header>
+        <%- include('./partials/header.ejs'); %>
+    </header>
 
-<main>
-    <div class="jumbotron">
-        <h1>MMAR</h1>
-        <p>File management test</p>
-        This is a test to upload files to the server and manage them.
-        <form id="uploadForm" method="POST" enctype="multipart/form-data">
-            <input type="file" name="file" id="fileInput">
-            <input type="text" name="uuid" alt="uuid" id="uuidInput" placeholder="00000000-0000-0000-0000-000000000000">
-            <button type="submit">Upload</button>
-        </form>
+    <main>
+        <div class="jumbotron">
+            <h1>MMAR</h1>
+            <p>File management test</p>
+            This is a test to upload files to the server and manage them.
+            <form id="uploadForm" method="POST" enctype="multipart/form-data">
+                <input type="file" name="file" id="fileInput">
+                <input type="text" name="uuid" alt="uuid" id="uuidInput"
+                    placeholder="00000000-0000-0000-0000-000000000000">
+                <button type="submit">Upload</button>
+            </form>
 
-        <form id="getForm" method="get">
-            <input type="text" name="uuid" alt="uuid" id="uuidGet" placeholder="00000000-0000-0000-0000-000000000000">
-            <input type="text" name="name" id="nameGet" placeholder="name">
-            <button type="submit">Get files</button>
-        </form>
+            <form id="getForm" method="get">
+                <input type="text" name="uuid" alt="uuid" id="uuidGet"
+                    placeholder="00000000-0000-0000-0000-000000000000">
+                <input type="text" name="name" id="nameGet" placeholder="name">
+                <button type="submit">Get files</button>
+            </form>
 
-        <div id="fileResult"></div>
+            <div id="fileResult"></div>
 
-    </div>
-</main>
-
-
-<footer>
-    <script>
-
-        const formUpload = document.getElementById('uploadForm');
-        const fileInput = document.getElementById('fileInput');
-        const addressUpload = 'https://localhost:8001/files';
-
-        const formGet = document.getElementById('getForm');
-        let addressGet1 = 'https://localhost:8001/files';
+        </div>
+    </main>
 
 
-        formGet.addEventListener('submit', async function(event) {
-            event.preventDefault(); // Prevent form submission
+    <footer>
+        <script>
 
-            const uuid = document.getElementById('uuidGet').value;
-            const name = document.getElementById('nameGet').value;
+            const formUpload = document.getElementById('uploadForm');
+            const fileInput = document.getElementById('fileInput');
+            const addressUpload = 'https://localhost:8001/metamodel/files';
 
-            if (uuid === '' && name === '') {
-                return;
-            }
+            const formGet = document.getElementById('getForm');
+            let addressGet1 = 'https://localhost:8001/metamodel/files';
 
-            const params = new URLSearchParams();
 
-            if (name !== '') {
-                params.append('name', name);
-            }
+            formGet.addEventListener('submit', async function (event) {
+                event.preventDefault(); // Prevent form submission
 
-            if (uuid !== '') {
-                params.append('uuid', uuid);
-            }
+                const uuid = document.getElementById('uuidGet').value;
+                const name = document.getElementById('nameGet').value;
 
-            const url = addressGet1 + '?' + params.toString();
-
-            try {
-                const response = await fetch(url, {
-                    method: 'GET'
-                });
-
-                if (response.ok) {
-                    console.log('File retrieved', response);
-                    const blob = await response.blob();
-
-                    const fileResult = document.getElementById('fileResult');
-                    fileResult.innerHTML = '';
-
-                    const img = document.createElement('img');
-                    img.src = URL.createObjectURL(blob);
-                    fileResult.appendChild(img);
-                } else {
-                    throw new Error('Error retrieving file: ' + response.statusText);
+                if (uuid === '' && name === '') {
+                    return;
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                // Handle the error as needed
-            }
-        });
 
-        formUpload.addEventListener('submit', async function (event) {
+                const params = new URLSearchParams();
 
-            event.preventDefault(); // Prevent form submission
-            const uuid = document.getElementById('uuidInput').value;
-            const file = fileInput.files[0];
+                if (name !== '') {
+                    params.append('name', name);
+                }
 
-            const formData = new FormData();
+                if (uuid !== '') {
+                    params.append('uuid', uuid);
+                }
 
-            formData.append('file', file);
-            formData.append('uuid', uuid);
+                const url = addressGet1 + '?' + params.toString();
 
+                try {
+                    const response = await fetch(url, {
+                        method: 'GET'
+                    });
 
-            fetch(addressUpload, {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => {
                     if (response.ok) {
-                        return response.blob();
+                        console.log('File retrieved', response);
+                        const blob = await response.blob();
+
+                        const fileResult = document.getElementById('fileResult');
+                        fileResult.innerHTML = '';
+
+                        const img = document.createElement('img');
+                        img.src = URL.createObjectURL(blob);
+                        fileResult.appendChild(img);
                     } else {
                         throw new Error('Error retrieving file: ' + response.statusText);
                     }
-                })
-                .then(blob => {
-                    const fileResult = document.getElementById('fileResult');
-                    fileResult.innerHTML = '';
-
-                    const img = document.createElement('img');
-                    img.src = URL.createObjectURL(blob);
-                    fileResult.appendChild(img);
-                })
-                .catch(error => {
+                } catch (error) {
                     console.error('Error:', error);
                     // Handle the error as needed
-                });
-        });
-    </script>
+                }
+            });
 
-    <%- include('./partials/footer.ejs'); %>
-</footer>
+            formUpload.addEventListener('submit', async function (event) {
+
+                event.preventDefault(); // Prevent form submission
+                const uuid = document.getElementById('uuidInput').value;
+                const file = fileInput.files[0];
+
+                const formData = new FormData();
+
+                formData.append('file', file);
+                formData.append('uuid', uuid);
+
+
+                fetch(addressUpload, {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            return response.blob();
+                        } else {
+                            throw new Error('Error retrieving file: ' + response.statusText);
+                        }
+                    })
+                    .then(blob => {
+                        const fileResult = document.getElementById('fileResult');
+                        fileResult.innerHTML = '';
+
+                        const img = document.createElement('img');
+                        img.src = URL.createObjectURL(blob);
+                        fileResult.appendChild(img);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        // Handle the error as needed
+                    });
+            });
+        </script>
+
+        <%- include('./partials/footer.ejs'); %>
+    </footer>
 
 </body>
+
 </html>

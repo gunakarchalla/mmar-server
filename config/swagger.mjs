@@ -44,10 +44,6 @@ const doc = {
       description: ''       // Tag description
     },
     {
-      name: 'Files',             // Tag name
-      description: ''       // Tag description
-    },
-    {
       name: 'default',             // Tag name
       description: ''       // Tag description
     },
@@ -65,9 +61,9 @@ const routes = ["./routes/all.routes.ts", "./routes/other.routes.ts"];
 root file where the route starts, such as index.js, app.js, routes.js, etc ... */
 
 const options = {
-  openapi:          '3.0.0',     // Enable/Disable OpenAPI.                        By default is null
-  autoHeaders:      false,    // Enable/Disable automatic headers recognition.  By default is true
-  autoQuery:        false,    // Enable/Disable automatic query recognition.    By default is true
+  openapi: '3.0.0',     // Enable/Disable OpenAPI.                        By default is null
+  autoHeaders: false,    // Enable/Disable automatic headers recognition.  By default is true
+  autoQuery: false,    // Enable/Disable automatic query recognition.    By default is true
 };
 
 swaggerAutogen(options)(outputFile, routes, doc);
