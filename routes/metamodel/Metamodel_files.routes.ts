@@ -52,6 +52,28 @@ fileRouter.get(
   }
 );
 
+fileRouter.get(
+  /*
+  #swagger.tags = ['Files']
+  #swagger.summary = 'Get all files'
+  #swagger.responses[200] = {
+    "description": "Successful operation. Returns the list of files."
+  }
+  #swagger.responses[400] = {
+    "description": "Invalid request",
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "#/components/schemas/Error"
+        }
+      }
+    }
+  }
+  */
+  "/allfiles",
+  Metamodel_file_controller.get_all_files
+);
+
 fileRouter.get("/alluuids", Metamodel_file_controller.get_all_uuids);
 
 fileRouter.get(

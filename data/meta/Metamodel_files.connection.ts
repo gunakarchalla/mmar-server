@@ -1,11 +1,37 @@
-import {CRUD} from "../common/crud.interface";
-import {PoolClient} from "pg";
-import {File, UUID} from "../../../mmar-global-data-structure";
+import { CRUD } from "../common/crud.interface";
+import { PoolClient } from "pg";
+import { File, UUID } from "../../../mmar-global-data-structure";
 import Metamodel_metaobject_connection from "./Metamodel_metaobjects.connection";
-import {queries} from "../../index";
-import {BaseError, HTTP403NORIGHT} from "../services/middleware/error_handling/standard_errors.middleware";
+import { queries } from "../../index";
+import { BaseError, HTTP403NORIGHT } from "../services/middleware/error_handling/standard_errors.middleware";
 
 class Metamodel_filesConnection implements CRUD {
+
+    async getAll(
+        client: PoolClient,
+        userUuid?: UUID
+    ): Promise<File[] | BaseError> {
+        try {
+            const file_query = "SELECT uuid_metaobject as uuid FROM file";
+            const returnFiles = new Array<File>();
+            const res_files = await client.query(file_query);
+            for (const file of res_files.rows) {
+                const newFile = await this.getByUuid(client, file.uuid, userUuid);
+                if (newFile instanceof File) {
+                    returnFiles.push(newFile);
+                }
+                else if (newFile instanceof BaseError) {
+                    if (newFile.httpCode === 403) {
+                        return new HTTP403NORIGHT(`The user ${userUuid} has no right to read the file ${file.uuid}`);
+                    }
+                    return newFile;
+                }
+            }
+            return returnFiles;
+        } catch (error) {
+            throw new Error(`Error getting all files: ${error}`);
+        }
+    }
 
     async create(
         client: PoolClient,
@@ -64,7 +90,7 @@ class Metamodel_filesConnection implements CRUD {
         }
     }
 
-    getAllByParentUuid(): Promise<File[]> {
+    async getAllByParentUuid(): Promise<File[]> {
         return Promise.resolve([]);
     }
 

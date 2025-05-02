@@ -15,6 +15,31 @@ import { File, UUID } from "../../../mmar-global-data-structure";
  * @class - Metamodel_file_controller
  */
 class Metamodel_filesController {
+
+    get_all_files: RequestHandler = async (req, res, next) => {
+        const client = await database_connection.getPool().connect();
+        try {
+            await client.query("BEGIN");
+            const sc = await Metamodel_files_connection.getAll(
+                client,
+                req.body.tokendata ? req.body.tokendata.uuid : undefined
+            );
+            if (sc instanceof Array) {
+                res.status(200).json(sc);
+            } else if (sc instanceof BaseError) {
+                throw sc;
+            } else {
+                throw new HTTP500Error(`Failed to retrieve files`);
+            }
+            await client.query("COMMIT");
+        } catch (err) {
+            await client.query("ROLLBACK");
+            next(err);
+        } finally {
+            (await client).release();
+        }
+    };
+
     /**
      * @description - Get a specific file by its uuid.
      * @param {UUID} req.params.uuid - The uuid of the file.
