@@ -40,6 +40,45 @@ class Metamodel_procedureConnection implements CRUD {
     }
 
     /**
+     * @description - This function gets all procedures.
+     * @param {PoolClient} client - The client to the database.
+     * @param {UUID} procedureUuid - The uuid of the procedure to get.
+     * @param {UUID} userUuid - The uuid of the user that is requesting the procedure.
+     * @returns {Promise<Procedure[]>} - The array of procedure if it exists, undefined otherwise.
+     * @throws {Error} - This function throws an error if there is an error getting the procedure.
+     * @memberof Metamodel_procedure_connection
+     * @async - This function is asynchronous, it must be called with the await keyword in front of it to get the inside of the promise.
+     * @export - This function is exported so that it can be used by other procedures.
+     * @method
+     */
+    async getAlgorithms(
+        client: PoolClient,
+        userUuid?: UUID
+    ): Promise<Procedure[] | BaseError> {
+        try {
+            const procedure_query =
+                'SELECT * FROM metaobject m, "procedure" p WHERE m.uuid = p.uuid_metaobject ';
+            const returnProcedure: Procedure[] = [];
+            const res_procedure = await client.query(procedure_query);
+            for (const pr of res_procedure.rows) {
+                const newProcedure = await this.getByUuid(
+                    client,
+                    pr.uuid,
+                    userUuid
+                );
+
+                if (newProcedure instanceof Procedure) {
+                    returnProcedure.push(newProcedure);
+                }
+            }
+            return returnProcedure;
+        } catch (err) {
+            throw new Error(`Error getting all the procedures: ${err}`);
+        }
+    }
+
+
+    /**
      * @description - This function gets the procedure by uuid.
      * @param {PoolClient} client - The client to the database.
      * @param {UUID} procedureUuid - The uuid of the procedure to get.
@@ -232,6 +271,45 @@ class Metamodel_procedureConnection implements CRUD {
         }
     }
 
+    async hardUpdate(
+        client: PoolClient,
+        procedureUuidToUpdate: UUID,
+        newProcedure: Procedure,
+        userUuid?: UUID
+    ): Promise<Procedure | undefined | BaseError> {
+        try {
+            const query_update_procedure =
+                "UPDATE procedure SET definition= coalesce($1,definition) WHERE uuid_metaobject = $2";
+
+            const updated_metaobj = await Metamodel_metaobject_connection.update(
+                client,
+                procedureUuidToUpdate,
+                newProcedure,
+                userUuid
+            );
+
+            if (updated_metaobj instanceof BaseError) {
+                if (updated_metaobj.httpCode === 403) {
+                    return new HTTP403NORIGHT(`The user ${userUuid} has no right to update the procedure ${procedureUuidToUpdate}`);
+                }
+                return updated_metaobj;
+            }
+            if (!updated_metaobj) return undefined;
+
+            await client.query(query_update_procedure, [
+                newProcedure.get_definition(),
+                procedureUuidToUpdate,
+            ]);
+
+            return await this.getByUuid(client, procedureUuidToUpdate, userUuid);
+        } catch (err) {
+            throw new Error(
+                `Error updating the procedure ${procedureUuidToUpdate}: ${err}`
+            );
+        }
+    }
+
+
     /**
      * @description - This function create a procedure for the scene type by the uuid of the scene type.
      * @param {PoolClient} client - The client to the database.
@@ -245,7 +323,7 @@ class Metamodel_procedureConnection implements CRUD {
      * @export - This function is exported so that it can be used by other files.
      * @method
      */
-    async postProcedureForSceneType(
+    async postProceduresForSceneType(
         client: PoolClient,
         sceneTypeUUID: UUID,
         newProcedure: Procedure[] | Procedure,
@@ -392,5 +470,7 @@ class Metamodel_procedureConnection implements CRUD {
         }
     }
 }
+
+
 
 export default new Metamodel_procedureConnection();

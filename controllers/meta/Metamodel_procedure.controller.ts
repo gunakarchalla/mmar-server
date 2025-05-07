@@ -54,6 +54,35 @@ class Metamodel_procedureController {
         }
     };
 
+    get_procedures: RequestHandler = async (req, res, next) => {
+        const client = await database_connection.getPool().connect();
+        try {
+            await client.query("BEGIN");
+
+            const procedure: Procedure[] = [];
+            const sc =
+                await Metamodel_procedure_connection.getAlgorithms(
+                    client,
+                    req.body.tokendata.uuid
+                );
+            if (Array.isArray(sc)) {
+                procedure.push(...sc);
+                res.status(200).json(filter_object(procedure, req.query.filter));
+            } else if (sc instanceof BaseError) {
+                throw sc;
+            } else {
+                throw new HTTP500Error(`Failed to retrieve the procedures.`);
+            }
+            await client.query("COMMIT");
+
+        } catch (err) {
+            await client.query("ROLLBACK");
+            next(err);
+        } finally {
+            (await client).release();
+        }
+    };
+
     get_independent_procedures: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
@@ -233,7 +262,7 @@ class Metamodel_procedureController {
             await client.query("BEGIN");
 
             const newProcedure = plainToInstance(Procedure, req.body);
-            const sc = await Metamodel_procedure_connection.postProcedureForSceneType(
+            const sc = await Metamodel_procedure_connection.postProceduresForSceneType(
                 await client,
                 req.params.uuid,
                 newProcedure,
