@@ -145,7 +145,7 @@ fileMetaRouter.post(
     }
   }
   */
-  "files/:uuid",
+  "/files/:uuid",
   upload.single("file"),
   Metamodel_file_controller.post_file_by_uuid
 );
@@ -185,7 +185,7 @@ fileMetaRouter.patch(
     }
   }
   */
-  "files/:uuid",
+  "/files/:uuid",
   upload.single("file"),
   Metamodel_file_controller.patch_file_by_uuid
 );

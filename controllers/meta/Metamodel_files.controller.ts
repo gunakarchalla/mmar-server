@@ -178,12 +178,23 @@ class Metamodel_filesController {
             newFile.set_name(originalname);
             newFile.uuid = specified_uuid;
 
-            const sc = await Metamodel_files_connection.update(
-                client,
-                specified_uuid,
-                newFile,
-                req.body.tokendata ? req.body.tokendata.uuid : undefined
-            );
+            const hardPatch = req.query.hardpatch === "true" ? true : false;
+            let sc;
+            if (hardPatch) {
+                sc = await Metamodel_files_connection.update(
+                    client,
+                    specified_uuid,
+                    newFile,
+                    req.body.tokendata ? req.body.tokendata.uuid : undefined
+                );
+            } else {
+                sc = await Metamodel_files_connection.update(
+                    client,
+                    specified_uuid,
+                    newFile,
+                    req.body.tokendata ? req.body.tokendata.uuid : undefined
+                );
+            }
 
             if (sc instanceof File) {
                 // res.status(200).send(sc.get_data());
