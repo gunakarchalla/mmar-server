@@ -147,7 +147,7 @@ class Metamodel_filesController {
 
             if (sc instanceof File) {
                 // res.status(201).send(sc.get_data());
-                res.status(201).json({ url: `https://localhost:8001/files/${newFile.uuid}` });
+                res.status(201).json({ url: `http://localhost:8000/metamodel/files/${newFile.uuid}` });
             } else if (sc instanceof BaseError) {
                 throw sc;
             } else {
@@ -198,7 +198,7 @@ class Metamodel_filesController {
 
             if (sc instanceof File) {
                 // res.status(200).send(sc.get_data());
-                res.status(201).json({ url: `https://localhost:8001/files/${newFile.uuid}`, uuid: newFile.uuid });
+                res.status(201).json({ url: `http://localhost:8000/metamodel/files/${newFile.uuid}`, uuid: newFile.uuid });
             } else if (sc instanceof BaseError) {
                 throw sc;
             } else {
@@ -278,7 +278,7 @@ class Metamodel_filesController {
 
             if (sc instanceof File) {
                 // res.status(201).send(sc.get_data());
-                res.status(201).json({ url: `https://localhost:8001/files/${newFile.uuid}`, uuid: newFile.uuid });
+                res.status(201).json({ url: `http://localhost:8000/metamodel/files/${newFile.uuid}`, uuid: newFile.uuid });
             } else if (sc instanceof BaseError) {
                 throw sc;
             } else {
