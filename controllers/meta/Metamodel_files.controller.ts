@@ -8,6 +8,7 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import Metamodel_files_connection from "../../data/meta/Metamodel_files.connection";
 import { File, UUID } from "../../../mmar-global-data-structure";
+import { filter_object } from "../../data/services/middleware/object_filter";
 
 /**
  * @classdesc - This class is used to handle all the requests for the file management.
@@ -130,14 +131,13 @@ class Metamodel_filesController {
 
             if (!req.file) throw new API404Error(`Cannot find the file.`);
 
-            const specified_uuid = req.params.uuid;
             const { originalname, buffer, mimetype } = req.file;
             const newFile = File.fromJS(req.body) as File;
 
             newFile.set_data(buffer);
             newFile.set_type(mimetype);
             newFile.set_name(originalname);
-            newFile.uuid = specified_uuid;
+            newFile.set_uuid(req.params.uuid);
 
             const sc = await Metamodel_files_connection.create(
                 client,
@@ -147,7 +147,12 @@ class Metamodel_filesController {
 
             if (sc instanceof File) {
                 // res.status(201).send(sc.get_data());
-                res.status(201).json({ url: `http://localhost:8000/metamodel/files/${newFile.uuid}` });
+
+                const filteredObject = filter_object(sc, req.query.filter);
+                res.status(201).json({
+                    ...(typeof filteredObject === 'object' && filteredObject !== null ? filteredObject : {}),
+                    url: `http://localhost:8000/metamodel/files/${newFile.uuid}`
+                });
             } else if (sc instanceof BaseError) {
                 throw sc;
             } else {
@@ -167,34 +172,33 @@ class Metamodel_filesController {
         try {
             await client.query("BEGIN");
 
+            console.log("req.body:", req.body);
+
+            const hardPatch = req.query.hardpatch === "true" ? true : false;
+            if (hardPatch) {
+                res.status(200).json({ url: `http://localhost:8000/metamodel/files/${req.params.uuid}` });
+            }
+
             if (!req.file) throw new API404Error(`Cannot find the file.`);
 
             const specified_uuid = req.params.uuid;
             const { originalname, buffer, mimetype } = req.file;
             const newFile = File.fromJS(req.body) as File;
+            console.log("req.body:", req.body);
 
             newFile.set_data(buffer);
             newFile.set_type(mimetype);
             newFile.set_name(originalname);
             newFile.uuid = specified_uuid;
 
-            const hardPatch = req.query.hardpatch === "true" ? true : false;
             let sc;
-            if (hardPatch) {
-                sc = await Metamodel_files_connection.update(
-                    client,
-                    specified_uuid,
-                    newFile,
-                    req.body.tokendata ? req.body.tokendata.uuid : undefined
-                );
-            } else {
-                sc = await Metamodel_files_connection.update(
-                    client,
-                    specified_uuid,
-                    newFile,
-                    req.body.tokendata ? req.body.tokendata.uuid : undefined
-                );
-            }
+
+            sc = await Metamodel_files_connection.update(
+                client,
+                specified_uuid,
+                newFile,
+                req.body.tokendata ? req.body.tokendata.uuid : undefined
+            );
 
             if (sc instanceof File) {
                 // res.status(200).send(sc.get_data());
