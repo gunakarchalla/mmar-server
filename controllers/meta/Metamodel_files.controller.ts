@@ -172,37 +172,59 @@ class Metamodel_filesController {
         try {
             await client.query("BEGIN");
 
-            console.log("req.body:", req.body);
+            let originalname, buffer, mimetype;
 
-            const hardPatch = req.query.hardpatch === "true" ? true : false;
-            if (hardPatch) {
-                res.status(200).json({ url: `http://localhost:8000/metamodel/files/${req.params.uuid}` });
+            if (!req.file) {
+                // If no file is uploaded, check if the data is in the body
+                if (!req.body["data"]["data"]) {
+                    // If no data is provided in the body, throw an error
+                    throw new API404Error(`Cannot find the file.`);
+                }
+                else {
+                    // Data is in the body
+                    originalname = req.body["name"];
+                    buffer = Buffer.from(req.body["data"]["data"]);
+                    mimetype = req.body["type"];
+                }
+            }
+            else {
+                ({ originalname, buffer, mimetype } = req.file);
             }
 
-            if (!req.file) throw new API404Error(`Cannot find the file.`);
-
             const specified_uuid = req.params.uuid;
-            const { originalname, buffer, mimetype } = req.file;
             const newFile = File.fromJS(req.body) as File;
-            console.log("req.body:", req.body);
 
             newFile.set_data(buffer);
             newFile.set_type(mimetype);
             newFile.set_name(originalname);
             newFile.uuid = specified_uuid;
 
+            const hardPatch = req.query.hardpatch === "true" ? true : false;
             let sc;
 
-            sc = await Metamodel_files_connection.update(
-                client,
-                specified_uuid,
-                newFile,
-                req.body.tokendata ? req.body.tokendata.uuid : undefined
-            );
+            if (hardPatch) {
+                sc = await Metamodel_files_connection.hardUpdate(
+                    client,
+                    specified_uuid,
+                    newFile,
+                    req.body.tokendata ? req.body.tokendata.uuid : undefined
+                );
+
+            } else {
+                sc = await Metamodel_files_connection.update(
+                    client,
+                    specified_uuid,
+                    newFile,
+                    req.body.tokendata ? req.body.tokendata.uuid : undefined
+                );
+            }
 
             if (sc instanceof File) {
-                // res.status(200).send(sc.get_data());
-                res.status(201).json({ url: `http://localhost:8000/metamodel/files/${newFile.uuid}`, uuid: newFile.uuid });
+                const filteredObject = filter_object(sc, req.query.filter);
+                res.status(200).json({
+                    ...(typeof filteredObject === 'object' && filteredObject !== null ? filteredObject : {}),
+                    url: `http://localhost:8000/metamodel/files/${newFile.uuid}`
+                });
             } else if (sc instanceof BaseError) {
                 throw sc;
             } else {
