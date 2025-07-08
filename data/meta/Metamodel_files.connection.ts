@@ -204,7 +204,6 @@ class Metamodel_filesConnection implements CRUD {
         userUuid?: UUID
     ): Promise<File | undefined | BaseError> {
         // The same logic as update is maintained here, but acts as place holder for future implementation of hard update
-        console.log("Hard update called for file with uuid:", uuidToUpdate);
         try {
             await client.query("BEGIN");
             const query =
