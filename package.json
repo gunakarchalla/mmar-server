@@ -46,6 +46,7 @@
     "pg": "8.12.0",
     "reflect-metadata": "0.2.2",
     "routes": "2.1.0",
+    "sharp": "0.34.3",
     "source-map-support": "0.5.21",
     "swagger-autogen": "2.23.7",
     "swagger-jsdoc": "6.1.0",

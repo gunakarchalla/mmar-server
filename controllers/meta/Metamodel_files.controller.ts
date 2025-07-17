@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from "uuid";
 import Metamodel_files_connection from "../../data/meta/Metamodel_files.connection";
 import { File, UUID } from "../../../mmar-global-data-structure";
 import { filter_object } from "../../data/services/middleware/object_filter";
+import { compressImage } from "../../data/services/compress.service";
 
 /**
  * @classdesc - This class is used to handle all the requests for the file management.
@@ -200,6 +201,21 @@ class Metamodel_filesController {
             newFile.uuid = specified_uuid;
 
             const hardPatch = req.query.hardpatch === "true" ? true : false;
+            const compress = req.query.compress === "true" ? true : false;
+            let targetWidth: number | undefined = req.query.targetWidth ? parseInt(req.query.targetWidth as string) : undefined;
+            let quality: number | undefined = req.query.quality ? parseInt(req.query.quality as string) : undefined;
+
+            console.log(`Hard patch: ${hardPatch}, Compress: ${compress}, Target Width: ${targetWidth}, Quality: ${quality}`);
+            if (compress) {
+                if (targetWidth === undefined || targetWidth <= 0 || quality === undefined || quality <= 0 || quality > 100) {
+                    throw new API404Error(`Invalid parameters for compression.`);
+                }
+                console.log(`Compressing image with target width: ${targetWidth} and quality: ${quality}`);
+                const compressedBuffer = await compressImage(newFile, targetWidth, quality);
+                newFile.set_data(compressedBuffer);
+            }
+
+
             let sc;
 
             if (hardPatch) {
