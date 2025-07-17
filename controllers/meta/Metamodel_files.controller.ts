@@ -205,12 +205,10 @@ class Metamodel_filesController {
             let targetWidth: number | undefined = req.query.targetWidth ? parseInt(req.query.targetWidth as string) : undefined;
             let quality: number | undefined = req.query.quality ? parseInt(req.query.quality as string) : undefined;
 
-            console.log(`Hard patch: ${hardPatch}, Compress: ${compress}, Target Width: ${targetWidth}, Quality: ${quality}`);
             if (compress) {
                 if (targetWidth === undefined || targetWidth <= 0 || quality === undefined || quality <= 0 || quality > 100) {
                     throw new API404Error(`Invalid parameters for compression.`);
                 }
-                console.log(`Compressing image with target width: ${targetWidth} and quality: ${quality}`);
                 const compressedBuffer = await compressImage(newFile, targetWidth, quality);
                 newFile.set_data(compressedBuffer);
             }

@@ -15,7 +15,6 @@ export async function compressImage(
 ): Promise<Buffer> {
     // Assuming JPEG for quality setting. You might want to adjust based on mimetype.
     const imgFormat = file.get_type().split("/").pop();
-    console.log(`Compressing image of type: ${imgFormat}`);
     const imageBuffer = file.get_data();
     const image = sharp(imageBuffer);
     const metadata = await image.metadata();
