@@ -209,6 +209,9 @@ class Metamodel_filesController {
                 if (targetWidth === undefined || targetWidth <= 0 || quality === undefined || quality <= 0 || quality > 100) {
                     throw new API404Error(`Invalid parameters for compression.`);
                 }
+                if (newFile.get_type().split("/")[0] !== "image") {
+                    throw new API404Error(`Compression is only supported for image files.`);
+                }
                 const compressedBuffer = await compressImage(newFile, targetWidth, quality);
                 newFile.set_data(compressedBuffer);
             }
@@ -309,6 +312,21 @@ class Metamodel_filesController {
             newFile.set_type(mimetype);
             newFile.set_name(originalname);
             newFile.uuid = specified_uuid;
+
+            const compress = req.query.compress === "true" ? true : false;
+            let targetWidth: number | undefined = req.query.targetWidth ? parseInt(req.query.targetWidth as string) : undefined;
+            let quality: number | undefined = req.query.quality ? parseInt(req.query.quality as string) : undefined;
+
+            if (compress) {
+                if (targetWidth === undefined || targetWidth <= 0 || quality === undefined || quality <= 0 || quality > 100) {
+                    throw new API404Error(`Invalid parameters for compression.`);
+                }
+                if (newFile.get_type().split("/")[0] !== "image") {
+                    throw new API404Error(`Compression is only supported for image files.`);
+                }
+                const compressedBuffer = await compressImage(newFile, targetWidth, quality);
+                newFile.set_data(compressedBuffer);
+            }
 
             const sc = await Metamodel_files_connection.create(
                 client,
