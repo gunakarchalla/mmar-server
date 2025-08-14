@@ -150,9 +150,10 @@ class Metamodel_filesController {
                 // res.status(201).send(sc.get_data());
 
                 const filteredObject = filter_object(sc, req.query.filter);
+                const publicBaseUrl = process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`;
                 res.status(201).json({
                     ...(typeof filteredObject === 'object' && filteredObject !== null ? filteredObject : {}),
-                    url: `http://localhost:8000/metamodel/files/${newFile.uuid}`
+                    url: `${publicBaseUrl}/metamodel/files/${newFile.uuid}`
                 });
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -238,9 +239,10 @@ class Metamodel_filesController {
 
             if (sc instanceof File) {
                 const filteredObject = filter_object(sc, req.query.filter);
+                const publicBaseUrl = process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`;
                 res.status(200).json({
-                    ...(typeof filteredObject === 'object' && filteredObject !== null ? filteredObject : {}),
-                    url: `http://localhost:8000/metamodel/files/${newFile.uuid}`
+                    ...(typeof filteredObject === "object" && filteredObject !== null ? filteredObject : {}),
+                    url: `${publicBaseUrl}/metamodel/files/${newFile.uuid}`
                 });
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -281,7 +283,6 @@ class Metamodel_filesController {
 
             if (typeof sc === 'string') {
                 res.status(200).send(`File with UUID ${specified_uuid} has been deleted sucessfully.`);
-                // res.status(201).json({url:`https://localhost:8001/files/${newFile.uuid}`});
             } else if (sc instanceof BaseError) {
                 throw sc;
             } else {
@@ -336,7 +337,8 @@ class Metamodel_filesController {
 
             if (sc instanceof File) {
                 // res.status(201).send(sc.get_data());
-                res.status(201).json({ url: `http://localhost:8000/metamodel/files/${newFile.uuid}`, uuid: newFile.uuid });
+                const publicBaseUrl = process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`;
+                res.status(201).json({ url: `${publicBaseUrl}/metamodel/files/${newFile.uuid}`, uuid: newFile.uuid });
             } else if (sc instanceof BaseError) {
                 throw sc;
             } else {

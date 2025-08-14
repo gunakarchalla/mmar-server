@@ -1,6 +1,6 @@
 {
   "user": "api",
-  "host": "127.0.0.1",
+  "host": "database",
   "database": "api",
   "password": "root",
   "port": 5432,
