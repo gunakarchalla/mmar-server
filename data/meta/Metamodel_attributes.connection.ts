@@ -252,6 +252,7 @@ class Metamodel_attributesConnection implements CRUD {
    * @method
    */
   async update(
+    
     client: PoolClient,
     attrUuidToUpdate: UUID,
     newAttribute: Attribute,

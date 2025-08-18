@@ -1,12 +1,12 @@
-import {Router} from "express";
+import { Router } from "express";
 import instanceRouter from "./instances/Instance.routes";
 import metamodelRouter from "./metamodel/Metamodel.routes";
 import otherRouter from "./other.routes";
 import loginRouter from "./metamodel/Login.routes";
 import usergroupRouter from "./metamodel/Usergroups.route";
-import fileRouter from "./metamodel/Metamodel_files.routes";
+// import fileRouter from "./metamodel/Metamodel_files.routes";
 import usersRouter from "./metamodel/Metamodel_users.routes";
-import {database_test} from "../data/services/middleware/database_test";
+import { database_test } from "../data/services/middleware/database_test";
 
 /**
  * @description - This is the all-in-one router for the entire project.
@@ -41,12 +41,6 @@ routes.use("/userGroups", database_test, usergroupRouter
 routes.use("/users", database_test, usersRouter
     /* 
     #swagger.tags = ['Users']
-    */
-);
-
-routes.use("/files", database_test, fileRouter
-    /* 
-    #swagger.tags = ['Files']
     */
 );
 

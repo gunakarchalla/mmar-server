@@ -1,11 +1,37 @@
-import {CRUD} from "../common/crud.interface";
-import {PoolClient} from "pg";
-import {File, UUID} from "../../../mmar-global-data-structure";
+import { CRUD } from "../common/crud.interface";
+import { PoolClient } from "pg";
+import { File, UUID } from "../../../mmar-global-data-structure";
 import Metamodel_metaobject_connection from "./Metamodel_metaobjects.connection";
-import {queries} from "../../index";
-import {BaseError, HTTP403NORIGHT} from "../services/middleware/error_handling/standard_errors.middleware";
+import { queries } from "../../index";
+import { BaseError, HTTP403NORIGHT } from "../services/middleware/error_handling/standard_errors.middleware";
 
 class Metamodel_filesConnection implements CRUD {
+
+    async getAll(
+        client: PoolClient,
+        userUuid?: UUID
+    ): Promise<File[] | BaseError> {
+        try {
+            const file_query = "SELECT uuid_metaobject as uuid FROM file";
+            const returnFiles = new Array<File>();
+            const res_files = await client.query(file_query);
+            for (const file of res_files.rows) {
+                const newFile = await this.getByUuid(client, file.uuid, userUuid);
+                if (newFile instanceof File) {
+                    returnFiles.push(newFile);
+                }
+                else if (newFile instanceof BaseError) {
+                    if (newFile.httpCode === 403) {
+                        return new HTTP403NORIGHT(`The user ${userUuid} has no right to read the file ${file.uuid}`);
+                    }
+                    return newFile;
+                }
+            }
+            return returnFiles;
+        } catch (error) {
+            throw new Error(`Error getting all files: ${error}`);
+        }
+    }
 
     async create(
         client: PoolClient,
@@ -64,7 +90,7 @@ class Metamodel_filesConnection implements CRUD {
         }
     }
 
-    getAllByParentUuid(): Promise<File[]> {
+    async getAllByParentUuid(): Promise<File[]> {
         return Promise.resolve([]);
     }
 
@@ -141,6 +167,43 @@ class Metamodel_filesConnection implements CRUD {
         newFile: File,
         userUuid?: UUID
     ): Promise<File | undefined | BaseError> {
+        try {
+            await client.query("BEGIN");
+            const query =
+                "UPDATE file SET data = $1, type = $2 WHERE uuid_metaobject = $3";
+
+            const updated_metaobj = await Metamodel_metaobject_connection.update(
+                client,
+                uuidToUpdate,
+                newFile,
+                userUuid
+            );
+
+            if (updated_metaobj instanceof BaseError) {
+                if (updated_metaobj.httpCode === 403) {
+                    return new HTTP403NORIGHT(`The user ${userUuid} has no right to update the file ${newFile.name}`);
+                }
+                return updated_metaobj;
+            }
+            if (!updated_metaobj) return undefined;
+
+            await client.query(query, [newFile.data, newFile.type, uuidToUpdate]);
+
+            await client.query("COMMIT");
+            return await this.getByUuid(client, uuidToUpdate, userUuid);
+        } catch (error) {
+            await client.query("ROLLBACK");
+            throw new Error(`Error updating the file with uuid ${uuidToUpdate}.`);
+        }
+    }
+
+    async hardUpdate(
+        client: PoolClient,
+        uuidToUpdate: UUID,
+        newFile: File,
+        userUuid?: UUID
+    ): Promise<File | undefined | BaseError> {
+        // The same logic as update is maintained here, but acts as place holder for future implementation of hard update
         try {
             await client.query("BEGIN");
             const query =
