@@ -457,6 +457,7 @@ class Metamodel_attribute_typesConnection implements CRUD {
           column.get_attribute().get_uuid(),
           current_attrType.get_uuid(),
           column.get_sequence(),
+          column.get_ui_component(),
         ]);
       }
 
