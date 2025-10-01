@@ -96,6 +96,9 @@ class Metamodel_attribute_typesConnection implements CRUD {
         const res_attr_table: QueryResult<{
           sequence: number;
           uuid_attribute: string;
+          ui_component: string;
+          width: number;
+          comment: string;
         }> = await client.query(table_attribute_query, [attributeTypeUuid]);
         if (res_attr_table.rowCount && res_attr_table.rowCount > 0) {
           const columns = new Array<ColumnStructure>();
@@ -105,7 +108,7 @@ class Metamodel_attribute_typesConnection implements CRUD {
               attr.uuid_attribute,
             );
             if (full_attr instanceof Attribute) {
-              columns.push(new ColumnStructure(full_attr, attr.sequence));
+              columns.push(new ColumnStructure(full_attr, attr.sequence, attr.width ? Number(attr.width) : undefined, attr.comment ? String(attr.comment) : undefined, attr.ui_component));
             }
           }
           newAttributeType.set_has_table_attribute(columns);
