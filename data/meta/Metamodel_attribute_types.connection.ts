@@ -457,8 +457,8 @@ class Metamodel_attribute_typesConnection implements CRUD {
 
       for (const column of columnsDifference.modified) {
         await client.query(query_update_column, [
-          column.get_attribute().get_uuid(),
           current_attrType.get_uuid(),
+          column.get_attribute().get_uuid(),
           column.get_sequence(),
           column.get_ui_component(),
         ]);
