@@ -327,11 +327,12 @@ class Metamodel_attribute_typesConnection implements CRUD {
           // if the attribute already exists, we connect it to the attribute type
 
           await client.query(
-            "INSERT INTO public.has_table_attribute (sequence, uuid_attribute_type, uuid_attribute) VALUES ($1, $2, $3);",
+            "INSERT INTO public.has_table_attribute (sequence, uuid_attribute_type, uuid_attribute, ui_component) VALUES ($1, $2, $3, $4);",
             [
               attr.get_sequence(),
               attrTypeUuid,
               attr.get_attribute().get_uuid(),
+              attr.get_ui_component() ? attr.get_ui_component() : "text",
             ],
           );
         } else {
@@ -346,6 +347,7 @@ class Metamodel_attribute_typesConnection implements CRUD {
               attr.get_sequence(),
               attrTypeUuid,
               newAttrTable.get_uuid(),
+              attr.get_ui_component() ? attr.get_ui_component() : "text",
             ]);
           }
         }
