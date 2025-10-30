@@ -74,7 +74,7 @@
     },
     {
       "name": "connect_attributeType_attribute",
-      "query": "INSERT INTO has_table_attribute (sequence, uuid_attribute_type, uuid_attribute) VALUES ($1, $2, $3) "
+      "query": "INSERT INTO has_table_attribute (sequence, uuid_attribute_type, uuid_attribute, ui_component) VALUES ($1, $2, $3, $4) "
     },
     {
       "name": "update_attribute_class",
@@ -230,7 +230,7 @@
     },
     {
       "name": "update_has_table_attribute",
-      "query": "UPDATE has_table_attribute set sequence = coalesce ($3, sequence) where uuid_attribute = $2 AND uuid_attribute_type = $1 "
+      "query": "UPDATE has_table_attribute set sequence = coalesce ($3, sequence), ui_component = coalesce ($4, ui_component) where uuid_attribute = $2 AND uuid_attribute_type = $1 "
     },
     {
       "name": "create_user_group",

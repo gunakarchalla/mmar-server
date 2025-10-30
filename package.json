@@ -5,6 +5,7 @@
   "scripts": {
     "start": "npm run tjs && npm run swagger && npm run build && node ../dist/mmar-server/index.js",
     "debug": "nodemon",
+    "docker:debug": "npm run tjs && npm run swagger && npm run build && nodemon",
     "build": "npm run build:global && npm run build:server",
     "build:server": "npm install && copyfiles \"package*.json\" \"../dist/mmar-server\" && npm install --prefix ../dist/mmar-server && tsc --build && npm run postbuild:server",
     "postbuild:server": "copyfiles \"config/**/*\" \"../dist/mmar-server\" && copyfiles \"views/**/*\" \"../dist/mmar-server\"",

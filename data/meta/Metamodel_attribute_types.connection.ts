@@ -96,6 +96,9 @@ class Metamodel_attribute_typesConnection implements CRUD {
         const res_attr_table: QueryResult<{
           sequence: number;
           uuid_attribute: string;
+          ui_component: string;
+          width: number;
+          comment: string;
         }> = await client.query(table_attribute_query, [attributeTypeUuid]);
         if (res_attr_table.rowCount && res_attr_table.rowCount > 0) {
           const columns = new Array<ColumnStructure>();
@@ -105,7 +108,7 @@ class Metamodel_attribute_typesConnection implements CRUD {
               attr.uuid_attribute,
             );
             if (full_attr instanceof Attribute) {
-              columns.push(new ColumnStructure(full_attr, attr.sequence));
+              columns.push(new ColumnStructure(full_attr, attr.sequence, attr.width ? Number(attr.width) : undefined, attr.comment ? String(attr.comment) : undefined, attr.ui_component));
             }
           }
           newAttributeType.set_has_table_attribute(columns);
@@ -324,11 +327,12 @@ class Metamodel_attribute_typesConnection implements CRUD {
           // if the attribute already exists, we connect it to the attribute type
 
           await client.query(
-            "INSERT INTO public.has_table_attribute (sequence, uuid_attribute_type, uuid_attribute) VALUES ($1, $2, $3);",
+            "INSERT INTO public.has_table_attribute (sequence, uuid_attribute_type, uuid_attribute, ui_component) VALUES ($1, $2, $3, $4);",
             [
               attr.get_sequence(),
               attrTypeUuid,
               attr.get_attribute().get_uuid(),
+              attr.get_ui_component() ? attr.get_ui_component() : "text",
             ],
           );
         } else {
@@ -343,6 +347,7 @@ class Metamodel_attribute_typesConnection implements CRUD {
               attr.get_sequence(),
               attrTypeUuid,
               newAttrTable.get_uuid(),
+              attr.get_ui_component() ? attr.get_ui_component() : "text",
             ]);
           }
         }
@@ -454,9 +459,10 @@ class Metamodel_attribute_typesConnection implements CRUD {
 
       for (const column of columnsDifference.modified) {
         await client.query(query_update_column, [
-          column.get_attribute().get_uuid(),
           current_attrType.get_uuid(),
+          column.get_attribute().get_uuid(),
           column.get_sequence(),
+          column.get_ui_component(),
         ]);
       }
 

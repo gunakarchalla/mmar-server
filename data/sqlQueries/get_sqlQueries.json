@@ -266,7 +266,7 @@
     },
     {
       "name": "get_sequence_attr_by_attrType_uuid",
-      "query": "select hta.sequence, hta.uuid_attribute from has_table_attribute hta where hta.uuid_attribute_type = $1 order by hta.sequence"
+      "query": "select hta.sequence, hta.uuid_attribute, hta.ui_component from has_table_attribute hta where hta.uuid_attribute_type = $1 order by hta.sequence"
     },
     {
       "name": "get_attributes_table_from_attribute_uuid",
