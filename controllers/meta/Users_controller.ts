@@ -19,7 +19,7 @@ class Users_controller {
             if (user instanceof User) {
                 user.set_password(""); // obfuscate password
                 res.status(200).send(user);
-            } else if (User instanceof BaseError) {
+            } else if (user instanceof BaseError) {
                 throw user;
             } else {
                 throw new HTTP500Error(
@@ -164,7 +164,7 @@ class Users_controller {
                     maxAge: 900000,
                     httpOnly: true,
                 });
-                res.status(201).json(token);
+                res.status(201).json(filter_object(user, req.query.filter));
             } else if (user instanceof BaseError) {
                 throw user;
             } else {
@@ -230,14 +230,15 @@ class Users_controller {
             await client.query("BEGIN");
 
             const user = await Users_connection.deleteByUuid(
-                await client,
+                client,
                 req.params.uuid,
                 req.body.tokendata.uuid
             );
-            if (Array.isArray(user)) {
-                res.status(200).json(user);
-            } else if (user instanceof BaseError) {
+            if (user instanceof BaseError) {
                 throw user;
+            } else if (user !== undefined) {
+                const deletedUuids = Array.isArray(user) ? user : [user];
+                res.status(200).json(deletedUuids);
             } else {
                 throw new HTTP500Error(`Failed to delete user ${req.params.uuid}`);
             }
