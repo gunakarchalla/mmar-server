@@ -8,6 +8,7 @@ import {queries} from "../../index";
 import {
     BaseError,
     HTTP403NORIGHT,
+    HTTP404Error,
     HTTP409CONFLICT
 } from "../services/middleware/error_handling/standard_errors.middleware";
 
@@ -210,20 +211,30 @@ class UsersConnection implements CRUD {
             );
 
             for (const userGroup of userGroupDifference.added) {
-                const newUserGroup = await UsergroupsConnection.create(client, userGroup, userUuid);
-                if (newUserGroup instanceof Usergroup) {
-                    await UsergroupsConnection.addByUserUuid(
-                        client,
-                        uuidToUpdate,
-                        newUserGroup.get_uuid(),
-                    );
-                } else if (!(newUserGroup instanceof BaseError)) {
-                    await UsergroupsConnection.addByUserUuid(
-                        client,
-                        uuidToUpdate,
-                        userGroup.uuid,
-                    );
+                const userGroupUuid = userGroup.uuid;
+                if (!userGroupUuid) {
+                    return new HTTP404Error("User group UUID is required to link an existing user group");
                 }
+
+                const existingUserGroup = await UsergroupsConnection.getByUuid(
+                    client,
+                    userGroupUuid,
+                    userUuid,
+                );
+
+                if (existingUserGroup instanceof BaseError) {
+                    return existingUserGroup;
+                }
+
+                if (!existingUserGroup) {
+                    return new HTTP404Error(`User group ${userGroupUuid} does not exist`);
+                }
+
+                await UsergroupsConnection.addByUserUuid(
+                    client,
+                    uuidToUpdate,
+                    userGroupUuid,
+                );
             }
 
             for (const userGroup of userGroupDifference.modified) {
