@@ -263,44 +263,47 @@ class UsersgroupController {
         }
     };
 
-    add_instanceobject_to_usergroup: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-        try {
-            const usergroup = await UsergroupsConnection.addRightToInstanceObject(
-                client,
-                req.params.uuid,
-                req.params.uuidInstanceObject,
-                req.body.tokendata.uuid,
-                req.body.has_read_right,
-                req.body.has_write_right,
-                req.body.has_delete_right,
-            );
-            if (usergroup instanceof Usergroup) {
-                res.status(200).json(filter_object(usergroup, req.query.filter));
-            } else if (usergroup instanceof BaseError) {
-                throw usergroup;
-            } else {
-                throw new HTTP500Error("Object instance could not be added to usergroup");
-            }
-            await client.query("COMMIT");
-        } catch (err) {
-            await client.query("ROLLBACK");
-            next(err);
-        } finally {
-            (await client).release();
-        }
-    };
+    // add_instanceobject_to_usergroup: RequestHandler = async (req, res, next) => {
+    //     const client = await database_connection.getPool().connect();
+    //     try {
+    //         const usergroup = await UsergroupsConnection.addRightToInstanceObject(
+    //             client,
+    //             req.params.uuid,
+    //             req.params.uuidInstanceObject,
+    //             req.body.tokendata.uuid,
+    //             req.body.has_read_right,
+    //             req.body.has_write_right,
+    //             req.body.has_delete_right,
+    //         );
+    //         if (usergroup instanceof Usergroup) {
+    //             res.status(200).json(filter_object(usergroup, req.query.filter));
+    //         } else if (usergroup instanceof BaseError) {
+    //             throw usergroup;
+    //         } else {
+    //             throw new HTTP500Error("Object instance could not be added to usergroup");
+    //         }
+    //         await client.query("COMMIT");
+    //     } catch (err) {
+    //         await client.query("ROLLBACK");
+    //         next(err);
+    //     } finally {
+    //         (await client).release();
+    //     }
+    // };
 
     delete_metaobject_from_usergroup: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
             await client.query("BEGIN");
 
-            const usergroup = await UsergroupsConnection.deleteRight(
+            const usergroup = await UsergroupsConnection.deleteRightFromMetaObject(
                 client,
                 req.params.uuid,
                 req.params.uuidMetaObject,
                 req.body.tokendata.uuid,
+                req.body.has_read_right,
+                req.body.has_write_right,
+                req.body.has_delete_right
             );
             if (usergroup instanceof Usergroup) {
                 res.status(200).json(filter_object(usergroup, req.query.filter));
@@ -318,30 +321,30 @@ class UsersgroupController {
         }
     };
 
-    delete_instance_from_usergroup: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-        try {
-            const usergroup = await UsergroupsConnection.deleteRight(
-                client,
-                req.params.uuid,
-                req.params.uuidInstanceObject,
-                req.body.tokendata.uuid
-            );
-            if (usergroup instanceof Usergroup) {
-                res.status(200).json(filter_object(usergroup, req.query.filter));
-            } else if (usergroup instanceof BaseError) {
-                throw usergroup;
-            } else {
-                throw new HTTP500Error("Object could not be deleted from usergroup");
-            }
-            await client.query("COMMIT");
-        } catch (err) {
-            await client.query("ROLLBACK");
-            next(err);
-        } finally {
-            (await client).release();
-        }
-    };
+    // delete_instance_from_usergroup: RequestHandler = async (req, res, next) => {
+    //     const client = await database_connection.getPool().connect();
+    //     try {
+    //         const usergroup = await UsergroupsConnection.deleteRight(
+    //             client,
+    //             req.params.uuid,
+    //             req.params.uuidInstanceObject,
+    //             req.body.tokendata.uuid
+    //         );
+    //         if (usergroup instanceof Usergroup) {
+    //             res.status(200).json(filter_object(usergroup, req.query.filter));
+    //         } else if (usergroup instanceof BaseError) {
+    //             throw usergroup;
+    //         } else {
+    //             throw new HTTP500Error("Object could not be deleted from usergroup");
+    //         }
+    //         await client.query("COMMIT");
+    //     } catch (err) {
+    //         await client.query("ROLLBACK");
+    //         next(err);
+    //     } finally {
+    //         (await client).release();
+    //     }
+    // };
 }
 
 export default new UsersgroupController();

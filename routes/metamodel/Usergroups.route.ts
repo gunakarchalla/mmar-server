@@ -248,71 +248,71 @@ usergroupRouter.post(
     UsergroupsController.delete_metaobject_from_usergroup,
   );
   
-  usergroupRouter.post(
-    /*
-    #swagger.tags = ["User Groups"]
-    #swagger.summary = "Add an instance object to a user group"
-    #swagger.responses[200] = {
-      "description": "Successful operation" 
-    }
-    #swagger.responses[400] = {
-      "description": "Invalid UUID supplied",
-      "content": {
-        "application/json": {
-          "schema": {
-            "$ref": "#/components/schemas/Error" 
-          }
-        }
-      }
-    }
-    #swagger.responses[404] = {
-      "description": "User group or instance object not found",
-      "content": {
-        "application/json": {
-          "schema": {
-            "$ref": "#/components/schemas/Error" 
-          }
-        }
-      }
-    }
-    */
-    "/:uuid/instanceObjects/:uuidInstanceObject",
-    authenticate_token,
-    UsergroupsController.add_instanceobject_to_usergroup,
-  );
-  
-  usergroupRouter.delete(
-    /*
-    #swagger.tags = ["User Groups"]
-    #swagger.summary = "Delete an instance object from a user group"
-    #swagger.responses[204] = {
-      "description": "Instance object deleted from user group successfully" 
-    }
-    #swagger.responses[400] = {
-      "description": "Invalid UUID supplied",
-      "content": {
-        "application/json": {
-          "schema": {
-            "$ref": "#/components/schemas/Error" 
-          }
-        }
-      }
-    }
-    #swagger.responses[404] = {
-      "description": "User group or instance object not found",
-      "content": {
-        "application/json": {
-          "schema": {
-            "$ref": "#/components/schemas/Error" 
-          }
-        }
-      }
-    }
-    */
-    "/:uuid/instanceObjects/:uuidInstanceObject",
-    authenticate_token,
-    UsergroupsController.delete_metaobject_from_usergroup, 
-  );
+// usergroupRouter.post(
+//   /*
+//   #swagger.tags = ["User Groups"]
+//   #swagger.summary = "Add an instance object to a user group"
+//   #swagger.responses[200] = {
+//     "description": "Successful operation"
+//   }
+//   #swagger.responses[400] = {
+//     "description": "Invalid UUID supplied",
+//     "content": {
+//       "application/json": {
+//         "schema": {
+//           "$ref": "#/components/schemas/Error"
+//         }
+//       }
+//     }
+//   }
+//   #swagger.responses[404] = {
+//     "description": "User group or instance object not found",
+//     "content": {
+//       "application/json": {
+//         "schema": {
+//           "$ref": "#/components/schemas/Error"
+//         }
+//       }
+//     }
+//   }
+//   */
+//   "/:uuid/instanceObjects/:uuidInstanceObject",
+//   authenticate_token,
+//   UsergroupsController.add_instanceobject_to_usergroup,
+// );
+
+// usergroupRouter.delete(
+//   /*
+//   #swagger.tags = ["User Groups"]
+//   #swagger.summary = "Delete an instance object from a user group"
+//   #swagger.responses[204] = {
+//     "description": "Instance object deleted from user group successfully"
+//   }
+//   #swagger.responses[400] = {
+//     "description": "Invalid UUID supplied",
+//     "content": {
+//       "application/json": {
+//         "schema": {
+//           "$ref": "#/components/schemas/Error"
+//         }
+//       }
+//     }
+//   }
+//   #swagger.responses[404] = {
+//     "description": "User group or instance object not found",
+//     "content": {
+//       "application/json": {
+//         "schema": {
+//           "$ref": "#/components/schemas/Error"
+//         }
+//       }
+//     }
+//   }
+//   */
+//   "/:uuid/instanceObjects/:uuidInstanceObject",
+//   authenticate_token,
+//   UsergroupsController.delete_metaobject_from_usergroup,
+// );
 
   usergroupRouter.get(
     /*
