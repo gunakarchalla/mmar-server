@@ -33,11 +33,11 @@ class Instance_rolesConnection implements CRUD {
         const role_query = queries.getQuery_get("instance_role_uuid_query");
         let newRole;
         try {
-            if (userUuid) {
-                const read_check = queries.getQuery_get("read_check");
-                const res = await client.query(read_check, [roleUuid, userUuid]);
-                if (res.rowCount == 0) return new HTTP403NORIGHT(`The user ${userUuid} has no right to read the role ${roleUuid}`);
-            }
+            // if (userUuid) {
+            //     const read_check = queries.getQuery_get("read_check");
+            //     const res = await client.query(read_check, [roleUuid, userUuid]);
+            //     if (res.rowCount == 0) return new HTTP403NORIGHT(`The user ${userUuid} has no right to read the role ${roleUuid}`);
+            // }
             const res_role = await client.query(role_query, [roleUuid]);
 
             if (res_role.rowCount == 1) {

@@ -8,7 +8,7 @@ import Instance_port_connection from "./Instance_ports.connection";
 import Instance_attribute_connection from "./Instance_attributes.connection";
 import Instance_class_connection from "./Instance_classes.connection";
 import Instance_objects_connection from "./Instance_objects.connection";
-import {BaseError, HTTP403NORIGHT} from "../services/middleware/error_handling/standard_errors.middleware";
+import {BaseError, HTTP403NORIGHT, HTTP404Error} from "../services/middleware/error_handling/standard_errors.middleware";
 
 /**
  * @description - This is the class that handles the CRUD operations for the Scene Instances.
@@ -38,7 +38,7 @@ class Instance_scenesConnection implements CRUD {
         let returnSceneInstance;
         try {
             if (userUuid) {
-                const read_check = queries.getQuery_get("read_check");
+                const read_check = queries.getQuery_get("sceneinstance_read_check");
                 const res = await client.query(read_check, [sceneUuid, userUuid]);
                 if (res.rowCount == 0) {
                     return new HTTP403NORIGHT(`The user ${userUuid} has no right to read the scene instance ${sceneUuid}`);
@@ -159,6 +159,9 @@ class Instance_scenesConnection implements CRUD {
             const query_create_sceneInstance = queries.getQuery_post(
                 "create_scene_instance"
             );
+            const query_create_sceneInstance_user_access = queries.getQuery_post(
+                "create_scene_instance_user_access"
+            );
 
             const created_instanceObject = await Instance_objects_connection.create(
                 client,
@@ -178,6 +181,14 @@ class Instance_scenesConnection implements CRUD {
                 created_instanceObject.get_uuid(),
                 newScene.get_scene_type_uuid(),
             ]);
+
+            // Granting read, edit and delete access to the user who created the scene instance
+            if (userUuid) {
+                await client.query(query_create_sceneInstance_user_access, [
+                    created_instanceObject.get_uuid(),
+                    userUuid,
+                ]);
+            }
 
             // Batch insert operations for related instances
 
@@ -238,6 +249,20 @@ class Instance_scenesConnection implements CRUD {
         userUuid?: UUID
     ): Promise<SceneInstance | undefined | BaseError> {
         try {
+            const sceneInstanceExistsQuery = queries.getQuery_get("sceneinstance_exist_check");
+            const sceneInstanceExists = await client.query(sceneInstanceExistsQuery, [sceneInstanceUuidToUpdate]);
+            if (sceneInstanceExists.rowCount === 0) {
+                return new HTTP404Error(`The scene instance ${sceneInstanceUuidToUpdate} does not exist`);
+            }
+
+            if (userUuid) {
+                const edit_check = queries.getQuery_get("sceneinstance_edit_check");
+                const res = await client.query(edit_check, [sceneInstanceUuidToUpdate, userUuid]);
+                if (res.rowCount == 0) {
+                    return new HTTP403NORIGHT(`The user ${userUuid} has no right to update the scene instance ${sceneInstanceUuidToUpdate}`);
+                }
+            }
+
             const updated_obj = await Instance_objects_connection.update(
                 client,
                 sceneInstanceUuidToUpdate,
@@ -488,6 +513,14 @@ class Instance_scenesConnection implements CRUD {
         userUuid?: UUID
     ): Promise<UUID[] | undefined | BaseError> {
         try {
+            if (userUuid) {
+                const delete_check = queries.getQuery_get("sceneinstance_delete_check");
+                const res = await client.query(delete_check, [uuidToDelete, userUuid]);
+                if (res.rowCount == 0) {
+                    return new HTTP403NORIGHT(`The user ${userUuid} has no right to delete the scene instance ${uuidToDelete}`);
+                }
+            }
+
             return await Instance_objects_connection.deleteByUuid(
                 client,
                 uuidToDelete,

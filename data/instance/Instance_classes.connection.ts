@@ -41,13 +41,13 @@ class Instance_classesConnection implements CRUD {
             let returnClass;
 
 
-            if (userUuid) {
-                const read_check = queries.getQuery_get("read_check");
-                const res = await client.query(read_check, [instanceClassUuid, userUuid]);
-                if (res.rowCount == 0) {
-                    return new HTTP403NORIGHT(`The user ${userUuid} has no right to read the class instance ${instanceClassUuid}`);
-                }
-            }
+            // if (userUuid) {
+            //     const read_check = queries.getQuery_get("read_check");
+            //     const res = await client.query(read_check, [instanceClassUuid, userUuid]);
+            //     if (res.rowCount == 0) {
+            //         return new HTTP403NORIGHT(`The user ${userUuid} has no right to read the class instance ${instanceClassUuid}`);
+            //     }
+            // }
 
 
             const res_classes = await client.query(classes_query, [instanceClassUuid]);

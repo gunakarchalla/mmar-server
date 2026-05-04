@@ -36,14 +36,14 @@ class Instance_attributesConnection implements CRUD {
             const attribute_query = queries.getQuery_get("instance_attribute_uuid_query");
             let newAttribute;
 
-            if (userUuid) {
-                const read_check = queries.getQuery_get("read_check");
-                const res = await client.query(read_check, [attributeUuid, userUuid]);
-                if (res.rowCount == 0) {
-                    return new HTTP403NORIGHT(`The user ${userUuid} has no right to read the attribute instance ${attributeUuid}`);
-                }
+            // if (userUuid) {
+            //     const read_check = queries.getQuery_get("read_check");
+            //     const res = await client.query(read_check, [attributeUuid, userUuid]);
+            //     if (res.rowCount == 0) {
+            //         return new HTTP403NORIGHT(`The user ${userUuid} has no right to read the attribute instance ${attributeUuid}`);
+            //     }
 
-            }
+            // }
 
             const res_attribute = await client.query(attribute_query, [attributeUuid]);
 

@@ -157,6 +157,10 @@
       "query": "insert into scene_instance (uuid_instance_object, uuid_scene_type) values ($1, $2) returning uuid_instance_object "
     },
     {
+      "name": "create_scene_instance_user_access",
+      "query": "insert into scene_instance_user_access (uuid_scene_instance, uuid_user, read_access, edit_access, delete_access) values ($1, $2, true, true, true)"
+    },
+    {
       "name": "create_attribute_instance",
       "query": "insert into attribute_instance (uuid_instance_object,uuid_attribute) values ($1,$2) returning uuid_instance_object "
     },

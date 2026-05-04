@@ -311,6 +311,22 @@
     {
       "name": "instanciate_check",
       "query": "SELECT 1 WHERE EXISTS ( SELECT 1 FROM can_create_instances har JOIN has_user_user_group huug ON har.uuid_user_group = huug.uuid_user_group WHERE har.uuid_metaobject = $1 AND huug.uuid_user = $2) OR $2 = 'ff892138-77e0-47fe-a323-3fe0e1bf0240';"
+    },
+    {
+      "name": "sceneinstance_exist_check",
+      "query": "SELECT 1 FROM scene_instance WHERE uuid_instance_object = $1;"
+    },
+    {
+      "name": "sceneinstance_read_check",
+      "query": "SELECT 1 FROM scene_instance_user_access WHERE (uuid_scene_instance = $1 AND uuid_user = $2 AND read_access = true) OR $2 = 'ff892138-77e0-47fe-a323-3fe0e1bf0240';"
+    },
+    {
+      "name": "sceneinstance_edit_check",
+      "query": "SELECT 1 FROM scene_instance_user_access WHERE (uuid_scene_instance = $1 AND uuid_user = $2 AND edit_access = true) OR $2 = 'ff892138-77e0-47fe-a323-3fe0e1bf0240';"
+    },
+    {
+      "name": "sceneinstance_delete_check",
+      "query": "SELECT 1 FROM scene_instance_user_access WHERE (uuid_scene_instance = $1 AND uuid_user = $2 AND delete_access = true) OR $2 = 'ff892138-77e0-47fe-a323-3fe0e1bf0240';"
     }
   ]
 }

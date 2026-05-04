@@ -37,14 +37,14 @@ class Instance_portsConnection implements CRUD {
             const ports_query = queries.getQuery_get("instance_port_uuid_query");
             let newPort;
 
-            if (userUuid) {
-                const read_check = queries.getQuery_get("read_check");
-                const res = await client.query(read_check, [portUuid, userUuid]);
-                if (res.rowCount == 0) {
-                    return new HTTP403NORIGHT(`The user ${userUuid} has no right to read the port instance ${portUuid}`);
+            // if (userUuid) {
+            //     const read_check = queries.getQuery_get("read_check");
+            //     const res = await client.query(read_check, [portUuid, userUuid]);
+            //     if (res.rowCount == 0) {
+            //         return new HTTP403NORIGHT(`The user ${userUuid} has no right to read the port instance ${portUuid}`);
 
-                }
-            }
+            //     }
+            // }
             const res_port = await client.query(ports_query, [portUuid]);
 
             if (res_port.rowCount == 1) {

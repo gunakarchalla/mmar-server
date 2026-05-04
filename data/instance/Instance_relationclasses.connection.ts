@@ -36,11 +36,11 @@ class Instance_relationclassesConnection implements CRUD {
             const relclasses_query: string =
                 "select * from instance_object io, relationclass_instance ri, class_instance ci where io.uuid=ci.uuid_instance_object AND ri.uuid_class_instance=ci.uuid_instance_object AND ri.uuid_class_instance =$1 ";
             let newRelClass;
-            if (userUuid) {
-                const read_check = queries.getQuery_get("read_check");
-                const res = await client.query(read_check, [relclassUuid, userUuid]);
-                if (res.rowCount == 0) return new HTTP403NORIGHT(`The user ${userUuid} has no right to read the relationclass ${relclassUuid}`);
-            }
+            // if (userUuid) {
+            //     const read_check = queries.getQuery_get("read_check");
+            //     const res = await client.query(read_check, [relclassUuid, userUuid]);
+            //     if (res.rowCount == 0) return new HTTP403NORIGHT(`The user ${userUuid} has no right to read the relationclass ${relclassUuid}`);
+            // }
 
             const res_relclass = await client.query(relclasses_query, [relclassUuid]);
 
