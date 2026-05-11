@@ -282,8 +282,21 @@ sceneInstanceRouter.delete(
 
 // -----------------------------------------------------------------------------
 // Scene instance access management
-// NOTE: /access/me must be registered before /access/:uuid_user (Phase 3)
+// NOTE: /access/me is registered before /access/:uuid_user to prevent Express
+// from capturing the literal "me" as a UUID parameter.
 // -----------------------------------------------------------------------------
+
+sceneInstanceRouter.get(
+  /*
+  #swagger.tags = ['Instance']
+  #swagger.summary = 'Get caller\'s effective access level for a scene instance'
+  #swagger.responses[200] = { "description": "Successful operation" }
+  #swagger.responses[401] = { "description": "No or invalid JWT" }
+  */
+  "/sceneInstances/:uuid/access/me",
+  authenticate_token,
+  Scene_access_controller.get_my_access
+);
 
 sceneInstanceRouter.get(
   /*
