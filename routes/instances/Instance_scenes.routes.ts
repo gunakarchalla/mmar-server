@@ -1,5 +1,6 @@
 import { Router } from "express";
 import Instance_scene_controller from "../../controllers/instance/Instance_scenes.controller";
+import Scene_access_controller from "../../controllers/instance/Scene_access_controller";
 import { verif_scene_instance_body } from "../../data/services/rule_engine/instance_rule_engine/Instance_scenes.verificator";
 import { authenticate_token } from "../../data/services/middleware/auth.middleware";
 
@@ -277,6 +278,64 @@ sceneInstanceRouter.delete(
   "/sceneTypes/:uuid/sceneInstances",
   authenticate_token,
   Instance_scene_controller.delete_scene_instances
+);
+
+// -----------------------------------------------------------------------------
+// Scene instance access management
+// NOTE: /access/me must be registered before /access/:uuid_user (Phase 3)
+// -----------------------------------------------------------------------------
+
+sceneInstanceRouter.get(
+  /*
+  #swagger.tags = ['Instance']
+  #swagger.summary = 'List all users with access to a scene instance'
+  #swagger.responses[200] = { "description": "Successful operation" }
+  #swagger.responses[403] = { "description": "Caller lacks delete access" }
+  */
+  "/sceneInstances/:uuid/access",
+  authenticate_token,
+  Scene_access_controller.get_scene_instance_access
+);
+
+sceneInstanceRouter.post(
+  /*
+  #swagger.tags = ['Instance']
+  #swagger.summary = 'Grant or upsert access for a user on a scene instance'
+  #swagger.responses[200] = { "description": "Successful operation" }
+  #swagger.responses[400] = { "description": "Invalid access level" }
+  #swagger.responses[403] = { "description": "Caller lacks delete access" }
+  */
+  "/sceneInstances/:uuid/access",
+  authenticate_token,
+  Scene_access_controller.post_scene_instance_access
+);
+
+sceneInstanceRouter.patch(
+  /*
+  #swagger.tags = ['Instance']
+  #swagger.summary = 'Change a user\'s access level on a scene instance'
+  #swagger.responses[200] = { "description": "Successful operation" }
+  #swagger.responses[400] = { "description": "Invalid access level" }
+  #swagger.responses[403] = { "description": "Caller lacks delete access" }
+  #swagger.responses[409] = { "description": "Would leave zero delete-owners" }
+  */
+  "/sceneInstances/:uuid/access/:uuid_user",
+  authenticate_token,
+  Scene_access_controller.patch_scene_instance_access
+);
+
+sceneInstanceRouter.delete(
+  /*
+  #swagger.tags = ['Instance']
+  #swagger.summary = 'Revoke a user\'s access to a scene instance'
+  #swagger.responses[200] = { "description": "Successful operation" }
+  #swagger.responses[403] = { "description": "Caller lacks delete access" }
+  #swagger.responses[404] = { "description": "User has no access to this scene instance" }
+  #swagger.responses[409] = { "description": "Would leave zero delete-owners" }
+  */
+  "/sceneInstances/:uuid/access/:uuid_user",
+  authenticate_token,
+  Scene_access_controller.delete_scene_instance_access
 );
 
 export default sceneInstanceRouter;

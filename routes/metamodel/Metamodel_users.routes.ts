@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authenticate_token } from "../../data/services/middleware/auth.middleware";
 import Users_controller from "../../controllers/meta/Users_controller";
+import User_lookup_controller from "../../controllers/meta/User_lookup_controller";
 
 const usersRouter: Router = Router();
 
@@ -106,6 +107,39 @@ usersRouter.get(
   "/", 
   authenticate_token, 
   Users_controller.get_all_users
+);
+
+usersRouter.get(
+  /*
+  #swagger.tags = ["Users"]
+  #swagger.summary = "Look up a user by exact username (returns uuid, username, displayname only)"
+  #swagger.responses[200] = {
+    "description": "Successful operation",
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "uuid": { "type": "string" },
+            "username": { "type": "string" },
+            "displayname": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+  #swagger.responses[404] = {
+    "description": "User not found",
+    "content": {
+      "application/json": {
+        "schema": { "$ref": "#/components/schemas/Error" }
+      }
+    }
+  }
+  */
+  "/byUsername/:username",
+  authenticate_token,
+  User_lookup_controller.get_user_by_username,
 );
 
 usersRouter.delete(
