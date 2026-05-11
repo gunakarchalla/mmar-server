@@ -327,6 +327,22 @@
     {
       "name": "sceneinstance_delete_check",
       "query": "SELECT 1 FROM scene_instance_user_access WHERE (uuid_scene_instance = $1 AND uuid_user = $2 AND delete_access = true) OR $2 = 'ff892138-77e0-47fe-a323-3fe0e1bf0240';"
+    },
+    {
+      "name": "list_scene_instance_access",
+      "query": "SELECT siua.uuid_user, u.username, m.name AS displayname, siua.read_access, siua.edit_access, siua.delete_access FROM scene_instance_user_access siua JOIN users u ON u.uuid_metaobject = siua.uuid_user JOIN metaobject m ON m.uuid = u.uuid_metaobject WHERE siua.uuid_scene_instance = $1 ORDER BY u.username;"
+    },
+    {
+      "name": "get_user_by_username",
+      "query": "SELECT u.uuid_metaobject AS uuid, u.username, m.name AS displayname FROM users u JOIN metaobject m ON m.uuid = u.uuid_metaobject WHERE u.username = $1 LIMIT 1;"
+    },
+    {
+      "name": "scene_instance_access_for_user",
+      "query": "SELECT read_access, edit_access, delete_access FROM scene_instance_user_access WHERE uuid_scene_instance = $1 AND uuid_user = $2 LIMIT 1;"
+    },
+    {
+      "name": "is_user_delete_owner",
+      "query": "SELECT COALESCE((SELECT delete_access FROM scene_instance_user_access WHERE uuid_scene_instance = $1 AND uuid_user = $2), false) OR ($2::uuid = 'ff892138-77e0-47fe-a323-3fe0e1bf0240'::uuid) AS allowed;"
     }
   ]
 }

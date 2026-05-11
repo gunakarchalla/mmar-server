@@ -255,6 +255,10 @@
     {
       "name": "add_user_to_user_group",
       "query": "insert into has_user_user_group (uuid_user, uuid_user_group) values ($1, $2) "
+    },
+    {
+      "name": "upsert_scene_instance_user_access",
+      "query": "INSERT INTO scene_instance_user_access (uuid_scene_instance, uuid_user, read_access, edit_access, delete_access) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (uuid_scene_instance, uuid_user) DO UPDATE SET read_access = EXCLUDED.read_access, edit_access = EXCLUDED.edit_access, delete_access = EXCLUDED.delete_access RETURNING uuid_user, read_access, edit_access, delete_access;"
     }
   ]
 }

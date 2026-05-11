@@ -131,6 +131,10 @@
     {
       "name": "delete_user_from_user_group",
       "query": "delete from has_user_user_group where uuid_user_group = $1 and uuid_user = $2 "
+    },
+    {
+      "name": "delete_scene_instance_user_access",
+      "query": "DELETE FROM scene_instance_user_access WHERE uuid_scene_instance = $1 AND uuid_user = $2 RETURNING uuid_user;"
     }
   ]
 }
