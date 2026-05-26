@@ -72,15 +72,13 @@ class Metamodel_relationclassesConnection implements CRUD {
                 newRelClass = Relationclass.fromJS(res_class.rows[0]) as Relationclass;
                 const role_from = await Metamodel_roles_connection.getByUuid(
                     client,
-                    res_class.rows[0].role_from,
-                    userUuid
+                    res_class.rows[0].role_from
                 );
                 if (role_from instanceof Role) newRelClass.set_role_from(role_from);
 
                 const role_to = await Metamodel_roles_connection.getByUuid(
                     client,
-                    res_class.rows[0].role_to,
-                    userUuid
+                    res_class.rows[0].role_to
                 );
                 if (role_to instanceof Role) newRelClass.set_role_to(role_to);
 
