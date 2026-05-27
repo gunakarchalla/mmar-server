@@ -343,6 +343,10 @@
     {
       "name": "is_user_delete_owner",
       "query": "SELECT COALESCE((SELECT delete_access FROM scene_instance_user_access WHERE uuid_scene_instance = $1 AND uuid_user = $2), false) OR ($2::uuid = 'ff892138-77e0-47fe-a323-3fe0e1bf0240'::uuid) AS allowed;"
+    },
+    {
+      "name": "is_user_view_owner",
+      "query": "SELECT COALESCE((SELECT read_access FROM scene_instance_user_access WHERE uuid_scene_instance = $1 AND uuid_user = $2), false) OR ($2::uuid = 'ff892138-77e0-47fe-a323-3fe0e1bf0240'::uuid) AS allowed;"
     }
   ]
 }

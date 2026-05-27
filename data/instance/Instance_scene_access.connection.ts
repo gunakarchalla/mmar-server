@@ -102,3 +102,17 @@ export async function isDeleteOwner(
         client.release();
     }
 }
+
+export async function isViewOwner(
+    sceneInstanceUuid: string,
+    userUuid: string
+): Promise<boolean> {
+    const client = await database_connection.getPool().connect();
+    try {
+        const query = queries.getQuery_get("is_user_view_owner");
+        const result = await client.query(query, [sceneInstanceUuid, userUuid]);
+        return result.rows[0]?.allowed === true;
+    } finally {
+        client.release();
+    }
+}

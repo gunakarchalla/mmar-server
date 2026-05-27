@@ -13,6 +13,7 @@ import {
     upsertAccess,
     deleteAccess,
     isDeleteOwner,
+    isViewOwner,
     AccessLevel,
 } from "../../data/instance/Instance_scene_access.connection";
 
@@ -38,15 +39,15 @@ class Scene_access_controller {
             #swagger.tags = ['Instance']
             #swagger.summary = 'List all users with access to a scene instance'
             #swagger.responses[200] = { "description": "Successful operation" }
-            #swagger.responses[403] = { "description": "Caller lacks delete access" }
+            #swagger.responses[403] = { "description": "Caller lacks view access" }
             */
             const {uuid} = req.params;
             const callerUuid: string = req.body.tokendata.uuid;
 
-            const allowed = await isDeleteOwner(uuid, callerUuid);
+            const allowed = await isViewOwner(uuid, callerUuid);
             if (!allowed) {
                 return next(new HTTP403NORIGHT(
-                    `User ${callerUuid} does not have delete access on scene instance ${uuid}`
+                    `User ${callerUuid} does not have view access on scene instance ${uuid}`
                 ));
             }
 
