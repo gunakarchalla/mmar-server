@@ -238,8 +238,12 @@ class Metamodel_metaobjectsConnection implements CRUD {
         // Holds the UUIDs of objects that cannot be deleted due to restrictions
         const restrictedUuids: { uuid: UUID; name: string; type: string }[] = [];
 
-        // Base query to delete the object and return violations if any
-        let queryDel = "select delete_and_return_violation($1);";
+        // Base query to delete the object and return violations if any.
+        // delete_and_return_violation is declared "RETURNS TABLE (uuid, name, type, error)",
+        // so it must be queried with "select * from" to expose those columns individually.
+        // Calling it in the select-list (e.g. "select delete_and_return_violation($1)")
+        // would instead return a single composite column named "delete_and_return_violation".
+        let queryDel = "select * from delete_and_return_violation($1);";
         const queryParams = [uuidToDelete];
 
 
@@ -249,7 +253,7 @@ class Metamodel_metaobjectsConnection implements CRUD {
             if (res.rowCount == 0) return new HTTP403NORIGHT(`The user ${userUuid} has no right to delete the meta object ${uuidToDelete}`);
 
             // If a user UUID is provided, modify the query to include user-specific deletion checks
-            queryDel = "select delete_and_return_violation($1,$2)";
+            queryDel = "select * from delete_and_return_violation($1,$2)";
             queryParams.push(userUuid);
         }
 
@@ -297,8 +301,8 @@ class Metamodel_metaobjectsConnection implements CRUD {
             );
         }
 
-        // If there are UUIDs to return, return them, else return undefined
-        return returnUuids[0] != undefined ? returnUuids : resultDel.rows[0].delete_and_return_violation as UUID[];
+        // Return the UUIDs of all the deleted objects (empty array if nothing was deleted).
+        return returnUuids;
     }
 }
 

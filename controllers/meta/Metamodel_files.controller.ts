@@ -281,7 +281,7 @@ class Metamodel_filesController {
                 req.body.tokendata ? req.body.tokendata.uuid : undefined
             );
 
-            if (typeof sc === 'string') {
+            if (Array.isArray(sc)) {
                 res.status(200).send(`File with UUID ${specified_uuid} has been deleted sucessfully.`);
             } else if (sc instanceof BaseError) {
                 throw sc;
