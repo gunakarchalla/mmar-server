@@ -5,6 +5,8 @@ import {filter_object} from "../../data/services/middleware/object_filter";
 import {
   API404Error,
   BaseError,
+  HTTP403NORIGHT,
+  HTTP409CONFLICT,
   HTTP500Error,
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";
 import {AttributeType} from "../../../mmar-global-data-structure";
@@ -288,7 +290,10 @@ class Metamodel_attribute_typesController {
       await client.query("COMMIT");
     } catch (err) {
       await client.query("ROLLBACK");
-      next(err);
+      if (err instanceof HTTP403NORIGHT) res.status(403).json(err.message);
+      else if (err instanceof HTTP500Error) res.status(500).json(err.message);
+      else if (err instanceof HTTP409CONFLICT) res.status(409).json(err.message);
+      else next(err);
     } finally {
       (await client).release();
     }
