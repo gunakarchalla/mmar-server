@@ -8,7 +8,7 @@ import Instance_port_connection from "./Instance_ports.connection";
 import Instance_attribute_connection from "./Instance_attributes.connection";
 import Instance_class_connection from "./Instance_classes.connection";
 import Instance_objects_connection from "./Instance_objects.connection";
-import {BaseError, HTTP403NORIGHT, HTTP404Error} from "../services/middleware/error_handling/standard_errors.middleware";
+import {BaseError, HTTP403NORIGHT} from "../services/middleware/error_handling/standard_errors.middleware";
 
 /**
  * @description - This is the class that handles the CRUD operations for the Scene Instances.
@@ -252,7 +252,12 @@ class Instance_scenesConnection implements CRUD {
             const sceneInstanceExistsQuery = queries.getQuery_get("sceneinstance_exist_check");
             const sceneInstanceExists = await client.query(sceneInstanceExistsQuery, [sceneInstanceUuidToUpdate]);
             if (sceneInstanceExists.rowCount === 0) {
-                return new HTTP404Error(`The scene instance ${sceneInstanceUuidToUpdate} does not exist`);
+                // Upsert semantics: a PATCH that targets a scene instance which does not
+                // exist yet (the first autosave of a freshly created scene) creates it
+                // instead of failing with 404. This lets the client always PATCH, without
+                // the noisy PATCH -> 404 -> POST fallback it used to need.
+                newSceneInstance.set_uuid(sceneInstanceUuidToUpdate);
+                return await this.create(client, newSceneInstance, userUuid);
             }
 
             if (userUuid) {

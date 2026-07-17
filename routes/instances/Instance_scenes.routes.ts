@@ -53,40 +53,30 @@ sceneInstanceRouter.get(
 sceneInstanceRouter.patch(
   /*
   #swagger.tags = ['Instance']
-  #swagger.summary = 'Update a scene instance'
+  #swagger.summary = 'Update a scene instance (upsert: creates it if it does not exist yet)'
   #swagger.requestBody = {
     "description": "Updated scene instance object",
     "content": {
       "application/json": {
         "schema": {
-          "$ref": "#/components/schemas/SceneInstance" 
+          "$ref": "#/components/schemas/SceneInstance"
         }
       }
     },
     "required": true
   }
   #swagger.responses[200] = {
-    "description": "Successful operation",
+    "description": "Successful operation (scene instance updated or created)",
     "content": {
       "application/json": {
         "schema": {
-          "$ref": "#/components/schemas/SceneInstance" 
+          "$ref": "#/components/schemas/SceneInstance"
         }
       }
     }
   }
   #swagger.responses[400] = {
     "description": "Invalid payload supplied",
-    "content": {
-      "application/json": {
-        "schema": {
-          "$ref": "#/components/schemas/Error"
-        }
-      }
-    }
-  }
-  #swagger.responses[404] = {
-    "description": "Scene instance not found",
     "content": {
       "application/json": {
         "schema": {

@@ -40,6 +40,7 @@ describe("Instance sceneInstance tests", function () {
         roleUuid5: uuidv4(),
         roleInstanceUuid5: uuidv4(),
         sceneInstanceUuid5: uuidv4(),
+        sceneInstanceUpsertUuid: uuidv4(),
     };
 
     before(async () => {
@@ -140,6 +141,44 @@ describe("Instance sceneInstance tests", function () {
                 uuid_scene_type: uuids.sceneTypeUuid,
                 name: "BPMN Diagram - test instance - updated",
                 uuid_instance_object: uuids.sceneInstanceUuid,
+            });
+        });
+    });
+
+    describe("PATCH Instance scene (upsert on a non-existent scene)", function () {
+        it(`Should create the scene ${uuids.sceneInstanceUpsertUuid} via PATCH when it does not exist yet`, async () => {
+            // Autosave of a freshly-created scene PATCHes before the scene has ever been
+            // POSTed. The server PATCH is an upsert, so this creates it instead of 404ing.
+            const res1 = await server
+                .patch(`/instances/sceneInstances/${uuids.sceneInstanceUpsertUuid}`)
+                .set("content-type", "application/json")
+                .set("accept", "application/json")
+                .set("Cookie", "authcookie=" + token)
+                .send({
+                    uuid: uuids.sceneInstanceUpsertUuid,
+                    uuid_scene_type: uuids.sceneTypeUuid,
+                    name: "Upsert-created scene",
+                });
+
+            expect(res1).to.exist;
+            expect(res1.status).to.equal(200);
+            expect(res1.body).to.deep.include({
+                uuid: uuids.sceneInstanceUpsertUuid,
+                uuid_scene_type: uuids.sceneTypeUuid,
+                name: "Upsert-created scene",
+                uuid_instance_object: uuids.sceneInstanceUpsertUuid,
+            });
+
+            // Confirm it is really persisted (a subsequent PATCH is a normal update).
+            const res2 = await server
+                .get(`/instances/sceneInstances/${uuids.sceneInstanceUpsertUuid}`)
+                .set("content-type", "application/json")
+                .set("accept", "application/json")
+                .set("Cookie", "authcookie=" + token);
+            expect(res2.status).to.equal(200);
+            expect(res2.body).to.deep.include({
+                uuid: uuids.sceneInstanceUpsertUuid,
+                name: "Upsert-created scene",
             });
         });
     });
