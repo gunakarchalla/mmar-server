@@ -5,9 +5,10 @@ import { current_user } from "./request_context";
  * @description - Open a transaction and tell the database who is acting.
  *
  * Every connection of the pool authenticates as the same database role, so the
- * "who" column of logging.t_history cannot distinguish the platform users. The
- * uuid of the caller is therefore published as a transaction local setting,
- * which public.change_trigger() reads through public.current_app_user().
+ * database alone cannot distinguish the platform users. The uuid of the caller is
+ * therefore published as a transaction local setting, which
+ * public.change_trigger() reads through public.current_app_user() to fill
+ * logging.t_history.uuid_user.
  *
  * The setting is transaction local, the third argument of set_config being true:
  * it is discarded on commit or rollback and can never leak to the next request
