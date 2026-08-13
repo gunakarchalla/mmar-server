@@ -11,6 +11,8 @@ import {
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";
 import {filter_object} from "../../data/services/middleware/object_filter";
 import Metamodel_relationclasses_connection from "../../data/meta/Metamodel_relationclasses.connection";
+import { requireUser } from "../../data/services/middleware/auth.middleware";
+import { begin_transaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the relationclasses.
@@ -32,10 +34,10 @@ class Metamodel_relationclassesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const relationClasses = await Metamodel_relationclasses_connection.getAll(
                 client,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(relationClasses)) {
                 res
@@ -72,11 +74,11 @@ class Metamodel_relationclassesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_relationclasses_connection.getByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof Relationclass) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -109,11 +111,11 @@ class Metamodel_relationclassesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_relationclasses_connection.getAllByParentUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -148,11 +150,11 @@ class Metamodel_relationclassesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_relationclasses_connection.getByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof Relationclass) {
                 res.status(200).json(filter_object(sc.get_role_from(), req.query.filter));
@@ -188,11 +190,11 @@ class Metamodel_relationclassesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_relationclasses_connection.getByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof Relationclass) {
                 res.status(200).json(filter_object(sc.get_role_to(), req.query.filter));
@@ -227,11 +229,11 @@ class Metamodel_relationclassesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_relationclasses_connection.getByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof Relationclass) {
                 const roles = [];
@@ -268,14 +270,14 @@ class Metamodel_relationclassesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             //let newRelClass = request_to_RelationClass(req.body);
             const newRelClass = Relationclass.fromJS(req.body) as Relationclass;
             newRelClass.set_uuid(req.params.uuid);
             const sc = await Metamodel_relationclasses_connection.create(
                 client,
                 newRelClass,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof Relationclass) {
                 res.status(201).json(filter_object(sc, req.query.filter));
@@ -310,14 +312,14 @@ class Metamodel_relationclassesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const newRelClass = plainToInstance(Relationclass, req.body);
             const sc =
                 await Metamodel_relationclasses_connection.postRelationClassesForSceneType(
                     client,
                     req.params.uuid,
                     newRelClass,
-                    req.body.tokendata.uuid
+                    requireUser(req).uuid
                 );
             if (Array.isArray(sc)) {
                 res.status(201).json(filter_object(sc, req.query.filter));
@@ -351,7 +353,7 @@ class Metamodel_relationclassesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const newRelClass = Relationclass.fromJS(req.body) as Relationclass;
 
             const hardPatch = req.query.hardpatch === "true";
@@ -361,14 +363,14 @@ class Metamodel_relationclassesController {
                     client,
                     req.params.uuid,
                     newRelClass,
-                    req.body.tokendata.uuid
+                    requireUser(req).uuid
                 );
             } else {
                 sc = await Metamodel_relationclasses_connection.update(
                     client,
                     req.params.uuid,
                     newRelClass,
-                    req.body.tokendata.uuid
+                    requireUser(req).uuid
                 );
             }
 
@@ -401,12 +403,12 @@ class Metamodel_relationclassesController {
     delete_relationclass_by_uuid: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const deletedItems =
                 await Metamodel_relationclasses_connection.deleteByUuid(
                     client,
                     req.params.uuid,
-                    req.body.tokendata.uuid
+                    requireUser(req).uuid
                 );
             if (Array.isArray(deletedItems)) {
                 //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
@@ -443,12 +445,12 @@ class Metamodel_relationclassesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc =
                 await Metamodel_relationclasses_connection.deleteAllByParentUuid(
                     client,
                     req.params.uuid,
-                    req.body.tokendata.uuid
+                    requireUser(req).uuid
                 );
             if (Array.isArray(sc)) {
                 //The result does not contains any uuid, i.e. the metaobject is not linked to any instance

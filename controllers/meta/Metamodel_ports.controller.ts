@@ -5,6 +5,8 @@ import {Port} from "../../../mmar-global-data-structure";
 import {BaseError, HTTP500Error,} from "../../data/services/middleware/error_handling/standard_errors.middleware";
 import {filter_object} from "../../data/services/middleware/object_filter";
 import Metamodel_ports_connection from "../../data/meta/Metamodel_ports.connection";
+import { requireUser } from "../../data/services/middleware/auth.middleware";
+import { begin_transaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the meta ports.
@@ -16,10 +18,10 @@ class Metamodel_portsController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_ports_connection.getAll(
                 client,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -52,11 +54,11 @@ class Metamodel_portsController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_ports_connection.getByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof Port) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -90,11 +92,11 @@ class Metamodel_portsController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_ports_connection.getAllByParentUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -129,14 +131,14 @@ class Metamodel_portsController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const newPort = Port.fromJS(req.body) as Port;
             newPort.set_uuid(req.params.uuid);
             const sc = await Metamodel_ports_connection.create(
                 client,
                 newPort,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof Port) {
                 res.status(201).json(filter_object(sc, req.query.filter));
@@ -169,7 +171,7 @@ class Metamodel_portsController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             //let newPort = request_to_port(req.body);
             const newPort = plainToInstance(Port, req.body);
@@ -177,7 +179,7 @@ class Metamodel_portsController {
                 client,
                 req.params.uuid,
                 newPort,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(201).json(filter_object(sc, req.query.filter));
@@ -212,7 +214,7 @@ class Metamodel_portsController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const newPort = Port.fromJS(req.body) as Port;
             const hardPatch = req.query.hardpatch === "true";
@@ -223,14 +225,14 @@ class Metamodel_portsController {
                     client,
                     req.params.uuid,
                     newPort,
-                    req.body.tokendata.uuid
+                    requireUser(req).uuid
                 );
             } else {
                 sc = await Metamodel_ports_connection.update(
                     client,
                     req.params.uuid,
                     newPort,
-                    req.body.tokendata.uuid
+                    requireUser(req).uuid
                 );
             }
 
@@ -264,11 +266,11 @@ class Metamodel_portsController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_ports_connection.deleteByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
@@ -301,11 +303,11 @@ class Metamodel_portsController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_ports_connection.deletePortsForScene(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 //The result does not contains any uuid, i.e. the metaobject is not linked to any instance

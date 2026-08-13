@@ -3,6 +3,8 @@ import {database_connection} from "../../index";
 import {filter_object} from "../../data/services/middleware/object_filter";
 import Metamodel_metaobject_connection from "../../data/meta/Metamodel_metaobjects.connection";
 import {BaseError, HTTP500Error,} from "../../data/services/middleware/error_handling/standard_errors.middleware";
+import { requireUser } from "../../data/services/middleware/auth.middleware";
+import { begin_transaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle some the requests for the meta objects.
@@ -24,11 +26,11 @@ class Metamodel_objectsController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_metaobject_connection.deleteByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(200).json(filter_object(sc, req.query.filter));

@@ -11,6 +11,8 @@ import {
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";
 import {AttributeType} from "../../../mmar-global-data-structure";
 import Metamodel_attribute_types_connection from "../../data/meta/Metamodel_attribute_types.connection";
+import { requireUser } from "../../data/services/middleware/auth.middleware";
+import { begin_transaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the meta attribute type.
@@ -21,10 +23,10 @@ class Metamodel_attribute_typesController {
   get_all_attributetypes: RequestHandler = async (req, res, next) => {
     const client = await database_connection.getPool().connect();
     try {
-      await client.query("BEGIN");
+      await begin_transaction(client);
       const sc = await Metamodel_attribute_types_connection.getAll(
         client,
-        req.body.tokendata.uuid,
+        requireUser(req).uuid,
       );
       if (Array.isArray(sc)) {
         res.status(200).json(filter_object(sc, req.query.filter));
@@ -57,11 +59,11 @@ class Metamodel_attribute_typesController {
     const client = await database_connection.getPool().connect();
 
     try {
-      await client.query("BEGIN");
+      await begin_transaction(client);
       const sc = await Metamodel_attribute_types_connection.getByUuid(
         client,
         req.params.uuid,
-        req.body.tokendata.uuid,
+        requireUser(req).uuid,
       );
       if (sc instanceof AttributeType) {
         res.status(200).json(filter_object(sc, req.query.filter));
@@ -96,11 +98,11 @@ class Metamodel_attribute_typesController {
     const client = await database_connection.getPool().connect();
 
     try {
-      await client.query("BEGIN");
+      await begin_transaction(client);
       const sc = await Metamodel_attribute_types_connection.getAllByParentUuid(
         client,
         req.params.uuid,
-        req.body.tokendata.uuid,
+        requireUser(req).uuid,
       );
       if (Array.isArray(sc)) {
         res.status(200).json(filter_object(sc, req.query.filter));
@@ -135,14 +137,14 @@ class Metamodel_attribute_typesController {
     const client = await database_connection.getPool().connect();
 
     try {
-      await client.query("BEGIN");
+      await begin_transaction(client);
       const newAttributeType = AttributeType.fromJS(req.body) as AttributeType;
       const sc =
         await Metamodel_attribute_types_connection.postAttributeTypeForAttribute(
           client,
           req.params.uuid,
           newAttributeType,
-          req.body.tokendata.uuid,
+          requireUser(req).uuid,
         );
       if (sc instanceof AttributeType) {
         res.status(201).json(filter_object(sc, req.query.filter));
@@ -177,7 +179,7 @@ class Metamodel_attribute_typesController {
     const client = await database_connection.getPool().connect();
 
     try {
-      await client.query("BEGIN");
+      await begin_transaction(client);
       const newAttributeType = AttributeType.fromJS(req.body) as AttributeType;
       const hardPatch = req.query.hardpatch === "true";
       let sc;
@@ -187,14 +189,14 @@ class Metamodel_attribute_typesController {
           client,
           req.params.uuid,
           newAttributeType,
-          req.body.tokendata.uuid,
+          requireUser(req).uuid,
         );
       } else {
         sc = await Metamodel_attribute_types_connection.update(
           client,
           req.params.uuid,
           newAttributeType,
-          req.body.tokendata.uuid,
+          requireUser(req).uuid,
         );
       }
       if (sc instanceof AttributeType) {
@@ -230,13 +232,13 @@ class Metamodel_attribute_typesController {
     const client = await database_connection.getPool().connect();
 
     try {
-      await client.query("BEGIN");
+      await begin_transaction(client);
       const newAttributeType = AttributeType.fromJS(req.body) as AttributeType;
       newAttributeType.set_uuid(req.params.uuid);
       const sc = await Metamodel_attribute_types_connection.create(
         client,
         newAttributeType,
-        req.body.tokendata.uuid,
+        requireUser(req).uuid,
       );
       if (sc instanceof AttributeType) {
         res.status(201).json(filter_object(sc, req.query.filter));
@@ -270,12 +272,12 @@ class Metamodel_attribute_typesController {
     const client = await database_connection.getPool().connect();
 
     try {
-      await client.query("BEGIN");
+      await begin_transaction(client);
       const resultQuery =
         await Metamodel_attribute_types_connection.deleteByUuid(
           client,
           req.params.uuid,
-          req.body.tokendata.uuid,
+          requireUser(req).uuid,
         );
       if (Array.isArray(resultQuery)) {
         //The result does not contains any uuid, i.e. the metaobject is not linked to any instance

@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
-import { BaseError } from "./standard_errors.middleware";
+import { BaseError, HttpStatusCode } from "./standard_errors.middleware";
+import { record_security_event } from "../../security_audit.service";
 import * as winston from "winston";
 import { LogCallback } from "winston";
 
@@ -11,6 +12,19 @@ export function logError(
 ): void {
   if (!errorHandler.isTrustedError(err)) {
     next(err);
+  }
+  // Every refused request funnels through here, whichever layer raised it, so
+  // this is the one place where a denial can be audited exhaustively.
+  if (err.httpCode === HttpStatusCode.FORBIDDEN) {
+    record_security_event({
+      event: "access_denied",
+      outcome: "failure",
+      req: req,
+      uuid_user: req.user?.uuid,
+      username: req.user?.username,
+      reason: err.name,
+      detail: { message: err.message },
+    });
   }
   errorHandler.handleError(err);
   res.status(err.httpCode || 500);

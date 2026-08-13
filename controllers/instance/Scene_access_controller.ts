@@ -16,6 +16,8 @@ import {
     isViewOwner,
     AccessLevel,
 } from "../../data/instance/Instance_scene_access.connection";
+import { requireUser } from "../../data/services/middleware/auth.middleware";
+import {record_security_event} from "../../data/services/security_audit.service";
 
 const VALID_LEVELS: AccessLevel[] = ['read', 'edit', 'delete'];
 
@@ -42,7 +44,7 @@ class Scene_access_controller {
             #swagger.responses[403] = { "description": "Caller lacks view access" }
             */
             const {uuid} = req.params;
-            const callerUuid: string = req.body.tokendata.uuid;
+            const callerUuid: string = requireUser(req).uuid;
 
             const allowed = await isViewOwner(uuid, callerUuid);
             if (!allowed) {
@@ -76,7 +78,7 @@ class Scene_access_controller {
             #swagger.responses[403] = { "description": "Caller lacks delete access" }
             */
             const {uuid} = req.params;
-            const callerUuid: string = req.body.tokendata.uuid;
+            const callerUuid: string = requireUser(req).uuid;
             const {uuid_user, access} = req.body;
 
             const allowed = await isDeleteOwner(uuid, callerUuid);
@@ -97,6 +99,17 @@ class Scene_access_controller {
             if (!row) {
                 return next(new HTTP500Error(`Failed to upsert access for user ${uuid_user}`));
             }
+            record_security_event({
+                event: "access_grant",
+                outcome: "success",
+                req: req,
+                uuid_user: callerUuid,
+                detail: {
+                    scene_instance: uuid,
+                    target_user: uuid_user,
+                    access: access,
+                },
+            });
             return res.status(200).json(row);
         } catch (err) {
             next(err);
@@ -123,7 +136,7 @@ class Scene_access_controller {
             #swagger.responses[409] = { "description": "Would leave zero delete-owners" }
             */
             const {uuid, uuid_user} = req.params;
-            const callerUuid: string = req.body.tokendata.uuid;
+            const callerUuid: string = requireUser(req).uuid;
             const {access} = req.body;
 
             const allowed = await isDeleteOwner(uuid, callerUuid);
@@ -155,6 +168,17 @@ class Scene_access_controller {
             if (!row) {
                 return next(new HTTP404Error(`User ${uuid_user} does not have access to scene instance ${uuid}`));
             }
+            record_security_event({
+                event: "access_grant",
+                outcome: "success",
+                req: req,
+                uuid_user: callerUuid,
+                detail: {
+                    scene_instance: uuid,
+                    target_user: uuid_user,
+                    access: access,
+                },
+            });
             return res.status(200).json(row);
         } catch (err) {
             next(err);
@@ -180,7 +204,7 @@ class Scene_access_controller {
             #swagger.responses[409] = { "description": "Would leave zero delete-owners" }
             */
             const {uuid, uuid_user} = req.params;
-            const callerUuid: string = req.body.tokendata.uuid;
+            const callerUuid: string = requireUser(req).uuid;
 
             const allowed = await isDeleteOwner(uuid, callerUuid);
             if (!allowed) {
@@ -202,6 +226,13 @@ class Scene_access_controller {
             if (!deletedUuid) {
                 return next(new HTTP404Error(`User ${uuid_user} does not have access to scene instance ${uuid}`));
             }
+            record_security_event({
+                event: "access_revoke",
+                outcome: "success",
+                req: req,
+                uuid_user: callerUuid,
+                detail: { scene_instance: uuid, target_user: uuid_user },
+            });
             return res.status(200).json({uuid_user: deletedUuid});
         } catch (err) {
             next(err);
@@ -221,7 +252,7 @@ class Scene_access_controller {
             #swagger.responses[200] = { "description": "Successful operation" }
             */
             const {uuid} = req.params;
-            const callerUuid: string = req.body.tokendata.uuid;
+            const callerUuid: string = requireUser(req).uuid;
 
             const access = await getAccessForUser(uuid, callerUuid);
             const level = access

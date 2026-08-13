@@ -12,6 +12,8 @@ import {filter_object} from "../../data/services/middleware/object_filter";
 import Metamodel_scenetypes_connection from "../../data/meta/Metamodel_scenetypes.connection";
 import Metamodel_classes_connection from "../../data/meta/Metamodel_classes.connection";
 import Metamodel_relationclassesConnection from "../../data/meta/Metamodel_relationclasses.connection";
+import { requireUser } from "../../data/services/middleware/auth.middleware";
+import { begin_transaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the meta scene.
@@ -22,7 +24,7 @@ class Metamodel_scenetypesController {
     /**
      * @description - Get a specific scene type by its uuid.
      * @param {UUID} req.params.uuid - The uuid of the scene type.
-     * @param {userUuid} req.body.tokendata.uuid - The uuid of the user.
+     * @param {userUuid} requireUser(req).uuid - The uuid of the authenticated user.
      * @param res
      * @param next
      * @yield {status: 200, body: {SceneType}} - The scene type.
@@ -35,11 +37,11 @@ class Metamodel_scenetypesController {
     get_scenetypes_by_uuid: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_scenetypes_connection.getByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid,
+                requireUser(req).uuid,
             );
             if (sc instanceof SceneType) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -70,11 +72,11 @@ class Metamodel_scenetypesController {
     get_scenetypes: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const mm = new Metamodel();
             const sceneTypes = await Metamodel_scenetypes_connection.getAll(
                 client,
-                req.body.tokendata.uuid,
+                requireUser(req).uuid,
             );
             if (Array.isArray(sceneTypes)) {
                 mm.set_sceneType(sceneTypes);
@@ -82,7 +84,7 @@ class Metamodel_scenetypesController {
 
             const classes = await Metamodel_classes_connection.getAll(
                 client,
-                req.body.tokendata.uuid,
+                requireUser(req).uuid,
             );
             if (Array.isArray(classes)) {
                 mm.set_class(classes);
@@ -90,7 +92,7 @@ class Metamodel_scenetypesController {
 
             const relations = await Metamodel_relationclassesConnection.getAll(
                 client,
-                req.body.tokendata.uuid,
+                requireUser(req).uuid,
             );
             if (Array.isArray(relations)) {
                 mm.set_relationclass(relations);
@@ -120,7 +122,7 @@ class Metamodel_scenetypesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const newSceneType = SceneType.fromJS(req.body) as SceneType;
 
             if (req.params.uuid) {
@@ -129,7 +131,7 @@ class Metamodel_scenetypesController {
             const sc = await Metamodel_scenetypes_connection.create(
                 client,
                 newSceneType,
-                req.body.tokendata.uuid,
+                requireUser(req).uuid,
             );
             if (sc instanceof SceneType) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -162,7 +164,7 @@ class Metamodel_scenetypesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const newSceneType = SceneType.fromJS(req.body) as SceneType;
 
             const hardPatch = req.query.hardpatch === "true";
@@ -173,14 +175,14 @@ class Metamodel_scenetypesController {
                     client,
                     req.params.uuid,
                     newSceneType,
-                    req.body.tokendata.uuid,
+                    requireUser(req).uuid,
                 );
             } else {
                 sc = await Metamodel_scenetypes_connection.update(
                     client,
                     req.params.uuid,
                     newSceneType,
-                    req.body.tokendata.uuid,
+                    requireUser(req).uuid,
                 );
             }
 
@@ -214,11 +216,11 @@ class Metamodel_scenetypesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_scenetypes_connection.deleteByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid,
+                requireUser(req).uuid,
             );
             if (Array.isArray(sc)) {
                 //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
@@ -255,8 +257,8 @@ class Metamodel_scenetypesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
-            const sc = await Metamodel_scenetypes_connection.deleteAll(client, req.body.tokendata.uuid);
+            await begin_transaction(client);
+            const sc = await Metamodel_scenetypes_connection.deleteAll(client, requireUser(req).uuid);
             if (Array.isArray(sc)) {
                 //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
                 res.status(200).json(filter_object(sc, req.query.filter));

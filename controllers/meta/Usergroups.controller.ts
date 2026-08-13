@@ -4,16 +4,18 @@ import {BaseError, HTTP500Error,} from "../../data/services/middleware/error_han
 import UsergroupsConnection from "../../data/meta/Usergroups.connection";
 import {Usergroup} from "../../../mmar-global-data-structure";
 import {filter_object} from "../../data/services/middleware/object_filter";
+import { requireUser } from "../../data/services/middleware/auth.middleware";
+import { begin_transaction } from "../../data/services/transaction";
 
 class UsersgroupController {
     get_usergroups: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const usersgroups = await UsergroupsConnection.getAll(
                 client,
-                req.body.tokendata.uuid,
+                requireUser(req).uuid,
             );
             if (Array.isArray(usersgroups)) {
                 res
@@ -38,12 +40,12 @@ class UsersgroupController {
     get_usergroup_by_uuid: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const usergroup = await UsergroupsConnection.getByUuid(
                 await client,
                 req.params.uuid,
-                req.body.tokendata.uuid,
+                requireUser(req).uuid,
             );
             if (usergroup instanceof Usergroup) {
                 res.status(200).json(filter_object(usergroup, req.query.filter));
@@ -64,12 +66,12 @@ class UsersgroupController {
     get_usergroup_for_user_uuid: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const usergroup = await UsergroupsConnection.getAllByUserUuid(
                 await client,
                 req.params.uuid,
-                req.body.tokendata.uuid,
+                requireUser(req).uuid,
             );
             if (Array.isArray(usergroup)) {
                 res.status(200).json(filter_object(usergroup, req.query.filter));
@@ -89,12 +91,12 @@ class UsersgroupController {
     post_usergroup: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const newUserGroup = Usergroup.fromJS(req.body) as Usergroup;
             if (req.params.uuid) {
                 newUserGroup.uuid = req.params.uuid;
             }
-            const usergroup = await UsergroupsConnection.create(client, newUserGroup, req.body.tokendata.uuid);
+            const usergroup = await UsergroupsConnection.create(client, newUserGroup, requireUser(req).uuid);
             if (usergroup instanceof Usergroup) {
                 res.status(201).json(usergroup);
             } else if (usergroup instanceof BaseError) {
@@ -115,7 +117,7 @@ class UsersgroupController {
     patch_usergroup: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const userGrpToUpdate = Usergroup.fromJS(req.body) as Usergroup;
             userGrpToUpdate.uuid = req.params.uuid;
@@ -126,14 +128,14 @@ class UsersgroupController {
                     client,
                     req.params.uuid,
                     userGrpToUpdate,
-                    req.body.tokendata.uuid,
+                    requireUser(req).uuid,
                 );
             } else {
                 sc = await UsergroupsConnection.update(
                     client,
                     req.params.uuid,
                     userGrpToUpdate,
-                    req.body.tokendata.uuid
+                    requireUser(req).uuid
                 );
             }
             if (sc instanceof Usergroup) {
@@ -155,12 +157,12 @@ class UsersgroupController {
     delete_usergroup: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const usergroup = await UsergroupsConnection.deleteByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid,
+                requireUser(req).uuid,
             );
             if (Array.isArray(usergroup)) {
                 res.status(200).json(filter_object(usergroup, req.query.filter));
@@ -181,13 +183,13 @@ class UsersgroupController {
     delete_usergroup_for_user_uuid: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const usergroup = await UsergroupsConnection.deleteByUserUuid(
                 client,
                 req.params.userUuid,
                 req.params.groupUuid,
-                req.body.tokendata.uuid,
+                requireUser(req).uuid,
             );
             if (usergroup instanceof Usergroup) {
                 res.status(200).json(filter_object(usergroup, req.query.filter));
@@ -208,13 +210,13 @@ class UsersgroupController {
     add_usergroup_for_user_uuid: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const usergroup = await UsergroupsConnection.addByUserUuid(
                 client,
                 req.params.userUuid,
                 req.params.groupUuid,
-                req.body.tokendata.uuid,
+                requireUser(req).uuid,
             );
             if (usergroup instanceof Usergroup) {
                 res.status(200).json(filter_object(usergroup, req.query.filter));
@@ -235,13 +237,13 @@ class UsersgroupController {
     add_metaobject_to_usergroup: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const usergroup = await UsergroupsConnection.addRightToMetaObject(
                 client,
                 req.params.uuid,
                 req.params.uuidMetaObject,
-                req.body.tokendata.uuid,
+                requireUser(req).uuid,
                 req.body.has_read_right,
                 req.body.has_write_right,
                 req.body.has_delete_right
@@ -270,7 +272,7 @@ class UsersgroupController {
     //             client,
     //             req.params.uuid,
     //             req.params.uuidInstanceObject,
-    //             req.body.tokendata.uuid,
+    //             requireUser(req).uuid,
     //             req.body.has_read_right,
     //             req.body.has_write_right,
     //             req.body.has_delete_right,
@@ -294,13 +296,13 @@ class UsersgroupController {
     delete_metaobject_from_usergroup: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const usergroup = await UsergroupsConnection.deleteRightFromMetaObject(
                 client,
                 req.params.uuid,
                 req.params.uuidMetaObject,
-                req.body.tokendata.uuid,
+                requireUser(req).uuid,
                 req.body.has_read_right,
                 req.body.has_write_right,
                 req.body.has_delete_right
@@ -328,7 +330,7 @@ class UsersgroupController {
     //             client,
     //             req.params.uuid,
     //             req.params.uuidInstanceObject,
-    //             req.body.tokendata.uuid
+    //             requireUser(req).uuid
     //         );
     //         if (usergroup instanceof Usergroup) {
     //             res.status(200).json(filter_object(usergroup, req.query.filter));

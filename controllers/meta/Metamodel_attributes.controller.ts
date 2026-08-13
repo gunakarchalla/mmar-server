@@ -11,6 +11,8 @@ import {
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";
 import {filter_object} from "../../data/services/middleware/object_filter";
 import Metamodel_attributes_connection from "../../data/meta/Metamodel_attributes.connection";
+import { requireUser } from "../../data/services/middleware/auth.middleware";
+import { begin_transaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the meta attributes.
@@ -22,10 +24,10 @@ class Metamodel_attributesController {
     const client = await database_connection.getPool().connect();
 
     try {
-      await client.query("BEGIN");
+      await begin_transaction(client);
       const sc = await Metamodel_attributes_connection.getAll(
         client,
-        req.body.tokendata.uuid,
+        requireUser(req).uuid,
       );
       if (Array.isArray(sc)) {
         res.status(200).json(filter_object(sc, req.query.filter));
@@ -58,11 +60,11 @@ class Metamodel_attributesController {
     const client = await database_connection.getPool().connect();
 
     try {
-      await client.query("BEGIN");
+      await begin_transaction(client);
       const sc = await Metamodel_attributes_connection.getByUuid(
         client,
         req.params.uuid,
-        req.body.tokendata.uuid,
+        requireUser(req).uuid,
       );
       if (sc instanceof Attribute) {
         res.status(200).json(filter_object(sc, req.query.filter));
@@ -97,11 +99,11 @@ class Metamodel_attributesController {
     const client = await database_connection.getPool().connect();
 
     try {
-      await client.query("BEGIN");
+      await begin_transaction(client);
       const sc = await Metamodel_attributes_connection.getAllByParentUuid(
         client,
         req.params.uuid,
-        req.body.tokendata.uuid,
+        requireUser(req).uuid,
       );
       if (Array.isArray(sc)) {
         res.status(200).json(filter_object(sc, req.query.filter));
@@ -134,11 +136,11 @@ class Metamodel_attributesController {
     const client = await database_connection.getPool().connect();
 
     try {
-      await client.query("BEGIN");
+      await begin_transaction(client);
       const sc = await Metamodel_attributes_connection.getAllByParentUuid(
         client,
         req.params.uuid,
-        req.body.tokendata.uuid,
+        requireUser(req).uuid,
       );
       if (Array.isArray(sc)) {
         res.status(200).json(filter_object(sc, req.query.filter));
@@ -172,14 +174,14 @@ class Metamodel_attributesController {
     const client = await database_connection.getPool().connect();
 
     try {
-      await client.query("BEGIN");
+      await begin_transaction(client);
 
       const newAttribute = Attribute.fromJS(req.body) as Attribute;
       newAttribute.set_uuid(req.params.uuid);
       const sc = await Metamodel_attributes_connection.create(
         client,
         newAttribute,
-        req.body.tokendata.uuid,
+        requireUser(req).uuid,
       );
       if (sc instanceof Attribute) {
         res.status(201).json(filter_object(sc, req.query.filter));
@@ -214,14 +216,14 @@ class Metamodel_attributesController {
     const client = await database_connection.getPool().connect();
 
     try {
-      await client.query("BEGIN");
+      await begin_transaction(client);
 
       const newAttribute = plainToInstance(Attribute, req.body);
       const sc = await Metamodel_attributes_connection.postForParentUuid(
         client,
         req.params.uuid,
         newAttribute,
-        req.body.tokendata.uuid,
+        requireUser(req).uuid,
       );
       if (Array.isArray(sc)) {
         res.status(201).json(filter_object(sc, req.query.filter));
@@ -256,14 +258,14 @@ class Metamodel_attributesController {
     const client = await database_connection.getPool().connect();
 
     try {
-      await client.query("BEGIN");
+      await begin_transaction(client);
 
       const newAttribute = plainToInstance(Attribute, req.body);
       const sc = await Metamodel_attributes_connection.postForParentUuid(
         client,
         req.params.uuid,
         newAttribute,
-        req.body.tokendata.uuid,
+        requireUser(req).uuid,
       );
       if (Array.isArray(sc)) {
         res.status(201).json(filter_object(sc, req.query.filter));
@@ -299,14 +301,14 @@ class Metamodel_attributesController {
     const client = await database_connection.getPool().connect();
 
     try {
-      await client.query("BEGIN");
+      await begin_transaction(client);
 
       const newAttribute = Attribute.fromJS(req.body) as Attribute;
       const sc = await Metamodel_attributes_connection.update(
         client,
         req.params.uuid,
         newAttribute,
-        req.body.tokendata.uuid,
+        requireUser(req).uuid,
       );
       if (sc instanceof Attribute) {
         res.status(200).json(filter_object(sc, req.query.filter));
@@ -342,13 +344,13 @@ class Metamodel_attributesController {
     const client = await database_connection.getPool().connect();
 
     try {
-      await client.query("BEGIN");
+      await begin_transaction(client);
       const newAttribute = plainToInstance(Attribute, req.body);
       const sc = await Metamodel_attributes_connection.updateForParentUuid(
         client,
         req.params.uuid,
         newAttribute,
-        req.body.tokendata.uuid,
+        requireUser(req).uuid,
       );
       if (Array.isArray(sc)) {
         res.status(200).json(filter_object(sc, req.query.filter));
@@ -382,11 +384,11 @@ class Metamodel_attributesController {
     const client = await database_connection.getPool().connect();
 
     try {
-      await client.query("BEGIN");
+      await begin_transaction(client);
       const sc = await Metamodel_attributes_connection.deleteByUuid(
         client,
         req.params.uuid,
-        req.body.tokendata.uuid,
+        requireUser(req).uuid,
       );
       if (Array.isArray(sc)) {
         //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
@@ -424,12 +426,12 @@ class Metamodel_attributesController {
     const client = await database_connection.getPool().connect();
 
     try {
-      await client.query("BEGIN");
+      await begin_transaction(client);
 
       const sc = await Metamodel_attributes_connection.deleteAllByParentUuid(
         client,
         req.params.uuid,
-        req.body.tokendata.uuid,
+        requireUser(req).uuid,
       );
       if (Array.isArray(sc)) {
         //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
@@ -467,12 +469,12 @@ class Metamodel_attributesController {
     const client = await database_connection.getPool().connect();
 
     try {
-      await client.query("BEGIN");
+      await begin_transaction(client);
 
       const sc = await Metamodel_attributes_connection.deleteAllByParentUuid(
         client,
         req.params.uuid,
-        req.body.tokendata.uuid,
+        requireUser(req).uuid,
       );
       if (Array.isArray(sc)) {
         //The result does not contains any uuid, i.e. the metaobject is not linked to any instance

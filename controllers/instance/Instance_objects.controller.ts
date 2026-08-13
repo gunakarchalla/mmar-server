@@ -3,6 +3,8 @@ import {database_connection} from "../../index";
 import {filter_object} from "../../data/services/middleware/object_filter";
 import {BaseError, HTTP500Error,} from "../../data/services/middleware/error_handling/standard_errors.middleware";
 import Instance_objects_connection from "../../data/instance/Instance_objects.connection";
+import { requireUser } from "../../data/services/middleware/auth.middleware";
+import { begin_transaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the object instances.
@@ -24,11 +26,11 @@ class Instance_objectsController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Instance_objects_connection.deleteByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 (await client).release();

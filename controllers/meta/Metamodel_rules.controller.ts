@@ -10,6 +10,8 @@ import {Rule} from "../../../mmar-global-data-structure";
 import {plainToInstance} from "class-transformer";
 import {filter_object} from "../../data/services/middleware/object_filter";
 import Metamodel_rules_connection from "../../data/meta/Metamodel_rules.connection";
+import { requireUser } from "../../data/services/middleware/auth.middleware";
+import { begin_transaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the rules.
@@ -31,11 +33,11 @@ class Metamodel_rulesController {
     get_rules_by_uuid: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_rules_connection.getByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof Rule) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -69,11 +71,11 @@ class Metamodel_rulesController {
     get_rules_for_metaobject_uuid: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_rules_connection.getAllByParentUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof Array) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -108,14 +110,14 @@ class Metamodel_rulesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const newRule = Rule.fromJS(req.body) as Rule;
             const sc = await Metamodel_rules_connection.update(
                 await client,
                 req.params.uuid,
                 newRule,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof Rule) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -147,7 +149,7 @@ class Metamodel_rulesController {
     post_rule_by_uuid: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const newRule = Rule.fromJS(req.body) as Rule;
             if (req.params.uuid) {
@@ -156,7 +158,7 @@ class Metamodel_rulesController {
             const sc = await Metamodel_rules_connection.create(
                 client,
                 newRule,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof Rule) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -189,14 +191,14 @@ class Metamodel_rulesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const newRules = plainToInstance(Rule, req.body);
             const sc = await Metamodel_rules_connection.postRuleForMetaobject(
                 client,
                 req.params.uuid,
                 newRules,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -227,7 +229,7 @@ class Metamodel_rulesController {
     delete_rules_by_uuid: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_rules_connection.deleteByUuid(
                 client,
                 req.params.uuid

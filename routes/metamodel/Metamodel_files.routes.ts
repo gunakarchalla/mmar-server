@@ -1,6 +1,7 @@
 import { Router } from "express";
 import Metamodel_file_controller from "../../controllers/meta/Metamodel_files.controller";
 import multer from "multer";
+import { authenticate_token } from "../../data/services/middleware/auth.middleware";
 const upload = multer();
 /**
  * @description - These are the routes for the file.
@@ -36,6 +37,7 @@ fileMetaRouter.get(
   }
   */
   "/files/page",
+  authenticate_token,
   function (req, res, next) {
     if (req.query.name) {
       Metamodel_file_controller.get_file_by_name(req, res, next);
@@ -71,10 +73,15 @@ fileMetaRouter.get(
   }
   */
   "/files",
+  authenticate_token,
   Metamodel_file_controller.get_all_files
 );
 
-fileMetaRouter.get("/files/alluuids", Metamodel_file_controller.get_all_uuids);
+fileMetaRouter.get(
+  "/files/alluuids",
+  authenticate_token,
+  Metamodel_file_controller.get_all_uuids
+);
 
 fileMetaRouter.get(
   /*
@@ -105,6 +112,7 @@ fileMetaRouter.get(
   }
   */
   "/files/:uuid",
+  authenticate_token,
   Metamodel_file_controller.get_file_by_uuid
 );
 
@@ -146,6 +154,7 @@ fileMetaRouter.post(
   }
   */
   "/files/:uuid",
+  authenticate_token,
   upload.single("file"),
   Metamodel_file_controller.post_file_by_uuid
 );
@@ -186,6 +195,7 @@ fileMetaRouter.patch(
   }
   */
   "/files/:uuid",
+  authenticate_token,
   upload.single("file"),
   Metamodel_file_controller.patch_file_by_uuid
 );
@@ -226,6 +236,7 @@ fileMetaRouter.post(
   }
   */
   "/files",
+  authenticate_token,
   upload.single("file"),
   Metamodel_file_controller.post_file
 );
@@ -248,7 +259,9 @@ fileMetaRouter.delete(
     }
   }
   */
-  "/files/:uuid", Metamodel_file_controller.delete_file_by_uuid
+  "/files/:uuid",
+  authenticate_token,
+  Metamodel_file_controller.delete_file_by_uuid
 );
 
 export default fileMetaRouter;

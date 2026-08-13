@@ -4,6 +4,7 @@ import { File, UUID } from "../../../mmar-global-data-structure";
 import Metamodel_metaobject_connection from "./Metamodel_metaobjects.connection";
 import { queries } from "../../index";
 import { BaseError, HTTP403NORIGHT } from "../services/middleware/error_handling/standard_errors.middleware";
+import { begin_transaction } from "../../data/services/transaction";
 
 class Metamodel_filesConnection implements CRUD {
 
@@ -39,7 +40,7 @@ class Metamodel_filesConnection implements CRUD {
         userUuid?: UUID
     ): Promise<File | undefined | BaseError> {
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const query =
                 "INSERT INTO file (uuid_metaobject, data, type) VALUES ($1, $2, $3)";
             const created_metaObject = await Metamodel_metaobject_connection.create(
@@ -100,7 +101,7 @@ class Metamodel_filesConnection implements CRUD {
         userUuid?: UUID
     ): Promise<File | undefined | BaseError> {
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             let return_file;
             const query =
                 "SELECT * FROM file f JOIN metaobject m ON f.uuid_metaobject = m.uuid WHERE f.uuid_metaobject = $1 LIMIT 1";
@@ -132,7 +133,7 @@ class Metamodel_filesConnection implements CRUD {
         userUuid?: UUID
     ): Promise<File | undefined | BaseError> {
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             let return_file;
             const query =
                 "select * from file f, metaobject m where f.uuid_metaobject = m.uuid and m.name = $1 limit 1";
@@ -168,7 +169,7 @@ class Metamodel_filesConnection implements CRUD {
         userUuid?: UUID
     ): Promise<File | undefined | BaseError> {
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const query =
                 "UPDATE file SET data = $1, type = $2 WHERE uuid_metaobject = $3";
 
@@ -205,7 +206,7 @@ class Metamodel_filesConnection implements CRUD {
     ): Promise<File | undefined | BaseError> {
         // The same logic as update is maintained here, but acts as place holder for future implementation of hard update
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const query =
                 "UPDATE file SET data = $1, type = $2 WHERE uuid_metaobject = $3";
 

@@ -10,6 +10,8 @@ import {AttributeInstance} from "../../../mmar-global-data-structure";
 import {filter_object} from "../../data/services/middleware/object_filter";
 import Instance_attribute_connection from "../../data/instance/Instance_attributes.connection";
 import {database_connection} from "../../index";
+import { requireUser } from "../../data/services/middleware/auth.middleware";
+import { begin_transaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the attributes instance.
@@ -31,11 +33,11 @@ class Instance_attributesController {
     get_attribute_instance_by_uuid: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Instance_attribute_connection.getByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof AttributeInstance) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -70,11 +72,11 @@ class Instance_attributesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Instance_attribute_connection.getAllByParentUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -106,11 +108,11 @@ class Instance_attributesController {
     get_attribute_instance_for_scene: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Instance_attribute_connection.getAllByParentUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -142,7 +144,7 @@ class Instance_attributesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const newAttribute = AttributeInstance.fromJS(
                 req.body
@@ -151,7 +153,7 @@ class Instance_attributesController {
                 client,
                 req.params.uuid,
                 newAttribute,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -189,7 +191,7 @@ class Instance_attributesController {
     ) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const newAttribute: AttributeInstance | AttributeInstance[] = plainToInstance(AttributeInstance, req.body);
             const newAttributeArray = Array.isArray(newAttribute) ? newAttribute : [newAttribute];
@@ -201,7 +203,7 @@ class Instance_attributesController {
                 client,
                 req.params.uuid,
                 newAttribute,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(201).json(filter_object(sc, req.query.filter));
@@ -240,7 +242,7 @@ class Instance_attributesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const newAttribute: AttributeInstance | AttributeInstance[] = plainToInstance(AttributeInstance, req.body);
             const newAttributeArray = Array.isArray(newAttribute) ? newAttribute : [newAttribute];
@@ -252,7 +254,7 @@ class Instance_attributesController {
                 client,
                 req.params.uuid,
                 newAttribute,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(201).json(filter_object(sc, req.query.filter));
@@ -287,7 +289,7 @@ class Instance_attributesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const newAttribute = AttributeInstance.fromJS(
                 req.body
@@ -296,7 +298,7 @@ class Instance_attributesController {
             const sc = await Instance_attribute_connection.postAttributesInstance(
                 client,
                 newAttribute,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(201).json(filter_object(sc, req.query.filter));
@@ -334,11 +336,11 @@ class Instance_attributesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Instance_attribute_connection.deleteAllByParentUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -376,11 +378,11 @@ class Instance_attributesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Instance_attribute_connection.deleteAllByParentUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -418,7 +420,7 @@ class Instance_attributesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Instance_attribute_connection.deleteByUuid(
                 client,
                 req.params.uuid

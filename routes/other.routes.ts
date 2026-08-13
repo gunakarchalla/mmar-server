@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { authenticate_token } from "../data/services/middleware/auth.middleware";
+import { authenticate_token, requireUser } from "../data/services/middleware/auth.middleware";
 
 const otherRouter = Router();
 
 otherRouter.get("/", authenticate_token, function (req, res) {
-  res.render("home", { username: req.body.tokendata.username });
+  res.render("home", { username: requireUser(req).username });
 });
 
 //test endpoint to check if the server is running

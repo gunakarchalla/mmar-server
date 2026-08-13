@@ -11,6 +11,8 @@ import {
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";
 import {filter_object} from "../../data/services/middleware/object_filter";
 import Metamodel_classes_connection from "../../data/meta/Metamodel_classes.connection";
+import { requireUser } from "../../data/services/middleware/auth.middleware";
+import { begin_transaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the meta classes.
@@ -32,10 +34,10 @@ class Metamodel_classesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const classes = await Metamodel_classes_connection.getAll(
                 client,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(classes)) {
                 res
@@ -70,11 +72,11 @@ class Metamodel_classesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_classes_connection.getByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof Class) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -109,11 +111,11 @@ class Metamodel_classesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_classes_connection.getAllByParentUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(200).json(sc);
@@ -153,7 +155,7 @@ class Metamodel_classesController {
             const sc = await Metamodel_classes_connection.create(
                 client,
                 newClass,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof Class) {
                 res.status(201).json(filter_object(sc, req.query.filter));
@@ -193,7 +195,7 @@ class Metamodel_classesController {
                 client,
                 req.params.uuid,
                 newClass,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(201).json(filter_object(sc, req.query.filter));
@@ -228,7 +230,7 @@ class Metamodel_classesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const newClass = Class.fromJS(req.body) as Class;
 
             const hardPatch = req.query.hardpatch === "true";
@@ -239,14 +241,14 @@ class Metamodel_classesController {
                     client,
                     req.params.uuid,
                     newClass,
-                    req.body.tokendata.uuid
+                    requireUser(req).uuid
                 );
             } else {
                 sc = await Metamodel_classes_connection.update(
                     client,
                     req.params.uuid,
                     newClass,
-                    req.body.tokendata.uuid
+                    requireUser(req).uuid
                 );
             }
             if (sc instanceof Class) {
@@ -280,11 +282,11 @@ class Metamodel_classesController {
     delete_classes_by_uuid: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_classes_connection.deleteByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
@@ -326,7 +328,7 @@ class Metamodel_classesController {
                 await Metamodel_classes_connection.deleteAllByParentUuid(
                     client,
                     req.params.uuid,
-                    req.body.tokendata.uuid
+                    requireUser(req).uuid
                 );
             if (Array.isArray(sc)) {
                 //The result does not contains any uuid, i.e. the metaobject is not linked to any instance

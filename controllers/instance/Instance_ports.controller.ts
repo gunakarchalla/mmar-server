@@ -8,6 +8,8 @@ import {
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";
 import {filter_object} from "../../data/services/middleware/object_filter";
 import Instance_port_connection from "../../data/instance/Instance_ports.connection";
+import { requireUser } from "../../data/services/middleware/auth.middleware";
+import { begin_transaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the port instances.
@@ -30,11 +32,11 @@ class Instance_portsController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Instance_port_connection.getByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof PortInstance) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -69,11 +71,11 @@ class Instance_portsController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Instance_port_connection.getAllByParentUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -108,14 +110,14 @@ class Instance_portsController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const newPort = PortInstance.fromJS(req.body) as PortInstance;
             const sc = await Instance_port_connection.update(
                 client,
                 req.params.uuid,
                 newPort,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof PortInstance) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -150,7 +152,7 @@ class Instance_portsController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const portsToAdd: PortInstance[] = [];
             for (let i = 0; i < req.body.length; i++) {
@@ -160,7 +162,7 @@ class Instance_portsController {
             const sc = await Instance_port_connection.postPortsInstance(
                 client,
                 portsToAdd,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(201).json(filter_object(sc, req.query.filter));
@@ -191,11 +193,11 @@ class Instance_portsController {
     delete_port_instances_for_scene: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Instance_port_connection.deleteAllByParentUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -229,11 +231,11 @@ class Instance_portsController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Instance_port_connection.deleteByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 //The result does not contains any uuid, i.e. the metaobject is not linked to any instance

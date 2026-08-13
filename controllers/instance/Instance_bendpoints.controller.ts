@@ -9,6 +9,8 @@ import {
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";
 import {filter_object} from "../../data/services/middleware/object_filter";
 import Instance_bendpoint_connection from "../../data/instance/Instance_bendpoints.connection";
+import { requireUser } from "../../data/services/middleware/auth.middleware";
+import { begin_transaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the bendpoint instances.
@@ -35,11 +37,11 @@ class Instance_bendpointsController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Instance_bendpoint_connection.getAllByParentUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -74,11 +76,11 @@ class Instance_bendpointsController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Instance_bendpoint_connection.getByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof ClassInstance) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -113,14 +115,14 @@ class Instance_bendpointsController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const newBendpoint = ClassInstance.fromJS(req.body) as ClassInstance;
             const sc = await Instance_bendpoint_connection.update(
                 client,
                 req.params.uuid,
                 newBendpoint,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof ClassInstance) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -155,14 +157,14 @@ class Instance_bendpointsController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const newClass = ClassInstance.fromJS(req.body) as ClassInstance;
             newClass.uuid = req.params.uuid;
             const sc = await Instance_bendpoint_connection.create(
                 client,
                 newClass,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -198,7 +200,7 @@ class Instance_bendpointsController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Instance_bendpoint_connection.deleteByUuid(
                 client,
                 req.params.uuid

@@ -8,6 +8,8 @@ import {
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";
 import Instance_scene_connection from "../../data/instance/Instance_scenes.connection";
 import {filter_object} from "../../data/services/middleware/object_filter";
+import { requireUser } from "../../data/services/middleware/auth.middleware";
+import { begin_transaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the scene instances.
@@ -30,11 +32,11 @@ class Instance_scenesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN"); // Start a transaction
+            await begin_transaction(client); // Start a transaction
             const sc = await Instance_scene_connection.getAllByParentUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -69,11 +71,11 @@ class Instance_scenesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN"); // Start a transaction
+            await begin_transaction(client); // Start a transaction
             const sc = await Instance_scene_connection.getByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof SceneInstance) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -108,13 +110,13 @@ class Instance_scenesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN"); // Start a transaction
+            await begin_transaction(client); // Start a transaction
             const newSceneInstance = SceneInstance.fromJS(req.body) as SceneInstance;
             const sc = await Instance_scene_connection.update(
                 client,
                 req.params.uuid,
                 newSceneInstance,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof SceneInstance) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -149,13 +151,13 @@ class Instance_scenesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN"); // Start a transaction
+            await begin_transaction(client); // Start a transaction
             const newSceneInstance = SceneInstance.fromJS(req.body) as SceneInstance;
             newSceneInstance.uuid_scene_type = req.params.uuid;
             const sc = await Instance_scene_connection.create(
                 client,
                 newSceneInstance,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof SceneInstance) {
                 res.status(201).json(filter_object(sc, req.query.filter));
@@ -183,13 +185,13 @@ class Instance_scenesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN"); // Start a transaction
+            await begin_transaction(client); // Start a transaction
             const newSceneInstance = SceneInstance.fromJS(req.body) as SceneInstance;
             newSceneInstance.uuid_scene_type = req.params.uuid;
             const sc = await Instance_scene_connection.create(
                 client,
                 newSceneInstance,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof SceneInstance) {
                 res.status(201).json(filter_object(sc, req.query.filter));
@@ -224,13 +226,13 @@ class Instance_scenesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN"); // Start a transaction
+            await begin_transaction(client); // Start a transaction
             const sceneInstance = SceneInstance.fromJS(req.body) as SceneInstance;
             sceneInstance.set_uuid(req.params.uuid);
             const sc = await Instance_scene_connection.create(
                 client,
                 sceneInstance,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof SceneInstance) {
                 res.status(201).json(filter_object(sc, req.query.filter));
@@ -263,11 +265,11 @@ class Instance_scenesController {
     delete_scene_instances: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN"); // Start a transaction
+            await begin_transaction(client); // Start a transaction
             const sc = await Instance_scene_connection.deleteAllByParentUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -301,11 +303,11 @@ class Instance_scenesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN"); // Start a transaction
+            await begin_transaction(client); // Start a transaction
             const sc = await Instance_scene_connection.deleteByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 //The result does not contains any uuid, i.e. the metaobject is not linked to any instance

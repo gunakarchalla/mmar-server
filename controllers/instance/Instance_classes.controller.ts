@@ -9,6 +9,8 @@ import {
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";
 import {filter_object} from "../../data/services/middleware/object_filter";
 import Instance_class_connection from "../../data/instance/Instance_classes.connection";
+import { requireUser } from "../../data/services/middleware/auth.middleware";
+import { begin_transaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the class instances.
@@ -31,11 +33,11 @@ class Instance_classesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN"); // start transaction
+            await begin_transaction(client); // start transaction
             const sc = await Instance_class_connection.getByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof ClassInstance) {
                 //res.status(200).json(filter_object(sc, req.query.filter));
@@ -71,11 +73,11 @@ class Instance_classesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN"); // start transaction
+            await begin_transaction(client); // start transaction
             const sc = await Instance_class_connection.getAllByParentUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -110,13 +112,13 @@ class Instance_classesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN"); // start transaction
+            await begin_transaction(client); // start transaction
             const newClass = ClassInstance.fromJS(req.body) as ClassInstance;
             const sc = await Instance_class_connection.update(
                 client,
                 req.params.uuid,
                 newClass,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof ClassInstance) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -151,13 +153,13 @@ class Instance_classesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN"); // start transaction
+            await begin_transaction(client); // start transaction
             const newClass = ClassInstance.fromJS(req.body) as ClassInstance;
             const sc = await Instance_class_connection.postClassInstances(
                 client,
                 newClass,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(201).json(filter_object(sc, req.query.filter));
@@ -192,13 +194,13 @@ class Instance_classesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN"); // start transaction
+            await begin_transaction(client); // start transaction
             const newClass = ClassInstance.fromJS(req.body) as ClassInstance;
             newClass.uuid = req.params.uuid;
             const sc = await Instance_class_connection.create(
                 client,
                 newClass,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof ClassInstance) {
                 res.status(201).json(filter_object(sc, req.query.filter));
@@ -232,11 +234,11 @@ class Instance_classesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN"); // start transaction
+            await begin_transaction(client); // start transaction
             const sc = await Instance_class_connection.deleteAllByParentUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -270,11 +272,11 @@ class Instance_classesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN"); // start transaction
+            await begin_transaction(client); // start transaction
             const sc = await Instance_class_connection.deleteByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 //The result does not contains any uuid, i.e. the metaobject is not linked to any instance

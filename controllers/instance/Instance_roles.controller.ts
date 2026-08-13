@@ -11,6 +11,8 @@ import {
 import {filter_object} from "../../data/services/middleware/object_filter";
 import Instance_role_connection from "../../data/instance/Instance_roles.connection";
 import Instance_relationclass_connection from "../../data/instance/Instance_relationclasses.connection";
+import { requireUser } from "../../data/services/middleware/auth.middleware";
+import { begin_transaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the role instances.
@@ -32,12 +34,12 @@ class Instance_rolesController {
     get_role_instances_by_uuid: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const sc = await Instance_role_connection.getByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof RoleInstance) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -76,12 +78,12 @@ class Instance_rolesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const sc = await Instance_relationclass_connection.getByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof RelationclassInstance) {
                 res.status(200).json(filter_object(sc.get_role_instance_from(), req.query.filter));
@@ -120,12 +122,12 @@ class Instance_rolesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const sc = await Instance_relationclass_connection.getByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof RelationclassInstance) {
                 res.status(200).json(filter_object(sc.get_role_instance_to(), req.query.filter));
@@ -160,11 +162,11 @@ class Instance_rolesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Instance_role_connection.getAllByParentUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -199,14 +201,14 @@ class Instance_rolesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const newRole = RoleInstance.fromJS(req.body) as RoleInstance;
             const sc = await Instance_role_connection.update(
                 client,
                 req.params.uuid,
                 newRole,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof RoleInstance) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -240,14 +242,14 @@ class Instance_rolesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const newRole = RoleInstance.fromJS(req.body) as RoleInstance;
             newRole.set_uuid(req.params.uuid);
             const sc = await Instance_role_connection.postRolesInstance(
                 client,
                 newRole,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(201).json(filter_object(sc, req.query.filter));
@@ -282,7 +284,7 @@ class Instance_rolesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const newRole = plainToInstance(RoleInstance, req.body);
             for (const roleToAdd of newRole) {
@@ -291,7 +293,7 @@ class Instance_rolesController {
             const sc = await Instance_role_connection.postRolesInstance(
                 client,
                 newRole,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(201).json(filter_object(sc, req.query.filter));
@@ -329,7 +331,7 @@ class Instance_rolesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const newRole = plainToInstance(RoleInstance, req.body);
             for (const roleToAdd of newRole) {
@@ -338,7 +340,7 @@ class Instance_rolesController {
             const sc = await Instance_role_connection.postRolesInstance(
                 client,
                 newRole,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(201).json(filter_object(sc, req.query.filter));
@@ -372,11 +374,11 @@ class Instance_rolesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Instance_role_connection.deleteAllByParentUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -409,11 +411,11 @@ class Instance_rolesController {
     delete_role_instances_by_uuid: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Instance_role_connection.deleteByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 //The result does not contains any uuid, i.e. the metaobject is not linked to any instance

@@ -10,6 +10,8 @@ import Metamodel_files_connection from "../../data/meta/Metamodel_files.connecti
 import { File, UUID } from "../../../mmar-global-data-structure";
 import { filter_object } from "../../data/services/middleware/object_filter";
 import { compressImage } from "../../data/services/compress.service";
+import { requireUser } from "../../data/services/middleware/auth.middleware";
+import { begin_transaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the file management.
@@ -21,10 +23,10 @@ class Metamodel_filesController {
     get_all_files: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_files_connection.getAll(
                 client,
-                req.body.tokendata ? req.body.tokendata.uuid : undefined
+                requireUser(req).uuid
             );
             if (sc instanceof Array) {
                 res.status(200).json(sc);
@@ -57,7 +59,7 @@ class Metamodel_filesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const uuid = (req.query.uuid as string | undefined) || req.params.uuid;
             if (!uuid) throw new API404Error("Missing file uuid parameter");
@@ -65,7 +67,7 @@ class Metamodel_filesController {
             const sc = await Metamodel_files_connection.getByUuid(
                 client,
                 uuid,
-                req.body.tokendata ? req.body.tokendata.uuid : undefined
+                requireUser(req).uuid
             );
             if (sc instanceof File) {
                 res.setHeader("Content-Type", sc.get_type());
@@ -99,14 +101,14 @@ class Metamodel_filesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const name = req.query.name as string | undefined;
             if (!name) throw new API404Error("Missing file name parameter");
 
             const sc = await Metamodel_files_connection.getByName(
                 client,
                 name,
-                req.body.tokendata ? req.body.tokendata.uuid : undefined
+                requireUser(req).uuid
             );
             if (sc instanceof File) {
                 res.setHeader("Content-Type", sc.get_type());
@@ -128,7 +130,7 @@ class Metamodel_filesController {
     post_file_by_uuid: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             if (!req.file) throw new API404Error(`Cannot find the file.`);
 
@@ -143,7 +145,7 @@ class Metamodel_filesController {
             const sc = await Metamodel_files_connection.create(
                 client,
                 newFile,
-                req.body.tokendata ? req.body.tokendata.uuid : undefined
+                requireUser(req).uuid
             );
 
             if (sc instanceof File) {
@@ -172,7 +174,7 @@ class Metamodel_filesController {
     patch_file_by_uuid: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             let originalname, buffer, mimetype;
 
@@ -225,7 +227,7 @@ class Metamodel_filesController {
                     client,
                     specified_uuid,
                     newFile,
-                    req.body.tokendata ? req.body.tokendata.uuid : undefined
+                    requireUser(req).uuid
                 );
 
             } else {
@@ -233,7 +235,7 @@ class Metamodel_filesController {
                     client,
                     specified_uuid,
                     newFile,
-                    req.body.tokendata ? req.body.tokendata.uuid : undefined
+                    requireUser(req).uuid
                 );
             }
 
@@ -262,7 +264,7 @@ class Metamodel_filesController {
     delete_file_by_uuid: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             // if (!req.file) throw new API404Error(`Cannot find the file.`);
 
@@ -278,7 +280,7 @@ class Metamodel_filesController {
             const sc = await Metamodel_files_connection.deleteByUuid(
                 client,
                 specified_uuid,
-                req.body.tokendata ? req.body.tokendata.uuid : undefined
+                requireUser(req).uuid
             );
 
             if (Array.isArray(sc)) {
@@ -301,7 +303,7 @@ class Metamodel_filesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             if (!req.file) throw new API404Error(`Cannot find the file.`);
 
@@ -332,7 +334,7 @@ class Metamodel_filesController {
             const sc = await Metamodel_files_connection.create(
                 client,
                 newFile,
-                req.body.tokendata ? req.body.tokendata.uuid : undefined
+                requireUser(req).uuid
             );
 
             if (sc instanceof File) {
@@ -356,7 +358,7 @@ class Metamodel_filesController {
     public get_all_uuids: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const queryResult = await client.query("SELECT uuid_metaobject FROM file;");
             await client.query("COMMIT");
 

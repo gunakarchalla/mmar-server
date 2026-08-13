@@ -8,6 +8,8 @@ import {
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";
 import {filter_object} from "../../data/services/middleware/object_filter";
 import Metamodel_roles_connection from "../../data/meta/Metamodel_roles.connection";
+import { requireUser } from "../../data/services/middleware/auth.middleware";
+import { begin_transaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the meta roles.
@@ -30,12 +32,12 @@ class Metamodel_rolesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const role = await Metamodel_roles_connection.getByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (role instanceof Role) {
                 res.status(200).json(filter_object(role, req.query.filter));
@@ -68,11 +70,11 @@ class Metamodel_rolesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const roles = await Metamodel_roles_connection.getAll(
                 client,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(roles)) {
                 res.status(200).json(filter_object(roles, req.query.filter));
@@ -103,7 +105,7 @@ class Metamodel_rolesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             //let newRole = request_to_role(req.body);
             const newRole = Role.fromJS(req.body) as Role;
@@ -111,7 +113,7 @@ class Metamodel_rolesController {
                 client,
                 req.params.uuid,
                 newRole,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof Role) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -145,14 +147,14 @@ class Metamodel_rolesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const newRole = Role.fromJS(req.body) as Role;
             newRole.uuid = req.params.uuid;
             const sc = await Metamodel_roles_connection.create(
                 client,
                 newRole,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof Role) {
                 res.status(201).json(filter_object(sc, req.query.filter));
@@ -187,13 +189,13 @@ class Metamodel_rolesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const newRole = Role.fromJS(req.body) as Role;
             const sc = await Metamodel_roles_connection.postRoles(
                 client,
                 newRole,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(201).json(filter_object(sc, req.query.filter));
@@ -227,14 +229,14 @@ class Metamodel_rolesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             //let newRole = request_to_role(req.body);
             const newRole = Role.fromJS(req.body) as Role;
             const sc = await Metamodel_roles_connection.postRoles(
                 client,
                 newRole,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(201).json(filter_object(sc, req.query.filter));
@@ -266,11 +268,11 @@ class Metamodel_rolesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_roles_connection.deleteByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 //The result does not contain any uuid, i.e. the metaobject is not linked to any instance

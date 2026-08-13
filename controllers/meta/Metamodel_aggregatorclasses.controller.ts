@@ -8,6 +8,8 @@ import {
 import {filter_object} from "../../data/services/middleware/object_filter";
 import Metamodel_aggregator_connection from "../../data/meta/Metamodel_aggregator_classes.connection";
 import {Class} from "../../../mmar-global-data-structure/models/meta/Metamodel_classes.structure";
+import { requireUser } from "../../data/services/middleware/auth.middleware";
+import { begin_transaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the meta aggregator classes.
@@ -34,11 +36,11 @@ class Metamodel_aggregatorclassesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_aggregator_connection.getAllByParentUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -73,11 +75,11 @@ class Metamodel_aggregatorclassesController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_aggregator_connection.getByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof Class) {
                 res.status(200).json(filter_object(sc, req.query.filter));

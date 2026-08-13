@@ -8,14 +8,17 @@ import {
     HTTP500Error,
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";
 import {filter_object} from "../../data/services/middleware/object_filter";
+import {record_security_event} from "../../data/services/security_audit.service";
+import { requireUser } from "../../data/services/middleware/auth.middleware";
+import { begin_transaction } from "../../data/services/transaction";
 
 class Users_controller {
     get_user_by_uuid: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
-            const user = await Users_connection.getByUuid(client, req.params.uuid, req.body.tokendata.uuid);
+            const user = await Users_connection.getByUuid(client, req.params.uuid, requireUser(req).uuid);
             if (user instanceof User) {
                 user.set_password(""); // obfuscate password
                 res.status(200).send(user);
@@ -39,8 +42,8 @@ class Users_controller {
     get_all_users: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
-            const users = await Users_connection.getAll(client, req.body.tokendata.uuid);
+            await begin_transaction(client);
+            const users = await Users_connection.getAll(client, requireUser(req).uuid);
             if (Array.isArray(users)) {
                 res.status(200).send(
                     // obfuscate password
@@ -66,12 +69,12 @@ class Users_controller {
     get_user_by_username: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const user = await Users_connection.getByUsername(
                 client,
                 req.params.username,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (user instanceof User) {
                 user.set_password(""); // obfuscate password
@@ -95,12 +98,12 @@ class Users_controller {
     get_users_by_usergroup_uuid: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const users = await Users_connection.getByUsergroupUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(users)) {
                 res.status(200).send(users);
@@ -121,16 +124,16 @@ class Users_controller {
     patch_user_by_uuid: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const newUser = User.fromJS(req.body) as User;
             const hardPatch = req.query.hardpatch === "true";
             let sc;
 
             if (hardPatch) {
-                sc = await Users_connection.hardPatch(client, req.params.uuid, newUser, req.body.tokendata.uuid);
+                sc = await Users_connection.hardPatch(client, req.params.uuid, newUser, requireUser(req).uuid);
             } else {
-                sc = await Users_connection.update(client, req.params.uuid, newUser, req.body.tokendata.uuid);
+                sc = await Users_connection.update(client, req.params.uuid, newUser, requireUser(req).uuid);
             }
 
             if (sc instanceof User) {
@@ -152,7 +155,7 @@ class Users_controller {
     post_user: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const newUser = User.fromJS(req.body) as User;
             const user = await Users_connection.create(
@@ -182,7 +185,7 @@ class Users_controller {
     signin_user: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             if (
                 await Users_connection.matchPassword(
@@ -201,11 +204,32 @@ class Users_controller {
                         maxAge: 900000,
                         httpOnly: true,
                     });
+                    record_security_event({
+                        event: "login",
+                        outcome: "success",
+                        req: req,
+                        uuid_user: user.get_uuid(),
+                        username: user.get_username(),
+                    });
                     res.json(token);
                 } else {
+                    record_security_event({
+                        event: "login",
+                        outcome: "failure",
+                        req: req,
+                        username: req.body.username,
+                        reason: "unknown_user",
+                    });
                     throw new HTTP500Error(`User could not be logged in`);
                 }
             } else {
+                record_security_event({
+                    event: "login",
+                    outcome: "failure",
+                    req: req,
+                    username: req.body.username,
+                    reason: "wrong_credentials",
+                });
                 throw new API401Error(`Wrong password or username`);
             }
             await client.query("COMMIT");
@@ -227,12 +251,12 @@ class Users_controller {
     delete_user_by_uuid: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const user = await Users_connection.deleteByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (user instanceof BaseError) {
                 throw user;

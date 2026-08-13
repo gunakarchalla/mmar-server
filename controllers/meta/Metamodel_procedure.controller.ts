@@ -9,6 +9,8 @@ import {
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";
 import {filter_object} from "../../data/services/middleware/object_filter";
 import Metamodel_procedure_connection from "../../data/meta/Metamodel_procedure.connection";
+import { requireUser } from "../../data/services/middleware/auth.middleware";
+import { begin_transaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the meta procedures.
@@ -30,11 +32,11 @@ class Metamodel_procedureController {
     get_procedure_by_uuid: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_procedure_connection.getByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof Procedure) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -57,13 +59,13 @@ class Metamodel_procedureController {
     get_procedures: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const procedure: Procedure[] = [];
             const sc =
                 await Metamodel_procedure_connection.getAlgorithms(
                     client,
-                    req.body.tokendata.uuid
+                    requireUser(req).uuid
                 );
             if (Array.isArray(sc)) {
                 procedure.push(...sc);
@@ -86,13 +88,13 @@ class Metamodel_procedureController {
     get_independent_procedures: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const procedure: Procedure[] = [];
             const sc =
                 await Metamodel_procedure_connection.getIndependentAlgorithms(
                     client,
-                    req.body.tokendata.uuid
+                    requireUser(req).uuid
                 );
             if (Array.isArray(sc)) {
                 procedure.push(...sc);
@@ -115,12 +117,12 @@ class Metamodel_procedureController {
     post_procedure: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const newProcedure = Procedure.fromJS(req.body) as Procedure;
             const sc = await Metamodel_procedure_connection.create(
                 await client,
                 newProcedure,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof Procedure) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -128,7 +130,7 @@ class Metamodel_procedureController {
                 throw new HTTP500Error(`Cannot post the procedure ${req.body}.`);
             } else {
                 throw new HTTP403NORIGHT(
-                    req.body.tokendata.username +
+                    requireUser(req).username +
                     " does not have the right for the procedure: " +
                     req.params.uuid
                 );
@@ -145,8 +147,8 @@ class Metamodel_procedureController {
     delete_all_procedures: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
-            const sc = await Metamodel_procedure_connection.deleteAll(client, req.body.tokendata.uuid);
+            await begin_transaction(client);
+            const sc = await Metamodel_procedure_connection.deleteAll(client, requireUser(req).uuid);
             if (Array.isArray(sc)) {
                 //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
                 res.status(200).json(sc);
@@ -178,11 +180,11 @@ class Metamodel_procedureController {
     get_procedure_by_scene_type_uuid: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_procedure_connection.getAllByParentUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(200).json(sc);
@@ -217,14 +219,14 @@ class Metamodel_procedureController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const newProcedure = Procedure.fromJS(req.body) as Procedure;
             newProcedure.uuid = req.params.uuid;
             const sc = await Metamodel_procedure_connection.create(
                 client,
                 newProcedure,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof Procedure) {
                 res.status(201).json(filter_object(sc, req.query.filter));
@@ -259,14 +261,14 @@ class Metamodel_procedureController {
         const client = await database_connection.getPool().connect();
 
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
 
             const newProcedure = plainToInstance(Procedure, req.body);
             const sc = await Metamodel_procedure_connection.postProceduresForSceneType(
                 await client,
                 req.params.uuid,
                 newProcedure,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(201).json(filter_object(sc, req.query.filter));
@@ -306,7 +308,7 @@ class Metamodel_procedureController {
                 client,
                 req.params.uuid,
                 newProcedure,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (sc instanceof Procedure) {
                 res.status(200).json(filter_object(sc, req.query.filter));
@@ -339,11 +341,11 @@ class Metamodel_procedureController {
     delete_procedure_by_uuid: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
-            await client.query("BEGIN");
+            await begin_transaction(client);
             const sc = await Metamodel_procedure_connection.deleteByUuid(
                 client,
                 req.params.uuid,
-                req.body.tokendata.uuid
+                requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
                 res.status(200).json(sc);
@@ -381,7 +383,7 @@ class Metamodel_procedureController {
                 await Metamodel_procedure_connection.deleteAllByParentUuid(
                     client,
                     req.params.uuid,
-                    req.body.tokendata.uuid
+                    requireUser(req).uuid
                 );
             if (Array.isArray(resultQuery)) {
                 res.status(200).json(resultQuery);
