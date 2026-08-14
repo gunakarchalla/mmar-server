@@ -7,15 +7,12 @@ import "reflect-metadata";
 import cors from "cors";
 import helmet from "helmet";
 import compress from "compression";
-import {errorHandler, logError,} from "./data/services/middleware/error_handling/error_handling.middleware";
+import {errorHandler, logError, logger,} from "./data/services/middleware/error_handling/error_handling.middleware";
 import * as path from "path";
 import routes from "./routes/all.routes";
-import dotenv from "dotenv";
+import {environment} from "./data/services/environment";
 import cookieParser from "cookie-parser";
 import {testDatabaseConnection} from "./data/services/middleware/database_test";
-import swaggerAutogen from "swagger-autogen";
-
-dotenv.config();
 
 export {postgres as database_connection, queries, http_server};
 /*
@@ -27,12 +24,10 @@ export {postgres as database_connection, queries, http_server};
 */
 
 /**
- * @description - This is the creation of the unsecured server
- * @param {express} http_server - The express server running on port 8000 (unsecured) : http://localhost:8000
+ * @description - The unsecured HTTP server. TLS is terminated by the reverse
+ * proxy in front of it.
  */
 const http_server = express();
-// This is the unsecured port that the server will listen on
-const HTTPPORT = process.env.HTTPPORT || 8000;
 
 /** @description - This is the creation of the list of the sql queries */
 const queries = new sql_queries_parser();
@@ -45,21 +40,41 @@ const postgres = database_connection.getInstance()
 http_server.set("views", path.join(__dirname, "views"));
 http_server.set("view engine", "ejs");
 
-// This is used to enable the cors and avoid some errors related to cross origin requests.
-http_server.use(cors());
+// req.ip and the rate limiter both depend on this being right: see
+// TRUST_PROXY_HOPS in .env.example.
+http_server.set("trust proxy", environment.trust_proxy_hops);
+
+// Security headers first, so that they are set on every response including the
+// ones produced by the middleware below.
+http_server.use(helmet());
 // Disable to improve security by obfuscating the technology used
 http_server.disable("x-powered-by");
 
-// This is used to enable the helmet and avoid some errors related to security.
-http_server.use(helmet());
+// The API authenticates with a cookie as well as with a bearer token, so it
+// cannot both reflect every origin and allow credentials. With CORS_ORIGINS set,
+// only those origins are accepted and cookies are allowed to travel to them.
+// Left unset, any origin may call the API but credentials are refused, which is
+// what a browser already enforces for a wildcard origin.
+http_server.use(
+    environment.cors_origins.length > 0
+        ? cors({origin: environment.cors_origins, credentials: true})
+        : cors()
+);
 
 // This is used to enable the compression and avoid some errors related to compression.
 http_server.use(compress());
 
-// used do decode the body of post requests that uses the 'application/json' in header
-http_server.use(json({type: "application/json", limit: "100mb"}));
-// We extend the limit to 10mb to avoid memory issues when sending large json objects
-http_server.use(urlencoded({extended: true, limit: "100mb"}));
+// Credentials are a few hundred bytes, so the authentication routes get a tight
+// ceiling of their own. It has to be mounted before the general one: body-parser
+// marks a request as parsed and every later parser then leaves it alone, so a
+// stricter limit declared further down the chain would never be reached.
+http_server.use("/login", json({type: "application/json", limit: "16kb"}));
+http_server.use("/login", urlencoded({extended: true, limit: "16kb"}));
+
+// Whole metamodels are posted as a single JSON document and legitimately reach
+// several megabytes, so the general ceiling is high by necessity.
+http_server.use(json({type: "application/json", limit: environment.max_body_bytes}));
+http_server.use(urlencoded({extended: true, limit: environment.max_body_bytes}));
 
 http_server.use(cookieParser());
 
@@ -77,34 +92,55 @@ const swaggerDocument = JSON.parse(
 // This is the creation of the documentation swagger page
 http_server.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-http_server.listen(HTTPPORT, async () => {
+// The error handler closes the chain, so it has to be registered after every
+// route that can raise into it.
+http_server.use(logError);
+
+http_server.listen(environment.http_port, async () => {
     console.log(
-        `⚡️[server]: Unsecured server is running at http://localhost:${HTTPPORT}`
+        `⚡️[server]: Unsecured server is running at http://localhost:${environment.http_port}`
     );
     await testDatabaseConnection(1)
 });
 
-//handle the error raised by the code
-http_server.use(logError);
-
-//executed if a promise is rejected but not handled
-process.on("unhandledRejection", (reason: Error) => {
-    throw reason;
+// A rejected promise nobody awaited is a bug in this server, not a reason to end
+// the process: throwing here used to turn any one of them into an uncaught
+// exception and take the whole server down with it. It is recorded instead, and
+// the request that caused it fails on its own.
+process.on("unhandledRejection", (reason: unknown) => {
+    errorHandler.handleError(reason);
+    logger.error("Unhandled promise rejection. The server keeps running.");
 });
 
-//if this code is called the server either handle the error or shut down
+// An uncaught exception means the process is in a state it does not model, so it
+// stops and lets the supervisor restart it.
 process.on("uncaughtException", (error: Error) => {
     errorHandler.handleError(error);
     if (!errorHandler.isTrustedError(error)) {
-        //exit the server with exit code 1 to be catch outside the server to restart
         console.error("Uncaught exception, shutting down server. Error: ", error);
-        process.exit(1);
+        void shutdown(1);
     }
 });
 
-// if the server is closed the database connection is closed nicely
+/**
+ * @description - Close the database pool and end the process.
+ * @param {number} code - The exit code to report to the supervisor.
+ */
+async function shutdown(code: number): Promise<void> {
+    try {
+        await postgres.releaseDriver();
+    } catch (err) {
+        console.error("Failed to close the database pool cleanly:", err);
+    }
+    process.exit(code);
+}
+
 process.once("SIGINT", async function () {
     console.warn("SIGINT received...");
-    await postgres.releaseDriver();
-    process.exit(0);
+    await shutdown(0);
+});
+
+process.once("SIGTERM", async function () {
+    console.warn("SIGTERM received...");
+    await shutdown(0);
 });

@@ -2,7 +2,20 @@ import { Router } from "express";
 import Metamodel_file_controller from "../../controllers/meta/Metamodel_files.controller";
 import multer from "multer";
 import { authenticate_token } from "../../data/services/middleware/auth.middleware";
-const upload = multer();
+import { environment } from "../../data/services/environment";
+
+/**
+ * @description - Uploads are buffered in memory before being written to the
+ * database, so an unbounded multer instance let a single request decide how much
+ * of the server's memory to take. One file per request is all any route here
+ * reads, and a field cannot be a file.
+ */
+const upload = multer({
+  limits: {
+    fileSize: environment.max_upload_bytes,
+    files: 1,
+  },
+});
 /**
  * @description - These are the routes for the file.
  * @type {Router}

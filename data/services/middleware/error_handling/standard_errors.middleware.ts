@@ -198,3 +198,23 @@ export class HTTP404Error extends BaseError {
         super(name, httpCode, isOperational, description);
     }
 }
+
+/**
+ * @description - The request itself is malformed: a missing field, a parameter
+ * out of range, a payload that cannot be interpreted. Distinct from a 404, which
+ * says the request was understood and named something that does not exist.
+ * @export - The class is exported so that it can be used by other files.
+ * @class HTTP400Error
+ * @extends {BaseError}
+ */
+export class HTTP400Error extends BaseError {
+    /** @description - This is the standard 400 error */
+    constructor(
+        description = "Bad request",
+        name = "Bad request",
+        httpCode = HttpStatusCode.BAD_REQUEST,
+        isOperational = true
+    ) {
+        super(name, httpCode, isOperational, description);
+    }
+}

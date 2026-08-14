@@ -29,6 +29,16 @@ Thumbs.db
 !.vscode/launch.json
 !.vscode/extensions.json
 
+# Secrets
+#
+# The server reads every credential from the environment. Nothing under these
+# paths may be committed: the values that used to live here were published in
+# this repository's history and must be treated as compromised.
+.env
+.env.*
+!.env.example
+config/DBConfig.json
+
 # Dependencies
 node_modules
 

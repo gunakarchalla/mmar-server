@@ -7,7 +7,11 @@ import {
     record_security_event,
 } from "../security_audit.service";
 import { run_with_request_context } from "../request_context";
-import { API401Error } from "./error_handling/standard_errors.middleware";
+import {
+    API401Error,
+    HTTP403NORIGHT,
+} from "./error_handling/standard_errors.middleware";
+import { is_administrator_standalone } from "../authorization";
 
 /**
  * @description - The payload carried by a JSON web token issued by this server.
@@ -104,7 +108,12 @@ export const authenticate_token: RequestHandler = (
     // downstream into a misleading "Invalid token" 401.
     let payload: string | jwt.JwtPayload;
     try {
-        payload = jwt.verify(token, environment.jwt_secret);
+        // The accepted algorithm is pinned to the one used to sign. Leaving it
+        // open lets a caller choose the algorithm their forged token is verified
+        // with, which is the basis of every "alg" confusion attack.
+        payload = jwt.verify(token, environment.jwt_secret, {
+            algorithms: ["HS256"],
+        });
     } catch (err) {
         if (err instanceof jwt.TokenExpiredError) {
             log_authentication_failure(req, "token_expired", token, {
@@ -137,6 +146,45 @@ export const authenticate_token: RequestHandler = (
     // The rest of the request, including everything it awaits, runs inside the
     // context so that the data layer can attribute its writes to this user.
     return run_with_request_context({ user: payload }, () => next());
+};
+
+/**
+ * @description - Refuse the request unless the caller is an administrator.
+ *
+ * Administrator status is membership of a user group flagged is_administrator,
+ * and it is read from the database rather than from the isAdmin claim of the
+ * token: a token lives for hours, so trusting its claim would let a demoted
+ * administrator keep acting as one until it expired.
+ *
+ * Must be placed after authenticate_token.
+ * @param {Request} req - The incoming request.
+ * @param {Response} res - The response, left untouched: errors travel through next().
+ * @param {NextFunction} next - The next handler of the chain.
+ */
+export const require_administrator: RequestHandler = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    let user: AuthTokenPayload;
+    try {
+        user = requireUser(req);
+    } catch (err) {
+        return next(err);
+    }
+
+    try {
+        if (await is_administrator_standalone(user.uuid)) {
+            return next();
+        }
+        return next(
+            new HTTP403NORIGHT(
+                `The user ${user.uuid} is not an administrator`
+            )
+        );
+    } catch (err) {
+        return next(err);
+    }
 };
 
 /**

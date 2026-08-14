@@ -12,14 +12,29 @@ The API Server is part of the MMAR Metamodeling Platform. To install the entire 
 ### Configuration
 
 The server validates its configuration on startup and refuses to boot when a mandatory
-variable is missing, rather than failing later on a request. The variables are read from
-the `.env` file at the root of the project, or from the environment:
+variable is missing or unusable, rather than failing later on a request. The variables are
+read from the `.env` file at the root of the project, or from the environment. Copy
+`.env.example` to `.env` to get started; that file documents every variable, and the table
+below lists the ones that matter most.
+
+Nothing containing a secret is committed to the repository. `.env` and the former
+`config/DBConfig.json` are git-ignored, and the credentials that used to live in them —
+including a `JWT_SECRET` of `secret` and a database password of `root` — were published in
+the git history and must be treated as compromised wherever this code was ever deployed.
 
 | Variable | Mandatory | Description |
 | --- | --- | --- |
-| `JWT_SECRET` | yes | Secret used to sign and verify the JSON web tokens. |
-| `TOKEN_EXPIRE_TIME` | no | Lifetime of an issued token. |
+| `JWT_SECRET` | yes | Secret used to sign and verify the JSON web tokens. Must be at least 32 characters; the server will not start with a shorter one. Generate with `openssl rand -base64 48`. |
+| `PGPASSWORD` | yes | Password of the database role the server connects as. |
+| `PGHOST`, `PGPORT`, `PGUSER`, `PGDATABASE` | no | Database connection, defaulting to `database:5432` / `api` / `api`. |
+| `PGPOOL_MAX` | no | Connections held open by this process, `25` by default. One request uses one connection, so this only has to cover the requests in flight, and it must stay well below the database's own `max_connections` across every server instance. |
+| `PG_STATEMENT_TIMEOUT_MS` | no | Upper bound on a single query, `30000` by default, so a runaway statement cannot pin a connection. |
+| `TOKEN_EXPIRE_TIME` | no | Lifetime of an issued token (`30m`, `8h`, or a number of seconds), `8h` by default. There is no revocation list, so this is also how long a leaked token stays usable. |
 | `HTTPPORT` | no | Port of the server, `8000` by default. |
+| `NODE_ENV` | no | `development` enables verbose logging and drops the `secure` flag on the auth cookie so it works over plain HTTP. Anything else is treated as production. |
+| `CORS_ORIGINS` | no | Comma separated browser origins allowed to call the API. The API accepts cookie authentication, so it cannot be left open to every origin when this is set; unset means same-origin only. |
+| `TRUST_PROXY_HOPS` | no | Number of reverse proxies in front of the server, `0` by default. Set it so that `req.ip` is the real client, which the rate limiter and the audit trail both depend on. |
+| `MAX_UPLOAD_BYTES` | no | Largest uploaded file accepted, `16 MiB` by default. |
 
 ### Authenticating a request
 
@@ -46,6 +61,36 @@ middleware, for example:
 ```ts
 router.delete("/files/:uuid", authenticate_token, controller.delete_file_by_uuid);
 ```
+
+### Administrators
+
+An administrator is a member of any user group whose `is_administrator` column is set. A
+group named `administrators` carrying that flag is seeded by the database, and the `admin`
+account belongs to it, but nothing in the code refers to that particular group: membership
+is what confers the privilege, so it can be granted and revoked through the ordinary user
+group API, and a deployment may flag more than one group. This replaces a single hardcoded
+user uuid that used to be written into every right check, which could be granted to nobody
+else and revoked from no one.
+
+`public.is_administrator(uuid)` in the database is the one definition of the privilege. The
+SQL right checks call it, and so does the server, through `require_administrator`:
+
+```ts
+router.post("/signup", authenticate_token, require_administrator, controller.post_user);
+```
+
+The check reads the database rather than the `isAdmin` claim carried by the token, so that
+revoking someone's administrator status takes effect on their next request instead of when
+their token happens to expire. Creating an account is restricted to administrators; there is
+no anonymous self-service sign up.
+
+### Rate limiting
+
+`POST /login` and `POST /login/signin` are rate limited per client address: every attempt
+costs a deliberately expensive bcrypt comparison, so without a limit the endpoint is both a
+password oracle and a cheap way to exhaust the CPU. Successful sign ins do not count against
+the limit. Set `TRUST_PROXY_HOPS` correctly, or every client behind the proxy is bucketed as
+one.
 
 ### Security audit trail
 

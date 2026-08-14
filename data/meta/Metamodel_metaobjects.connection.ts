@@ -11,6 +11,24 @@ import {
 } from "../services/middleware/error_handling/standard_errors.middleware";
 
 /**
+ * @description - The user_group column that grants the right to create each kind
+ * of meta object. Types absent from this table are created without a right check
+ * of their own: a user, a file and a rule are guarded by the route that reaches
+ * them rather than by a per-group flag.
+ */
+const CREATION_RIGHT_COLUMN: Readonly<Record<string, string | undefined>> = Object.freeze({
+    scene_type: "can_create_scenetype",
+    attribute: "can_create_attribute",
+    attribute_type: "can_create_attribute_type",
+    class: "can_create_class",
+    relationclass: "can_create_relationclass",
+    role: "can_create_role",
+    port: "can_create_port",
+    procedure: "can_create_procedure",
+    user_group: "can_create_user_group",
+});
+
+/**
  * @description - This is the class that handles the CRUD operations for the Meta object.
  * @export - The class is exported so that it can be used by other files.
  * @class Metamodel_metaobjectsConnection
@@ -112,32 +130,25 @@ class Metamodel_metaobjectsConnection implements CRUD {
             const uuid: UUID | undefined = newMetaObject.uuid;
 
 
-            if (userUuid && metaobjectType) {
-                const tableTypes: { [key: string]: string } = {
-                    "scene_type": "can_create_scenetype",
-                    "attribute": "can_create_attribute",
-                    "attribute_type": "can_create_attribute_type",
-                    "class": "can_create_class",
-                    "relationclass": "can_create_relationclass",
-                    "role": "can_create_role",
-                    "port": "can_create_port",
-                    "procedure": "can_create_procedure",
-                    "user_group": "can_create_user_group",
-                };
-                const tableName = tableTypes[metaobjectType];
-                if (!tableName) return new HTTP500Error(`Invalid metaobject type: ${metaobjectType}`);
+            const columnName = metaobjectType
+                ? CREATION_RIGHT_COLUMN[metaobjectType]
+                : undefined;
 
-                const columnName = tableTypes[metaobjectType];
-                if (!columnName) return new HTTP500Error(`Invalid column name: ${columnName}`);
-
-                //const meta_create_check = queries.getQuery_get("meta_create_check");
+            // A type with no column of its own carries no per-group creation
+            // right, so there is nothing to check here; the route that reaches it
+            // is what guards it. Returning an error instead used to make every
+            // authenticated file upload fail with a 500.
+            if (userUuid && columnName) {
+                // columnName is interpolated because a column cannot be a bind
+                // parameter. It is safe only because it is a value of the frozen
+                // table above, never a value taken from the request.
                 const meta_create_check = `SELECT 1
                                            WHERE EXISTS (SELECT 1
                                                          FROM user_group ug
                                                                   JOIN has_user_user_group huug ON ug.uuid_metaobject = huug.uuid_user_group
                                                          WHERE ug.${columnName} = true
                                                            AND huug.uuid_user = $1)
-                                              OR $1 = 'ff892138-77e0-47fe-a323-3fe0e1bf0240';`;
+                                              OR public.is_administrator($1);`;
                 const res = await client.query(meta_create_check, [userUuid]);
                 if (res.rowCount == 0) {
                     return new HTTP403NORIGHT(`The user ${userUuid} has no right to create a ${metaobjectType}`);

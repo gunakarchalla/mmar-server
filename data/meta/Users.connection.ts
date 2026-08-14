@@ -12,6 +12,32 @@ import {
     HTTP409CONFLICT
 } from "../services/middleware/error_handling/standard_errors.middleware";
 
+/**
+ * @description - The columns of a user that may leave the data layer.
+ *
+ * The password hash is deliberately absent. It used to be pulled in by SELECT *
+ * and then blanked again in each controller before responding, which meant that
+ * every handler added later leaked it until somebody noticed. Selecting it only
+ * where it is needed — get_password_hash, below — makes that mistake impossible
+ * to repeat.
+ */
+/**
+ * @description - A valid bcrypt hash of a value nobody knows, compared against
+ * when the requested login does not exist so that both outcomes take the same
+ * time. Its plaintext is irrelevant and it is never stored.
+ */
+const NON_EXISTENT_USER_HASH =
+    "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+
+const USER_COLUMNS = `mo.uuid,
+                      mo.name,
+                      mo.description,
+                      mo.creation_time,
+                      mo.modification_time,
+                      usr.uuid_metaobject,
+                      usr.username,
+                      usr.token`;
+
 class UsersConnection implements CRUD {
     async getByUuid(
         client: PoolClient,
@@ -20,7 +46,7 @@ class UsersConnection implements CRUD {
     ): Promise<User | undefined | BaseError> {
         try {
             const user_query =
-                "SELECT * FROM users AS usr JOIN metaobject AS mo ON mo.uuid = usr.uuid_metaobject WHERE usr.uuid_metaobject = $1 ";
+                `SELECT ${USER_COLUMNS} FROM users AS usr JOIN metaobject AS mo ON mo.uuid = usr.uuid_metaobject WHERE usr.uuid_metaobject = $1 `;
             let newUser: User | undefined;
 
             if (requserUuid) {
@@ -51,7 +77,7 @@ class UsersConnection implements CRUD {
     ): Promise<User | undefined | BaseError> {
         try {
             const user_query =
-                "SELECT * FROM users usr, metaobject mo WHERE mo.uuid = usr.uuid_metaobject AND usr.username = $1 ";
+                `SELECT ${USER_COLUMNS} FROM users usr, metaobject mo WHERE mo.uuid = usr.uuid_metaobject AND usr.username = $1 `;
             let newUser: User | undefined;
 
             if (requserUuid) {
@@ -230,10 +256,14 @@ class UsersConnection implements CRUD {
                     return new HTTP404Error(`User group ${userGroupUuid} does not exist`);
                 }
 
+                // The caller is passed on so that the group's own write check and
+                // the administrative-group guard apply here too: adding a
+                // membership through a user PATCH used to skip both.
                 await UsergroupsConnection.addByUserUuid(
                     client,
                     uuidToUpdate,
                     userGroupUuid,
+                    userUuid,
                 );
             }
 
@@ -280,15 +310,41 @@ class UsersConnection implements CRUD {
         }
     }
 
+    /**
+     * @description - Read the stored password hash of a user. This is the only
+     * read that touches the column, and its result must never reach a response.
+     * @param {PoolClient} client - The client to the database.
+     * @param {string} username - The login to look up.
+     * @returns {Promise<string | undefined>} - The hash, or undefined if no such user.
+     */
+    private async getPasswordHash(
+        client: PoolClient,
+        username: string,
+    ): Promise<string | undefined> {
+        const res = await client.query(
+            "SELECT password FROM users WHERE username = $1",
+            [username],
+        );
+        return res.rowCount === 1 ? (res.rows[0].password as string) : undefined;
+    }
+
     async matchPassword(
         client: PoolClient,
         username: string,
         password: string,
     ): Promise<boolean> {
         try {
-            const user = await this.getByUsername(client, username);
-            if (!(user instanceof User)) return false;
-            return await bcrypt.compare(password, user.get_password());
+            const hash = await this.getPasswordHash(client, username);
+
+            // An unknown login and a wrong password have to cost the same, or the
+            // difference in response time tells an attacker which usernames exist.
+            // Comparing against a throwaway hash keeps both paths on the same
+            // bcrypt work factor.
+            if (hash === undefined) {
+                await bcrypt.compare(password, NON_EXISTENT_USER_HASH);
+                return false;
+            }
+            return await bcrypt.compare(password, hash);
         } catch (err) {
             throw new Error(`Error matching password for user ${username} : ${err}`);
         }

@@ -28,7 +28,8 @@ export const custom_rules_object_instance_body: RequestHandler = async (
                 `The object instance with the uuid: ${req.params.uuid}, does not meet the rules: ${res_rules.failed}.`
             );
         }
-        next();
+        // The response is already sent, so the chain ends here: calling next()
+        // handed the finished request to the 404 handler.
     } catch (err) {
         next(err);
     }

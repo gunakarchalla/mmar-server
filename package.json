@@ -10,9 +10,10 @@
     "build:server": "npm install && copyfiles \"package*.json\" \"../dist/mmar-server\" && npm install --prefix ../dist/mmar-server && tsc --build && npm run postbuild:server",
     "postbuild:server": "copyfiles \"config/**/*\" \"../dist/mmar-server\" && copyfiles \"views/**/*\" \"../dist/mmar-server\"",
     "build:global": "cd ../mmar-global-data-structure && npm run build",
-    "test": "mocha -r ts-node/register test/unitTests/**/*.spec.ts",
+    "test": "mocha -r reflect-metadata -r ts-node/register test/unitTests/**/*.spec.ts",
     "swagger": "node ./config/swagger.mjs",
-    "tjs": "node ./config/tjs.mjs"
+    "tjs": "node ./config/tjs.mjs",
+    "test:unit": "mocha -r reflect-metadata -r ts-node/register test/unitTests/Auth_middleware.spec.ts test/unitTests/Transaction_context.spec.ts test/unitTests/Security.spec.ts"
   },
   "nodemonConfig": {
     "watch": [
@@ -27,33 +28,30 @@
   "author": "Daniel Borcard & Fabian Muff & Gunakar Challa",
   "license": "AGPL-3.0",
   "dependencies": {
-    "bcrypt": "5.1.1",
+    "bcrypt": "^6.0.0",
     "class-transformer": "0.5.1",
-    "compression": "1.7.4",
+    "compression": "^1.8.1",
     "cookie-parser": "1.4.7",
     "copyfiles": "2.4.1",
     "cors": "2.8.5",
     "dotenv": "16.4.5",
     "ejs": "3.1.10",
-    "express": "4.21.2",
-    "express-ejs-layouts": "2.5.1",
-    "express-winston": "4.2.0",
+    "express": "^4.22.2",
+    "express-rate-limit": "^7.5.1",
     "helmet": "7.1.0",
     "json-rules-engine": "7.2.1",
-    "jsonpath-plus": "10.2.0",
+    "jsonpath-plus": "^10.4.0",
     "jsonwebtoken": "9.0.2",
     "multer": "1.4.5-lts.1",
-    "node-rules": "github:omgimalexis/node-rules",
     "pg": "8.12.0",
     "reflect-metadata": "0.2.2",
-    "routes": "2.1.0",
-    "sharp": "0.34.3",
+    "sharp": "^0.35.3",
     "source-map-support": "0.5.21",
     "swagger-autogen": "2.23.7",
     "swagger-jsdoc": "6.1.0",
     "swagger-ui-express": "5.0.1",
     "typescript-json-schema": "0.65.1",
-    "uuidv4": "6.2.13",
+    "uuid": "^11.1.1",
     "winston": "3.13.1"
   },
   "devDependencies": {
@@ -75,12 +73,15 @@
     "@typescript-eslint/parser": "7.18.0",
     "chai": "4.3.10",
     "chai-http": "4.4.0",
-    "mocha": "10.8.2",
+    "mocha": "^11.8.0",
     "nodemon": "3.1.4",
     "prettier": "3.4.2",
-    "rools": "2.3.0",
     "ts-node": "10.9.2",
     "typedoc": "0.27.4",
     "typescript": "5.7.2"
+  },
+  "overrides": {
+    "serialize-javascript": "^7.1.0",
+    "diff": "^8.0.3"
   }
 }

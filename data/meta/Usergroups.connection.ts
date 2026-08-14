@@ -10,6 +10,7 @@ import {
     HTTP404Error,
 } from "../services/middleware/error_handling/standard_errors.middleware";
 import Metamodel_common_functionsConnection from "./Metamodel_common_functions.connection";
+import {is_administrator} from "../services/authorization";
 
 class UsergroupsConnection implements CRUD {
     async getAll(client: PoolClient, userUuid?: UUID): Promise<Usergroup[] | BaseError> {
@@ -319,6 +320,19 @@ class UsergroupsConnection implements CRUD {
                 const write_check = queries.getQuery_get("write_check");
                 const res = await client.query(write_check, [usergroupUuid, userUuid]);
                 if (res.rowCount == 0) return new HTTP403NORIGHT(`The user ${userUuid} has no right to update the usergroup ${usergroupUuid}`);
+            }
+
+            // Joining an administrative group grants every right there is, so it
+            // is the one membership that write rights on the group are not enough
+            // to confer: only an administrator may hand out administrator. The
+            // check is here rather than in the callers because this is the single
+            // statement that creates a membership.
+            if (usergroup instanceof Usergroup && usergroup.get_is_administrator()) {
+                if (!userUuid || !(await is_administrator(client, userUuid))) {
+                    return new HTTP403NORIGHT(
+                        `Only an administrator can add a user to the administrative user group ${usergroupUuid}`,
+                    );
+                }
             }
 
             await client.query(

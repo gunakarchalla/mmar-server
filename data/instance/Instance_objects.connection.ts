@@ -1,7 +1,7 @@
 import {PoolClient} from "pg";
 import {ObjectInstance, UUID} from "../../../mmar-global-data-structure";
 
-import {uuid} from "uuidv4";
+import {v4 as uuid} from "uuid";
 import {queries} from "../../index";
 import {CRUD} from "../common/crud.interface";
 import {BaseError, HTTP403NORIGHT} from "../services/middleware/error_handling/standard_errors.middleware";
@@ -48,7 +48,9 @@ class Instance_objectsConnection implements CRUD {
             return ObjectInstance.fromJS(res_object.rows[0]);
 
         } catch (err) {
-            await client.query("ROLLBACK");
+            // The transaction belongs to the caller: rolling it back from a read
+            // would undo work this function knows nothing about, and would leave
+            // the controller's own rollback running against a finished transaction.
             throw new Error(`Error getting the object ${objectUUID}: ${err}`);
         }
     }
@@ -131,27 +133,26 @@ class Instance_objectsConnection implements CRUD {
             const search_instanceObject_query = queries.getQuery_rules(
                 "search_instanceobject"
             );
-            let query = `INSERT INTO instance_object (uuid)
-                         VALUES ('DEFAULT')
-                         RETURNING uuid`;
-            if (instanceObjectToAdd.get_uuid()) {
-                query = `INSERT INTO instance_object (uuid)
-                         VALUES ('${instanceObjectToAdd.get_uuid()}')
-                         RETURNING uuid`;
-            }
-            if (
-                typeof instanceObjectToAdd.get_uuid() &&
-                (
-                    await client.query(search_instanceObject_query, [
-                        instanceObjectToAdd.get_uuid(),
-                    ])
-                ).rowCount != 0
-            ) {
-                // if the object already exists we return undefined
-                return undefined;
+            const requested_uuid = instanceObjectToAdd.get_uuid();
+
+            if (requested_uuid) {
+                // The object already exists: undefined means "nothing was created",
+                // which the callers treat as a no-op rather than as a failure.
+                const existing = await client.query(search_instanceObject_query, [
+                    requested_uuid,
+                ]);
+                if (existing.rowCount !== 0) return undefined;
             }
 
-            const queryResult = await client.query(query);
+            // The uuid is supplied by the client, so it is bound as a parameter and
+            // never interpolated into the statement. COALESCE lets the column
+            // default generate one when the client did not propose any.
+            const queryResult = await client.query(
+                `INSERT INTO instance_object (uuid)
+                 VALUES (COALESCE($1::uuid, gen_random_uuid()))
+                 RETURNING uuid`,
+                [requested_uuid ?? null]
+            );
             if (queryResult.rowCount && queryResult.rowCount > 0) {
 
                 await this.update(client, queryResult.rows[0].uuid, instanceObjectToAdd, userUuid);

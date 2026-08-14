@@ -11,6 +11,7 @@ import {filter_object} from "../../data/services/middleware/object_filter";
 import {record_security_event} from "../../data/services/security_audit.service";
 import { requireUser } from "../../data/services/middleware/auth.middleware";
 import { begin_transaction } from "../../data/services/transaction";
+import { environment } from "../../data/services/environment";
 
 class Users_controller {
     get_user_by_uuid: RequestHandler = async (req, res, next) => {
@@ -20,7 +21,6 @@ class Users_controller {
 
             const user = await Users_connection.getByUuid(client, req.params.uuid, requireUser(req).uuid);
             if (user instanceof User) {
-                user.set_password(""); // obfuscate password
                 res.status(200).send(user);
             } else if (user instanceof BaseError) {
                 throw user;
@@ -45,12 +45,10 @@ class Users_controller {
             await begin_transaction(client);
             const users = await Users_connection.getAll(client, requireUser(req).uuid);
             if (Array.isArray(users)) {
+                // The password hash is not selected by the data layer at all, so
+                // there is nothing to strip here.
                 res.status(200).send(
-                    // obfuscate password
-                    users.map((user) => {
-                        user.set_password("");
-                        return filter_object(user, req.query.filter);
-                    }),
+                    users.map((user) => filter_object(user, req.query.filter)),
                 );
             } else if (users instanceof BaseError) {
                 throw users;
@@ -77,7 +75,6 @@ class Users_controller {
                 requireUser(req).uuid
             );
             if (user instanceof User) {
-                user.set_password(""); // obfuscate password
                 res.status(200).send(user);
             } else if (user instanceof BaseError) {
                 throw user;
@@ -152,6 +149,15 @@ class Users_controller {
         }
     };
 
+    /**
+     * @description - Create a user account. The route restricts this to
+     * administrators, and the caller is passed to the data layer so that the
+     * right checks there run against a real identity rather than being skipped.
+     *
+     * No token is issued: an administrator creating an account for somebody else
+     * must not be handed that person's session, and must not have their own
+     * replaced.
+     */
     post_user: RequestHandler = async (req, res, next) => {
         const client = await database_connection.getPool().connect();
         try {
@@ -160,13 +166,10 @@ class Users_controller {
             const newUser = User.fromJS(req.body) as User;
             const user = await Users_connection.create(
                 client,
-                newUser);
+                newUser,
+                requireUser(req).uuid,
+            );
             if (user instanceof User) {
-                const token = user.generate_token();
-                res.cookie("authcookie", token, {
-                    maxAge: 900000,
-                    httpOnly: true,
-                });
                 res.status(201).json(filter_object(user, req.query.filter));
             } else if (user instanceof BaseError) {
                 throw user;
@@ -201,8 +204,16 @@ class Users_controller {
                 if (user instanceof User) {
                     const token = user.generate_token();
                     res.cookie("authcookie", token, {
-                        maxAge: 900000,
+                        // The cookie now expires with the token it carries: it
+                        // used to lapse after 15 minutes while the token inside
+                        // stayed valid for a day.
+                        maxAge: environment.token_expire_ms,
                         httpOnly: true,
+                        sameSite: "lax",
+                        // Only sent over HTTPS in a real deployment. Left off in
+                        // development, where the server is reached over plain
+                        // HTTP and a secure cookie would never be stored.
+                        secure: !environment.is_development,
                     });
                     record_security_event({
                         event: "login",
