@@ -1,5 +1,5 @@
 import {CRUD} from "../common/crud.interface";
-import {User, Usergroup, UUID} from "../../../mmar-global-data-structure";
+import {User, UUID} from "../../../mmar-global-data-structure";
 import {PoolClient} from "pg";
 import bcrypt from "bcrypt";
 import Metamodel_metaobject_connection from "./Metamodel_metaobjects.connection";
@@ -13,15 +13,6 @@ import {
 } from "../services/middleware/error_handling/standard_errors.middleware";
 
 /**
- * @description - The columns of a user that may leave the data layer.
- *
- * The password hash is deliberately absent. It used to be pulled in by SELECT *
- * and then blanked again in each controller before responding, which meant that
- * every handler added later leaked it until somebody noticed. Selecting it only
- * where it is needed — get_password_hash, below — makes that mistake impossible
- * to repeat.
- */
-/**
  * @description - A valid bcrypt hash of a value nobody knows, compared against
  * when the requested login does not exist so that both outcomes take the same
  * time. Its plaintext is irrelevant and it is never stored.
@@ -29,6 +20,15 @@ import {
 const NON_EXISTENT_USER_HASH =
     "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
 
+/**
+ * @description - The columns of a user that may leave the data layer.
+ *
+ * The password hash is deliberately absent. It used to be pulled in by SELECT *
+ * and then blanked again in each controller before responding, which meant that
+ * every handler added later leaked it until somebody noticed. Selecting it only
+ * where it is needed — getPasswordHash, below — makes that mistake impossible
+ * to repeat.
+ */
 const USER_COLUMNS = `mo.uuid,
                       mo.name,
                       mo.description,

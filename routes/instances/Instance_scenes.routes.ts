@@ -172,7 +172,7 @@ sceneInstanceRouter.get(
         "schema": {
           "type": "array",
           "items": {
-            "$ref": "#/components/schemas/SceneInstance"   
+            "$ref": "#/components/schemas/SceneInstance"   
  
           }
         }

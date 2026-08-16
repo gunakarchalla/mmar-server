@@ -1,7 +1,6 @@
 import {RequestHandler} from "express";
 import {database_connection} from "../..";
 import {
-    API404Error,
     BaseError,
     HTTP500Error
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";

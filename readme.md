@@ -153,6 +153,68 @@ by a direct SQL session. The schema lives in the
 [mmar-database](https://github.com/MM-AR/mmar-database) repository.
 
 
+## Connections and transactions
+
+One request uses one database connection, held for the length of its transaction.
+That is what lets `PGPOOL_MAX` stay small, and it is a property worth preserving when
+adding code: a handler that opens a second connection while holding the first doubles
+the pool the server needs, and under load the two halves of the same request can end up
+waiting on each other.
+
+Two rules follow from it.
+
+**A helper takes the caller's client, it does not borrow its own.** Everything under
+`data/` accepts a `PoolClient` as its first argument. The rule engine nests — verifying a
+scene verifies its classes, which verify their attributes — so the verificators pass the
+client down and use `with_client` from `data/services/database_connection.ts`, which
+borrows a connection only when the caller has none:
+
+```ts
+export async function verif_inner_class_instance_body(
+  classToTest: ClassInstance | ClassInstance[],
+  client?: PoolClient
+) {
+  return await with_client(client, async (c) => applyRules(c, classToTest));
+}
+```
+
+**A sequence of related reads and writes belongs in one transaction.** Asking each
+question on a connection of its own answers each from a different snapshot, which is how
+two concurrent revocations can each see another owner and between them remove the last
+one. `Scene_access_controller` shows the shape: one `begin_transaction`, every helper on
+that client, commit at the end.
+
+## Indexes
+
+PostgreSQL creates an index for a primary key or a unique constraint, never for a foreign
+key. The schema declares 111 of them, and the columns they cover are exactly what the API
+walks to get from a parent to its children — the attributes of a class, the classes of a
+scene, the rights of a user. `init.sql` therefore ends with a `CREATE INDEX` for each of
+them; measured on a scene of 150 objects, their absence turned the attribute lookup from
+a bitmap index scan into a sequential scan and made the read 3.4 times slower, a gap that
+widens as the tables grow.
+
+Adding a foreign key means adding its index in the same change.
+
+## Development
+
+```bash
+npm run lint        # eslint over the whole project
+npm run test:unit   # the tests that need no database
+npm test            # the full suite, needs a database and a running server
+```
+
+`npm test` drives the real API against a real database, so it needs both up: see
+`.github/workflows/ci.yml`, which loads `mmar-database/init.sql` into a throwaway
+PostgreSQL, starts the server and runs the suite the same way.
+
+Run it against a **fresh** database. The specs are not isolated from one another: they
+share one schema, and `TestEnvironmentSetup.tearDown` only removes the uuids a spec lists
+explicitly, so anything else it created survives into the next one. Running the same specs
+twice against a long-lived database therefore produces different failures each time — which
+makes a red result there meaningless as a signal. CI gets a new container per run for that
+reason, and giving the suite real isolation is outstanding work.
+
 ## Contributing
 
 We welcome contributions! Please follow these steps:

@@ -28,7 +28,7 @@ class Instance_rolesConnection implements CRUD {
     async getByUuid(
         client: PoolClient,
         roleUuid: UUID,
-        userUuid?: UUID
+        _userUuid?: UUID
     ): Promise<RoleInstance | undefined | BaseError> {
         const role_query = queries.getQuery_get("instance_role_uuid_query");
         let newRole;

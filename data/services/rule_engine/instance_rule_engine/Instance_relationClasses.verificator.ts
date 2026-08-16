@@ -1,6 +1,7 @@
 import {RequestHandler} from "express";
 import {RelationclassInstance} from "../../../../../mmar-global-data-structure";
-import {database_connection} from "../../../../index";
+import {PoolClient} from "pg";
+import {with_client} from "../../database_connection";
 import {applyRules} from "./Instance_relationclasses.rules";
 
 export const verif_relationclass_instances_body: RequestHandler = async (
@@ -20,22 +21,18 @@ export const verif_relationclass_instances_body: RequestHandler = async (
 };
 
 export async function verif_inner_relationclass_instance_body(
-  relationClassToTest: RelationclassInstance | RelationclassInstance[]
+  relationClassToTest: RelationclassInstance | RelationclassInstance[],
+  client?: PoolClient
 ) {
-  const client = await database_connection.getPool().connect();
-
-  try {
+  // The rule engine nests, so the connection is threaded down rather than a new
+  // one taken at every level: see with_client.
+  return await with_client(client, async (c) => {
     if (relationClassToTest instanceof RelationclassInstance) {
-      await applyRules(client, relationClassToTest);
+      await applyRules(c, relationClassToTest);
     } else {
-      for (const relationClassToTestElement of relationClassToTest) {
-        await applyRules(client, relationClassToTestElement);
+      for (const element of relationClassToTest) {
+        await applyRules(c, element);
       }
     }
-    // eslint-disable-next-line no-useless-catch
-  } catch (err) {
-    throw err;
-  } finally {
-    client.release();
-  }
+  });
 }

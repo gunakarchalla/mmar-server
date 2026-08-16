@@ -5,7 +5,7 @@ import {CRUD} from "../common/crud.interface";
 import Instance_attribute_connection from "./Instance_attributes.connection";
 import Instance_class_connection from "./Instance_classes.connection";
 import Instance_objects_connection from "./Instance_objects.connection";
-import {queries} from "../../index";
+import {} from "../../index";
 import {BaseError, HTTP403NORIGHT} from "../services/middleware/error_handling/standard_errors.middleware";
 
 /**

@@ -37,7 +37,9 @@ describe("ARWFML tests", async function () {
     await setup.tearDown(client, ["a3b35b86-2636-4987-8cc4-814f468f6c4b"]);
   });
 
-  const postModel = (modelName: string, modelData: any) => {
+  // The model is read straight from a JSON fixture and posted verbatim, so the
+  // test makes no claim about its shape beyond it being a JSON document.
+  const postModel = (modelName: string, modelData: object) => {
     it(`Should post and return the ${modelName} model`, async () => {
       const res1 = await server
         .post(`/metamodel/sceneTypes/`)

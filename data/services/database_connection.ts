@@ -1,5 +1,32 @@
-import { Pool } from "pg";
+import { Pool, PoolClient } from "pg";
 import { environment } from "./environment";
+
+/**
+ * @description - Run something against a database connection, borrowing one only
+ * if the caller did not already have one.
+ *
+ * The rule engine nests: verifying a scene verifies its classes, which verify
+ * their attributes. Each level used to open a connection of its own and hold it
+ * while the level below did the same, so one request could occupy four at once
+ * for work that is entirely sequential. Passing the client down collapses that to
+ * one, which is what keeps a small pool sufficient.
+ * @param {PoolClient | undefined} client - The caller's connection, if it has one.
+ * @param {(client: PoolClient) => Promise<T>} run - The work to perform.
+ * @returns {Promise<T>} - Whatever the work returned.
+ */
+export async function with_client<T>(
+    client: PoolClient | undefined,
+    run: (client: PoolClient) => Promise<T>
+): Promise<T> {
+    if (client) return await run(client);
+
+    const borrowed = await database_connection.getInstance().getPool().connect();
+    try {
+        return await run(borrowed);
+    } finally {
+        borrowed.release();
+    }
+}
 
 /**
  * @description - The connection pool to the database, shared by the whole server.

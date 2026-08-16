@@ -149,7 +149,7 @@ sceneTypeRouter.get(
         "schema": {
           "type": "array",
           "items": {
-            "$ref": "#/components/schemas/SceneType"   
+            "$ref": "#/components/schemas/SceneType"   
 
           }
         }

@@ -3,7 +3,6 @@ import {RequestHandler} from "express";
 import {database_connection} from "../../index";
 import {filter_object} from "../../data/services/middleware/object_filter";
 import {
-  API404Error,
   BaseError,
   HTTP403NORIGHT,
   HTTP409CONFLICT,

@@ -181,7 +181,7 @@ relationClassInstanceRouter.get(
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/components/schemas/RelationclassInstance"   
+          "$ref": "#/components/schemas/RelationclassInstance"   
 
         }
       }

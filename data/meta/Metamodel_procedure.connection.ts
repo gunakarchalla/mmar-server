@@ -191,7 +191,7 @@ class Metamodel_procedureConnection implements CRUD {
         try {
             const query_create_procedure =
                 'INSERT INTO "procedure" (uuid_metaobject) values ($1)';
-            let returnProcedure: Procedure | 403 | undefined;
+            let _returnProcedure: Procedure | 403 | undefined;
             const created_metaObject = await Metamodel_metaobject_connection.create(
                 client,
                 newProcedure,

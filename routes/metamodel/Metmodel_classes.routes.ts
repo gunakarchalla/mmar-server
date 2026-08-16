@@ -20,7 +20,7 @@ classMetaRouter.get(
         "schema": {
           "type": "array",
           "items": {
-            "$ref": "#/components/schemas/Class"   
+            "$ref": "#/components/schemas/Class"   
  
           }
         }
@@ -205,7 +205,7 @@ classMetaRouter.get(
         "schema": {
           "type": "array",
           "items": {
-            "$ref": "#/components/schemas/Class"   
+            "$ref": "#/components/schemas/Class"   
  
           }
         }

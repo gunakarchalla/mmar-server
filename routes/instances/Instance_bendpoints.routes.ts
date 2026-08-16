@@ -98,7 +98,7 @@ bendpointInstanceRouter.get(
               "schema": {
                   "type": "array",
                   "items": {
-                      "$ref": "#/components/schemas/ClassInstance"   
+                      "$ref": "#/components/schemas/ClassInstance"   
  
                   }
               }

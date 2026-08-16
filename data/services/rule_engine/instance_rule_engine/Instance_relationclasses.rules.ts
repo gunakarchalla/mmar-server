@@ -22,7 +22,8 @@ export async function applyRules(
 
   await metaObjectExists(client, relationClassToTest);
   await verif_inner_attribute_instance_body(
-    relationClassToTest.attribute_instance
+    relationClassToTest.attribute_instance,
+    client
   );
-  await verif_inner_class_instance_body(relationClassToTest);
+  await verif_inner_class_instance_body(relationClassToTest, client);
 }

@@ -2,6 +2,18 @@ import {PoolClient} from "pg";
 import {UUID} from "../../../mmar-global-data-structure";
 import {BaseError} from "../services/middleware/error_handling/standard_errors.middleware";
 
+/*
+ * The `any` below is deliberate for now, and is the reason every caller of this
+ * layer has to test its result with `instanceof` before using it: the contract
+ * promises nothing about what comes back, so the compiler cannot object when a
+ * BaseError is used as if it were data.
+ *
+ * Making this generic (CRUD<T>) is part of the planned rework of the data layer,
+ * together with throwing errors instead of returning them. Until then the rule is
+ * disabled here rather than globally, so that new `any` elsewhere is still caught.
+ */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export interface CRUD {
     /**
      * @description - Get a specific object by its uuid.

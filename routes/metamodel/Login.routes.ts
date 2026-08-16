@@ -5,6 +5,7 @@ import {
   authenticate_token,
   require_administrator,
 } from "../../data/services/middleware/auth.middleware";
+import { environment } from "../../data/services/environment";
 
 const loginRouter = Router();
 
@@ -16,8 +17,8 @@ const loginRouter = Router();
  * not the problem.
  */
 const signin_limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 10,
+  windowMs: environment.login_rate_limit_window_ms,
+  limit: environment.login_rate_limit,
   skipSuccessfulRequests: true,
   standardHeaders: "draft-7",
   legacyHeaders: false,

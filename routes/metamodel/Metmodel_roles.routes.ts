@@ -18,7 +18,7 @@ roleMetaRouter.get(
         "schema": {
           "type": "array",
           "items": {
-            "$ref": "#/components/schemas/Role"   
+            "$ref": "#/components/schemas/Role"   
  
           }
         }

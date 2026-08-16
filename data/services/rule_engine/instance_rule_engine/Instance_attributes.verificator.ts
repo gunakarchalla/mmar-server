@@ -1,6 +1,7 @@
 import {RequestHandler} from "express";
 import {AttributeInstance} from "../../../../../mmar-global-data-structure";
-import {database_connection} from "../../../../index";
+import {PoolClient} from "pg";
+import {with_client} from "../../database_connection";
 import {applyRules} from "./Instance_attributes.rules";
 
 export const verif_attribute_instance_body: RequestHandler = async (
@@ -25,23 +26,18 @@ export const verif_attribute_instance_body: RequestHandler = async (
  * @param attributeToTest
  */
 export async function verif_inner_attribute_instance_body(
-  attributeToTest: AttributeInstance | AttributeInstance[]
+  attributeToTest: AttributeInstance | AttributeInstance[],
+  client?: PoolClient
 ) {
-  const client = await database_connection.getPool().connect();
-
-  try {
+  // The rule engine nests, so the connection is threaded down rather than a new
+  // one taken at every level: see with_client.
+  return await with_client(client, async (c) => {
     if (attributeToTest instanceof AttributeInstance) {
-      await applyRules(client, attributeToTest);
+      await applyRules(c, attributeToTest);
     } else {
-      for (const attributeToTestIntern of attributeToTest) {
-        await applyRules(client, attributeToTestIntern);
+      for (const element of attributeToTest) {
+        await applyRules(c, element);
       }
     }
-
-    // eslint-disable-next-line no-useless-catch
-  } catch (err) {
-    throw err;
-  } finally {
-    client.release();
-  }
+  });
 }

@@ -155,7 +155,7 @@ procedureMetaRouter.get(
         "schema": {
           "type": "array",
           "items": {
-            "$ref": "#/components/schemas/Procedure"   
+            "$ref": "#/components/schemas/Procedure"   
 
           }
         }
@@ -185,7 +185,7 @@ procedureMetaRouter.get(
         "schema": {
           "type": "array",
           "items": {
-            "$ref": "#/components/schemas/Procedure"   
+            "$ref": "#/components/schemas/Procedure"   
 
           }
         }
@@ -271,7 +271,7 @@ procedureMetaRouter.get(
         "schema": {
           "type": "array",
           "items": {
-            "$ref": "#/components/schemas/Procedure"   
+            "$ref": "#/components/schemas/Procedure"   
 
           }
         }

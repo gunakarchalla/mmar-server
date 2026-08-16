@@ -2,7 +2,6 @@ import {RequestHandler} from "express";
 import {plainToInstance} from "class-transformer";
 
 import {
-    API404Error,
     BaseError,
     HTTP500Error,
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";

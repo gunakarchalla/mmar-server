@@ -19,5 +19,5 @@ export async function applyRules(
 ) {
   //new rules comes here
   await metaObjectExists(client, classToTest);
-  await verif_inner_attribute_instance_body(classToTest.attribute_instance);
+  await verif_inner_attribute_instance_body(classToTest.attribute_instance, client);
 }

@@ -405,7 +405,28 @@ class UsergroupsConnection implements CRUD {
         can_create_instances?: boolean,
     ): Promise<Usergroup | undefined | BaseError> {
         try {
-            const res = await this.deleteRight(client, usergroupUuid, objectUuid, requesterUuid, has_read_right, has_write_right, has_delete_right, can_create_instances);
+            // deleteRight removes a right only when its flag is set, and the flags
+            // come from the request body. A DELETE carries no body in most clients,
+            // so every flag arrived undefined and the endpoint answered 200 having
+            // revoked nothing — an operator was told a right was withdrawn while it
+            // was still in force. Naming no right therefore means all of them, which
+            // is what deleting the link between a group and an object should do.
+            const no_right_named =
+                has_read_right === undefined &&
+                has_write_right === undefined &&
+                has_delete_right === undefined &&
+                can_create_instances === undefined;
+
+            const res = await this.deleteRight(
+                client,
+                usergroupUuid,
+                objectUuid,
+                requesterUuid,
+                no_right_named || has_read_right,
+                no_right_named || has_write_right,
+                no_right_named || has_delete_right,
+                no_right_named || can_create_instances,
+            );
             if (res instanceof BaseError) return res;
             return await this.getByUuid(client, usergroupUuid, requesterUuid);
         } catch (err) {
@@ -468,7 +489,7 @@ class UsergroupsConnection implements CRUD {
                     FROM has_write_right
                     WHERE uuid_user_group = $1
                       AND uuid_metaobject = $2;`, [usergroupUuid, objectUuid])
-            };
+            }
             if (has_delete_right) {
             await client.query(` DELETE
                                  FROM has_delete_right

@@ -330,7 +330,7 @@ describe("Instance classes tests", function () {
         });
 
         it(`Should delete the class and the attribute instance`, async () => {
-            const test = await server
+            const _test = await server
                 .post(`/instances/sceneTypes/${uuids.sceneTypeUuid}/sceneInstances`)
                 .set("content-type", "application/json")
                 .set("accept", "application/json")
@@ -403,7 +403,7 @@ describe("Instance classes tests", function () {
                     uuid_class: uuids.classUuid,
                 });
 
-            const test = await server
+            const _test = await server
                 .post(
                     `/instances/sceneInstances/${uuids.sceneInstanceUuid}/portsInstances`
                 )

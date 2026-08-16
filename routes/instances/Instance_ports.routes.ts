@@ -139,7 +139,7 @@ portInstanceRouter.get(
         "schema": {
           "type": "array",
           "items": {
-            "$ref": "#/components/schemas/PortInstance"   
+            "$ref": "#/components/schemas/PortInstance"   
 
           }
         }

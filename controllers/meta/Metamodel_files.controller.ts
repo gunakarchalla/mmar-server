@@ -8,7 +8,7 @@ import {
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";
 import { v4 as uuidv4 } from "uuid";
 import Metamodel_files_connection from "../../data/meta/Metamodel_files.connection";
-import { File, UUID } from "../../../mmar-global-data-structure";
+import { File } from "../../../mmar-global-data-structure";
 import { filter_object } from "../../data/services/middleware/object_filter";
 import { compressImage } from "../../data/services/compress.service";
 import { requireUser } from "../../data/services/middleware/auth.middleware";
@@ -209,8 +209,8 @@ class Metamodel_filesController {
 
             const hardPatch = req.query.hardpatch === "true" ? true : false;
             const compress = req.query.compress === "true" ? true : false;
-            let targetWidth: number | undefined = req.query.targetWidth ? parseInt(req.query.targetWidth as string) : undefined;
-            let quality: number | undefined = req.query.quality ? parseInt(req.query.quality as string) : undefined;
+            const targetWidth: number | undefined = req.query.targetWidth ? parseInt(req.query.targetWidth as string) : undefined;
+            const quality: number | undefined = req.query.quality ? parseInt(req.query.quality as string) : undefined;
 
             if (compress) {
                 if (targetWidth === undefined || targetWidth <= 0 || quality === undefined || quality <= 0 || quality > 100) {
@@ -323,8 +323,8 @@ class Metamodel_filesController {
             newFile.uuid = specified_uuid;
 
             const compress = req.query.compress === "true" ? true : false;
-            let targetWidth: number | undefined = req.query.targetWidth ? parseInt(req.query.targetWidth as string) : undefined;
-            let quality: number | undefined = req.query.quality ? parseInt(req.query.quality as string) : undefined;
+            const targetWidth: number | undefined = req.query.targetWidth ? parseInt(req.query.targetWidth as string) : undefined;
+            const quality: number | undefined = req.query.quality ? parseInt(req.query.quality as string) : undefined;
 
             if (compress) {
                 if (targetWidth === undefined || targetWidth <= 0 || quality === undefined || quality <= 0 || quality > 100) {

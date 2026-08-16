@@ -10,10 +10,12 @@
     "build:server": "npm install && copyfiles \"package*.json\" \"../dist/mmar-server\" && npm install --prefix ../dist/mmar-server && tsc --build && npm run postbuild:server",
     "postbuild:server": "copyfiles \"config/**/*\" \"../dist/mmar-server\" && copyfiles \"views/**/*\" \"../dist/mmar-server\"",
     "build:global": "cd ../mmar-global-data-structure && npm run build",
-    "test": "mocha -r reflect-metadata -r ts-node/register test/unitTests/**/*.spec.ts",
+    "test": "mocha --exit -r reflect-metadata -r ts-node/register test/unitTests/**/*.spec.ts",
     "swagger": "node ./config/swagger.mjs",
     "tjs": "node ./config/tjs.mjs",
-    "test:unit": "mocha -r reflect-metadata -r ts-node/register test/unitTests/Auth_middleware.spec.ts test/unitTests/Transaction_context.spec.ts test/unitTests/Security.spec.ts"
+    "test:unit": "mocha --exit -r reflect-metadata -r ts-node/register test/unitTests/Auth_middleware.spec.ts test/unitTests/Transaction_context.spec.ts test/unitTests/Security.spec.ts test/unitTests/Collection_difference.spec.ts",
+    "lint": "eslint --ext .ts .",
+    "lint:fix": "eslint --ext .ts . --fix"
   },
   "nodemonConfig": {
     "watch": [

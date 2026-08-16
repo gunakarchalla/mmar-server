@@ -23,7 +23,7 @@ portMetaRouter.get(
         "schema": {
           "type": "array",
           "items": {
-            "$ref": "#/components/schemas/Port"   
+            "$ref": "#/components/schemas/Port"   
 
           }
         }
@@ -223,7 +223,7 @@ portMetaRouter.get(
         "schema": {
           "type": "array",
           "items": {
-            "$ref": "#/components/schemas/Port"   
+            "$ref": "#/components/schemas/Port"   
 
           }
         }

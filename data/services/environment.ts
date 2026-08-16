@@ -208,6 +208,21 @@ export const environment = Object.freeze({
     /** @description - The largest uploaded file accepted, in bytes. */
     max_upload_bytes: numeric_variable("MAX_UPLOAD_BYTES", 16 * 1024 * 1024),
 
+    /**
+     * @description - How many failed sign in attempts one address may make within
+     * the window below. Successful sign ins are not counted, so this only ever
+     * throttles guessing. It is configurable because the right number depends on
+     * the deployment: behind a shared address or a NAT, every user counts as one
+     * client, and an automated test suite is a single client too.
+     */
+    login_rate_limit: numeric_variable("LOGIN_RATE_LIMIT", 10),
+
+    /** @description - The window the sign in limit is counted over, in milliseconds. */
+    login_rate_limit_window_ms: numeric_variable(
+        "LOGIN_RATE_LIMIT_WINDOW_MS",
+        15 * 60 * 1000
+    ),
+
     /** @description - The secret used to sign and verify the JSON web tokens. */
     jwt_secret: require_jwt_secret(),
 

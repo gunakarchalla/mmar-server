@@ -4,7 +4,7 @@ import {ObjectInstance, UUID} from "../../../mmar-global-data-structure";
 import {v4 as uuid} from "uuid";
 import {queries} from "../../index";
 import {CRUD} from "../common/crud.interface";
-import {BaseError, HTTP403NORIGHT} from "../services/middleware/error_handling/standard_errors.middleware";
+import {BaseError} from "../services/middleware/error_handling/standard_errors.middleware";
 
 /**
  * @description - This is the class that handles the CRUD operations for the Object Instances.
@@ -27,7 +27,7 @@ class Instance_objectsConnection implements CRUD {
     async getByUuid(
         client: PoolClient,
         objectUUID: UUID,
-        userUuid?: UUID
+        _userUuid?: UUID
     ): Promise<ObjectInstance | undefined | BaseError> {
         try {
 
@@ -70,7 +70,7 @@ class Instance_objectsConnection implements CRUD {
     async deleteByUuid(
         client: PoolClient,
         objectUUID: UUID,
-        userUUID?: UUID
+        _userUUID?: UUID
     ): Promise<UUID[] | undefined | BaseError> {
         try {
             const returnUuids: UUID[] = new Array<UUID>();
@@ -214,7 +214,7 @@ class Instance_objectsConnection implements CRUD {
         client: PoolClient,
         instanceObjectUUID: UUID,
         instanceObjectUpdated: ObjectInstance,
-        userUUID?: UUID
+        _userUUID?: UUID
     ): Promise<ObjectInstance | undefined | BaseError> {
         try {
 

@@ -27,11 +27,12 @@ export async function applyRules(
 ) {
   //new rules comes here
   await metaObjectExists(client, sceneToTest);
-  await verif_inner_class_instance_body(sceneToTest.class_instances);
+  await verif_inner_class_instance_body(sceneToTest.class_instances, client);
   await verif_inner_relationclass_instance_body(
-    sceneToTest.relationclasses_instances
+    sceneToTest.relationclasses_instances,
+    client
   );
-  await verif_inner_role_instance_body(sceneToTest.role_instances);
-  await verif_inner_attribute_instance_body(sceneToTest.attribute_instances);
-  await verif_inner_port_instance_body(sceneToTest.port_instances);
+  await verif_inner_role_instance_body(sceneToTest.role_instances, client);
+  await verif_inner_attribute_instance_body(sceneToTest.attribute_instances, client);
+  await verif_inner_port_instance_body(sceneToTest.port_instances, client);
 }

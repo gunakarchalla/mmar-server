@@ -31,7 +31,7 @@ class Metamodel_referencesConnection {
     async getClassReferences(
         client: PoolClient,
         roleUUID: UUID,
-        userUUID?: UUID
+        _userUUID?: UUID
     ): Promise<ClassReference[] | BaseError> {
         try {
             const role_class_ref_query = queries.getQuery_get("role_class_ref_query");
@@ -68,7 +68,7 @@ class Metamodel_referencesConnection {
     async getRelationclassReferences(
         client: PoolClient,
         roleUUID: UUID,
-        userUUID?: UUID
+        _userUUID?: UUID
     ): Promise<RelationClassReference[] | BaseError> {
         try {
             const role_relclass_ref_query = queries.getQuery_get(
@@ -107,7 +107,7 @@ class Metamodel_referencesConnection {
     async getSceneTypeReferences(
         client: PoolClient,
         roleUUID: UUID,
-        userUUID?: UUID
+        _userUUID?: UUID
     ): Promise<SceneTypeReference[] | BaseError> {
         const role_scenetype_ref_query =
             "SELECT * FROM role_scene_reference rs WHERE rs.uuid_role = $1 ";
@@ -146,7 +146,7 @@ class Metamodel_referencesConnection {
     async getPortReferences(
         client: PoolClient,
         roleUUID: UUID,
-        userUUID?: UUID
+        _userUUID?: UUID
     ): Promise<PortReference[] | BaseError> {
         try {
             const role_port_ref_query =
@@ -170,7 +170,7 @@ class Metamodel_referencesConnection {
     async getAttributeReferences(
         client: PoolClient,
         roleUUID: UUID,
-        userUUID?: UUID
+        _userUUID?: UUID
     ): Promise<PortReference[] | BaseError> {
         try {
             const role_attribute_ref_query =

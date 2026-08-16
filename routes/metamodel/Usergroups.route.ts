@@ -16,7 +16,7 @@ usergroupRouter.get(
           "schema": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Usergroup"   
+              "$ref": "#/components/schemas/Usergroup"   
    
             }
           }
@@ -81,7 +81,7 @@ usergroupRouter.get(
           "schema": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Usergroup"   
+              "$ref": "#/components/schemas/Usergroup"   
    
             }
           }

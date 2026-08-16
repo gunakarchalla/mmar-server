@@ -3,7 +3,6 @@ import {database_connection} from "../../index";
 import {ClassInstance} from "../../../mmar-global-data-structure";
 
 import {
-    API404Error,
     BaseError,
     HTTP500Error,
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";

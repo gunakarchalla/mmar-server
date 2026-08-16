@@ -1,6 +1,7 @@
 import {RequestHandler} from "express";
 import {PortInstance} from "../../../../../mmar-global-data-structure";
-import {database_connection} from "../../../../index";
+import {PoolClient} from "pg";
+import {with_client} from "../../database_connection";
 import {applyRules} from "./Instance_ports.rules";
 
 export const verif_port_instance_body: RequestHandler = async (
@@ -18,22 +19,18 @@ export const verif_port_instance_body: RequestHandler = async (
 };
 
 export async function verif_inner_port_instance_body(
-  portToTest: PortInstance | PortInstance[]
+  portToTest: PortInstance | PortInstance[],
+  client?: PoolClient
 ) {
-  const client = await database_connection.getPool().connect();
-
-  try {
+  // The rule engine nests, so the connection is threaded down rather than a new
+  // one taken at every level: see with_client.
+  return await with_client(client, async (c) => {
     if (portToTest instanceof PortInstance) {
-      await applyRules(client, portToTest);
+      await applyRules(c, portToTest);
     } else {
-      for (const portInstanceToTestIntern of portToTest) {
-        await applyRules(client, portInstanceToTestIntern);
+      for (const element of portToTest) {
+        await applyRules(c, element);
       }
     }
-    // eslint-disable-next-line no-useless-catch
-  } catch (err) {
-    throw err;
-  } finally {
-    client.release();
-  }
+  });
 }

@@ -40,7 +40,7 @@ class Metamodel_common_functionsConnection {
         client: PoolClient,
         deletionQuery: string,
         uuidFilter?: UUID,
-        userUuid?: UUID
+        _userUuid?: UUID
     ): Promise<UUID[] | undefined | BaseError> {
         try {
             let res_uuid: Array<{ uuid_instance_object: UUID }> = [];

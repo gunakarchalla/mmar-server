@@ -26,7 +26,7 @@ class Metamodel_rulesConnection implements CRUD {
     async getByUuid(
         client: PoolClient,
         ruleUuid: UUID,
-        userUuid?: UUID
+        _userUuid?: UUID
     ): Promise<undefined | Rule | BaseError> {
         try {
 

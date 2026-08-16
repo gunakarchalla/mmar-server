@@ -4,7 +4,6 @@ import {plainToInstance} from "class-transformer";
 import {RelationclassInstance, RoleInstance,} from "../../../mmar-global-data-structure";
 
 import {
-    API404Error,
     BaseError,
     HTTP500Error,
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";

@@ -3,7 +3,6 @@ import {RequestHandler} from "express";
 import {database_connection} from "../..";
 import {Relationclass} from "../../../mmar-global-data-structure";
 import {
-    API404Error,
     BaseError,
     HTTP403NORIGHT,
     HTTP409CONFLICT,

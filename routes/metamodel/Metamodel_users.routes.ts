@@ -96,7 +96,7 @@ usersRouter.get(
         "schema": {
           "type": "array", 
           "items": {
-            "$ref": "#/components/schemas/User"   
+            "$ref": "#/components/schemas/User"   
  
           }
         }
@@ -233,7 +233,7 @@ usersRouter.get(
       }
     }
   }
-  #swagger.responses[400]   
+  #swagger.responses[400]   
  = {
     "description": "Invalid UUID supplied",
     "content": {

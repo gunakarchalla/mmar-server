@@ -16,7 +16,7 @@ relationclassMetaRouter.get(
         schema: {
           type: 'array',
           items: {
-            $ref: '#/components/schemas/Relationclass'   
+            $ref: '#/components/schemas/Relationclass'   
 
           }
         }

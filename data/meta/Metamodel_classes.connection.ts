@@ -154,7 +154,7 @@ class Metamodel_classesConnection implements CRUD {
   async getBendpointsForRelationClass(
     client: PoolClient,
     relclassUuid: UUID,
-    userUuid?: UUID,
+    _userUuid?: UUID,
   ): Promise<UUID | undefined | BaseError> {
     try {
       const classes_query = queries.getQuery_get("bendpoints_relClass_query");

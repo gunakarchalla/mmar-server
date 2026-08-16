@@ -2,7 +2,6 @@ import {RequestHandler} from "express";
 import {database_connection} from "../../index";
 import {Metamodel, SceneType} from "../../../mmar-global-data-structure";
 import {
-    API404Error,
     BaseError,
     HTTP403NORIGHT,
     HTTP409CONFLICT,

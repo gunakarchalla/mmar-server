@@ -3,7 +3,6 @@ import {database_connection} from "../..";
 import {plainToInstance} from "class-transformer";
 import {Attribute} from "../../../mmar-global-data-structure";
 import {
-    API404Error,
     BaseError,
     HTTP403NORIGHT,
     HTTP409CONFLICT,
