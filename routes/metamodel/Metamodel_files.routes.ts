@@ -3,6 +3,7 @@ import Metamodel_file_controller from "../../controllers/meta/Metamodel_files.co
 import multer from "multer";
 import { authenticate_token } from "../../data/services/middleware/auth.middleware";
 import { environment } from "../../data/services/environment";
+import { validate_uuid_params } from "../../data/services/middleware/uuid_params.middleware";
 
 /**
  * @description - Uploads are buffered in memory before being written to the
@@ -21,6 +22,10 @@ const upload = multer({
  * @type {Router}
  */
 const fileMetaRouter: Router = Router();
+
+// A malformed uuid is a bad request, not a database error: without this the
+// value reaches PostgreSQL, fails to cast, and comes back to the caller as a 500.
+validate_uuid_params(fileMetaRouter);
 fileMetaRouter.get(
   /*
   #swagger.tags= ["Metamodel"]

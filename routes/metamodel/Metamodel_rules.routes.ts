@@ -1,12 +1,17 @@
 import { Router } from "express";
 import Metamodel_rules_controller from "../../controllers/meta/Metamodel_rules.controller";
 import { authenticate_token } from "../../data/services/middleware/auth.middleware";
+import { validate_uuid_params } from "../../data/services/middleware/uuid_params.middleware";
 
 /**
  * @description - These are the routes for the rules.
  * @type {Router}
  */
 const ruleMetaRouter: Router = Router();
+
+// A malformed uuid is a bad request, not a database error: without this the
+// value reaches PostgreSQL, fails to cast, and comes back to the caller as a 500.
+validate_uuid_params(ruleMetaRouter);
 
 //ruleMetaRouter.post('/rules/:uuid', verif_rules_body, post_rules_for_metaObject);
 ruleMetaRouter.post(

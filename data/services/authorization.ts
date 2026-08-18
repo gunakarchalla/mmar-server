@@ -33,6 +33,41 @@ export async function is_administrator(
 }
 
 /**
+ * @description - Of many meta objects, the ones a user is allowed to read.
+ *
+ * This is the set form of the read_check query. Reading a level of the metamodel
+ * in one query would otherwise lose the per-object rights check the
+ * one-at-a-time path performed: an object the caller may not read has to stay
+ * out of the list, and asking that per object is exactly what batching removes.
+ * Administrators read everything.
+ * @param {PoolClient} client - The client to the database.
+ * @param {UUID[]} uuids - The objects to test.
+ * @param {UUID} userUuid - The user asking.
+ * @returns {Promise<Set<UUID>>} - The subset the user may read.
+ */
+export async function readable_uuids(
+    client: PoolClient,
+    uuids: UUID[],
+    userUuid: UUID,
+): Promise<Set<UUID>> {
+    if (uuids.length === 0) return new Set();
+
+    const res = await client.query(
+        `SELECT candidate.uuid
+         FROM unnest($1::uuid[]) AS candidate(uuid)
+         WHERE public.is_administrator($2)
+            OR EXISTS (SELECT 1
+                       FROM has_read_right har
+                                JOIN has_user_user_group huug
+                                     ON har.uuid_user_group = huug.uuid_user_group
+                       WHERE har.uuid_metaobject = candidate.uuid
+                         AND huug.uuid_user = $2)`,
+        [uuids, userUuid],
+    );
+    return new Set<UUID>(res.rows.map((row) => row.uuid as UUID));
+}
+
+/**
  * @description - The same check on a connection of its own, for callers that are
  * not already inside a transaction.
  * @param {UUID} userUuid - The user to test.

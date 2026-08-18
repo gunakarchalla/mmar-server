@@ -10,6 +10,7 @@ import {
     HTTP403NORIGHT,
     HTTP409CONFLICT,
 } from "../services/middleware/error_handling/standard_errors.middleware";
+import {readable_uuids} from "../services/authorization";
 
 /**
  * @description - This is the class that handles the CRUD operations for the Meta ports.
@@ -50,6 +51,74 @@ class Metamodel_portsConnection implements CRUD {
    * @export - This function is exported so that it can be used by other classes.
    * @method
    */
+  /**
+   * @description - Read every port of many classes at once, with the attributes
+   * of all of those ports fetched together.
+   *
+   * The result is keyed by class uuid; a class with no ports is absent rather
+   * than present with an empty list.
+   * @param {PoolClient} client - The client to the database.
+   * @param {UUID[]} classUuids - The classes to load the ports of.
+   * @param {UUID} userUuid - The caller, whose read rights filter the result.
+   * @returns {Promise<Map<UUID, Port[]>>} - The ports per class.
+   */
+  async getAllByParentUuids(
+    client: PoolClient,
+    classUuids: UUID[],
+    userUuid?: UUID,
+  ): Promise<Map<UUID, Port[]>> {
+    const byClass = new Map<UUID, Port[]>();
+    if (classUuids.length === 0) return byClass;
+
+    try {
+      // p.* and m.* reproduce port_uuid_query. uuid_class is already a column of
+      // port, so grouping needs no extra join column and nothing has to be
+      // stripped before the object is built.
+      const res = await client.query(
+        `SELECT p.*, m.*
+         FROM port p
+                  JOIN metaobject m ON m.uuid = p.uuid_metaobject
+         WHERE p.uuid_class = ANY ($1::uuid[])`,
+        [classUuids],
+      );
+      if (res.rowCount === 0) return byClass;
+
+      let rows = res.rows;
+      if (userUuid) {
+        const readable = await readable_uuids(
+          client,
+          rows.map((row) => row.uuid_metaobject as UUID),
+          userUuid,
+        );
+        rows = rows.filter((row) => readable.has(row.uuid_metaobject as UUID));
+      }
+      if (rows.length === 0) return byClass;
+
+      const ports = rows.map((row) => Port.fromJS(row) as Port);
+      const attributes =
+        await Metamodel_attributes_connection.getAllByParentUuids(
+          client,
+          ports.map((port) => port.uuid),
+          "port",
+          userUuid,
+        );
+
+      rows.forEach((row, index) => {
+        const port = ports[index];
+        port.set_attribute(attributes.get(port.uuid) ?? []);
+        const parent = row.uuid_class as UUID;
+        const existing = byClass.get(parent);
+        if (existing) existing.push(port);
+        else byClass.set(parent, [port]);
+      });
+      return byClass;
+    } catch (err) {
+      throw new Error(
+        `Error getting the port for the parents ${classUuids.join(", ")}: ${err}`,
+      );
+    }
+  }
+
   async getByUuid(
     client: PoolClient,
     portUuid: UUID,

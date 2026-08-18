@@ -2,12 +2,17 @@ import { Router } from "express";
 import Instance_attribute_controller from "../../controllers/instance/Instance_attributes.controller";
 import { verif_attribute_instance_body } from "../../data/services/rule_engine/instance_rule_engine/Instance_attributes.verificator";
 import { authenticate_token } from "../../data/services/middleware/auth.middleware";
+import { validate_uuid_params } from "../../data/services/middleware/uuid_params.middleware";
 
 /**
  * @description - These are the routes for the attributes instances.
  * @type {Router}
  */
 const attributeInstanceRouter = Router();
+
+// A malformed uuid is a bad request, not a database error: without this the
+// value reaches PostgreSQL, fails to cast, and comes back to the caller as a 500.
+validate_uuid_params(attributeInstanceRouter);
 
 attributeInstanceRouter.get(
   /*

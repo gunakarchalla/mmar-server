@@ -31,15 +31,23 @@ class Metamodel_filesController {
                 requireUser(req).uuid
             );
             if (sc instanceof Array) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(sc);
             } else if (sc instanceof BaseError) {
                 throw sc;
             } else {
                 throw new HTTP500Error(`Failed to retrieve files`);
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -72,6 +80,10 @@ class Metamodel_filesController {
                 requireUser(req).uuid
             );
             if (sc instanceof File) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.setHeader("Content-Type", sc.get_type());
                 res.send(sc.get_data());
             } else if (sc instanceof BaseError) {
@@ -79,9 +91,13 @@ class Metamodel_filesController {
             } else {
                 throw new HTTP500Error(`Failed to retrieve file ${req.params.uuid}`);
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -113,6 +129,10 @@ class Metamodel_filesController {
                 requireUser(req).uuid
             );
             if (sc instanceof File) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.setHeader("Content-Type", sc.get_type());
                 res.send(sc.get_data());
             } else if (sc instanceof BaseError) {
@@ -120,9 +140,13 @@ class Metamodel_filesController {
             } else {
                 throw new HTTP500Error(`Failed to retrieve file ${req.params.uuid}`);
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -155,6 +179,10 @@ class Metamodel_filesController {
 
                 const filteredObject = filter_object(sc, req.query.filter);
                 const publicBaseUrl = environment.public_base_url || `${req.protocol}://${req.get("host")}`;
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(201).json({
                     ...(typeof filteredObject === 'object' && filteredObject !== null ? filteredObject : {}),
                     url: `${publicBaseUrl}/metamodel/files/${newFile.uuid}`
@@ -164,9 +192,13 @@ class Metamodel_filesController {
             } else {
                 throw new HTTP500Error(`Cannot post the file ${req.params.uuid}.`);
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -248,6 +280,10 @@ class Metamodel_filesController {
             if (sc instanceof File) {
                 const filteredObject = filter_object(sc, req.query.filter);
                 const publicBaseUrl = environment.public_base_url || `${req.protocol}://${req.get("host")}`;
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json({
                     ...(typeof filteredObject === "object" && filteredObject !== null ? filteredObject : {}),
                     url: `${publicBaseUrl}/metamodel/files/${newFile.uuid}`
@@ -257,9 +293,13 @@ class Metamodel_filesController {
             } else {
                 throw new HTTP500Error(`Cannot patch the file ${req.params.uuid}.`);
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -290,15 +330,23 @@ class Metamodel_filesController {
             );
 
             if (Array.isArray(sc)) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).send(`File with UUID ${specified_uuid} has been deleted sucessfully.`);
             } else if (sc instanceof BaseError) {
                 throw sc;
             } else {
                 throw new HTTP500Error(`Cannot delete the file ${req.params.uuid}.`);
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -348,15 +396,23 @@ class Metamodel_filesController {
             if (sc instanceof File) {
                 // res.status(201).send(sc.get_data());
                 const publicBaseUrl = environment.public_base_url || `${req.protocol}://${req.get("host")}`;
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(201).json({ url: `${publicBaseUrl}/metamodel/files/${newFile.uuid}`, uuid: newFile.uuid });
             } else if (sc instanceof BaseError) {
                 throw sc;
             } else {
                 throw new HTTP500Error(`Cannot post the file ${specified_uuid}.`);
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -374,7 +430,12 @@ class Metamodel_filesController {
                 uuids: queryResult.rows.map(row => row.uuid_metaobject),
             });
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             client.release();

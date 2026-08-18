@@ -38,6 +38,10 @@ class Instance_scenesController {
                 requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -46,9 +50,13 @@ class Instance_scenesController {
                     `Failed to retrieve scene instances for scene type ${req.params.uuid}`
                 );
             }
-            await client.query("COMMIT"); // End the transaction
         } catch (err) {
-            await client.query("ROLLBACK"); // Rollback the transaction
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             client.release();
@@ -77,6 +85,10 @@ class Instance_scenesController {
                 requireUser(req).uuid
             );
             if (sc instanceof SceneInstance) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -85,9 +97,13 @@ class Instance_scenesController {
                     `Failed to retrieve scene instance ${req.params.uuid}`
                 );
             }
-            await client.query("COMMIT"); // End the transaction
         } catch (err) {
-            await client.query("ROLLBACK"); // Rollback the transaction
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             client.release();
@@ -118,6 +134,10 @@ class Instance_scenesController {
                 requireUser(req).uuid
             );
             if (sc instanceof SceneInstance) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -126,9 +146,13 @@ class Instance_scenesController {
                     `Failed to update scene instance ${req.params.uuid}`
                 );
             }
-            await client.query("COMMIT"); // End the transaction
         } catch (err) {
-            await client.query("ROLLBACK"); // Rollback the transaction
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             client.release();
@@ -159,6 +183,10 @@ class Instance_scenesController {
                 requireUser(req).uuid
             );
             if (sc instanceof SceneInstance) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(201).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -167,9 +195,13 @@ class Instance_scenesController {
                     `Failed to create scene instance for scene type ${req.params.uuid}`
                 );
             }
-            await client.query("COMMIT"); // End the transaction
         } catch (err) {
-            await client.query("ROLLBACK"); // Rollback the transaction
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             client.release();
@@ -193,6 +225,10 @@ class Instance_scenesController {
                 requireUser(req).uuid
             );
             if (sc instanceof SceneInstance) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(201).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -201,9 +237,13 @@ class Instance_scenesController {
                     `Failed to create scene instance for scene type ${req.params.uuid}`
                 );
             }
-            await client.query("COMMIT"); // End the transaction
         } catch (err) {
-            await client.query("ROLLBACK"); // Rollback the transaction
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             client.release();
@@ -234,6 +274,10 @@ class Instance_scenesController {
                 requireUser(req).uuid
             );
             if (sc instanceof SceneInstance) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(201).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -242,9 +286,13 @@ class Instance_scenesController {
                     `Failed to create scene instance ${req.params.uuid}`
                 );
             }
-            await client.query("COMMIT"); // End the transaction
         } catch (err) {
-            await client.query("ROLLBACK"); // Rollback the transaction
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             client.release();
@@ -271,6 +319,10 @@ class Instance_scenesController {
                 requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -279,9 +331,13 @@ class Instance_scenesController {
                     `Failed to delete scene instances for scene type ${req.params.uuid}`
                 );
             }
-            await client.query("COMMIT"); // End the transaction
         } catch (err) {
-            await client.query("ROLLBACK"); // Rollback the transaction
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             client.release();
@@ -310,6 +366,10 @@ class Instance_scenesController {
             );
             if (Array.isArray(sc)) {
                 //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(sc);
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -318,9 +378,13 @@ class Instance_scenesController {
                     `Failed to delete scene instance ${req.params.uuid}`
                 );
             }
-            await client.query("COMMIT"); // End the transaction
         } catch (err) {
-            await client.query("ROLLBACK"); // Rollback the transaction
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             client.release();

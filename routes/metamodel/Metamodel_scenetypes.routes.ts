@@ -2,12 +2,17 @@ import { Router } from "express";
 import Metamodel_scenetypes_controller from "../../controllers/meta/Metamodel_scenetypes.controller";
 import { verif_scenetype_body } from "../../data/services/rule_engine/meta_rule_engine/Metamodel_scenetypes.rules";
 import { authenticate_token } from "../../data/services/middleware/auth.middleware";
+import { validate_uuid_params } from "../../data/services/middleware/uuid_params.middleware";
 
 /**
  * @description - These are the routes for the sceneTypes.
  * @type {Router}
  */
 const sceneTypeRouter = Router();
+
+// A malformed uuid is a bad request, not a database error: without this the
+// value reaches PostgreSQL, fails to cast, and comes back to the caller as a 500.
+validate_uuid_params(sceneTypeRouter);
 
 sceneTypeRouter.get(
   /*

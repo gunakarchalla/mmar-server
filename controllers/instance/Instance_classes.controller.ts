@@ -40,6 +40,10 @@ class Instance_classesController {
             );
             if (sc instanceof ClassInstance) {
                 //res.status(200).json(filter_object(sc, req.query.filter));
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).send(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -47,10 +51,14 @@ class Instance_classesController {
                 throw new HTTP500Error(
                     `Failed to find the class instance ${req.params.uuid}.`
                 );
-            }
-            await client.query("COMMIT"); // end transaction
+            } // end transaction
         } catch (err) {
-            await client.query("ROLLBACK"); // end transaction
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             client.release();
@@ -79,6 +87,10 @@ class Instance_classesController {
                 requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -86,10 +98,14 @@ class Instance_classesController {
                 throw new HTTP500Error(
                     `Failed to retrieve the class instances for the scene ${req.params.uuid}.`
                 );
-            }
-            await client.query("COMMIT"); // end transaction
+            } // end transaction
         } catch (err) {
-            await client.query("ROLLBACK"); // end transaction
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             client.release();
@@ -120,6 +136,10 @@ class Instance_classesController {
                 requireUser(req).uuid
             );
             if (sc instanceof ClassInstance) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -127,10 +147,14 @@ class Instance_classesController {
                 throw new HTTP500Error(
                     `Failed to update the class instance ${req.params.uuid}.`
                 );
-            }
-            await client.query("COMMIT"); // end transaction
+            } // end transaction
         } catch (err) {
-            await client.query("ROLLBACK"); // end transaction
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             client.release();
@@ -161,6 +185,10 @@ class Instance_classesController {
                 requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(201).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -168,10 +196,14 @@ class Instance_classesController {
                 throw new HTTP500Error(
                     `Failed to create the class instance for the scene ${req.params.uuid}.`
                 );
-            }
-            await client.query("COMMIT"); // end transaction
+            } // end transaction
         } catch (err) {
-            await client.query("ROLLBACK"); // end transaction
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             client.release();
@@ -202,6 +234,10 @@ class Instance_classesController {
                 requireUser(req).uuid
             );
             if (sc instanceof ClassInstance) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(201).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -209,10 +245,14 @@ class Instance_classesController {
                 throw new HTTP500Error(
                     `Failed to create the class instance ${req.params.uuid}.`
                 );
-            }
-            await client.query("COMMIT"); // end transaction
+            } // end transaction
         } catch (err) {
-            await client.query("ROLLBACK"); // end transaction
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             client.release();
@@ -240,6 +280,10 @@ class Instance_classesController {
                 requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -247,10 +291,14 @@ class Instance_classesController {
                 throw new HTTP500Error(
                     `Failed to delete the class instance for the scene ${req.params.uuid}.`
                 );
-            }
-            await client.query("COMMIT"); // end transaction
+            } // end transaction
         } catch (err) {
-            await client.query("ROLLBACK"); // end transaction
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             client.release();
@@ -279,6 +327,10 @@ class Instance_classesController {
             );
             if (Array.isArray(sc)) {
                 //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(sc);
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -286,10 +338,14 @@ class Instance_classesController {
                 throw new HTTP500Error(
                     `Failed to delete the class instance ${req.params.uuid}.`
                 );
-            }
-            await client.query("COMMIT"); // end transaction
+            } // end transaction
         } catch (err) {
-            await client.query("ROLLBACK"); // end transaction
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             client.release();

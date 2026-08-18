@@ -9,11 +9,16 @@ import sceneInstanceRouter from "./Instance_scenes.routes";
 import relationClassInstanceRouter from "./Instance_relationclasses.routes";
 import roleInstanceRouter from "./Instance_roles.routes";
 import classInstanceRouter from "./Instance_classes.routes";
+import { validate_uuid_params } from "../../data/services/middleware/uuid_params.middleware";
 
 /** @description - This is the router for the Instance part of the project.
  * @type {Router}
  */
 const instanceRouter = Router();
+
+// A malformed uuid is a bad request, not a database error: without this the
+// value reaches PostgreSQL, fails to cast, and comes back to the caller as a 500.
+validate_uuid_params(instanceRouter);
 
 instanceRouter.use(bendpointInstanceRouter);
 instanceRouter.use(portInstanceRouter);

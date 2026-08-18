@@ -42,6 +42,10 @@ class Instance_relationclassesController {
                 requireUser(req).uuid
             );
             if (sc instanceof RelationclassInstance) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -50,9 +54,13 @@ class Instance_relationclassesController {
                     `Failed to retrieve relationclass instance ${req.params.uuid}`
                 );
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -85,6 +93,10 @@ class Instance_relationclassesController {
                 requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -93,9 +105,13 @@ class Instance_relationclassesController {
                     `Failed to retrieve relationclass instances for scene ${req.params.uuid}`
                 );
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -145,7 +161,12 @@ class Instance_relationclassesController {
             }
             await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -185,6 +206,10 @@ class Instance_relationclassesController {
                     requireUser(req).uuid
                 );
             if (Array.isArray(sc)) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(201).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -193,9 +218,13 @@ class Instance_relationclassesController {
                     `Failed to create relationclass instance ${req.params.uuid}`
                 );
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -233,6 +262,10 @@ class Instance_relationclassesController {
                 requireUser(req).uuid
             );
             if (sc instanceof RelationclassInstance) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -241,9 +274,13 @@ class Instance_relationclassesController {
                     `Failed to update relationclass instance ${req.params.uuid}`
                 );
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -276,6 +313,10 @@ class Instance_relationclassesController {
             );
             if (Array.isArray(sc)) {
                 //The result does not contain any uuid, i.e. the metaobject is not linked to any instance
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(sc);
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -284,9 +325,13 @@ class Instance_relationclassesController {
                     `Failed to delete relationclass instance ${req.params.uuid}`
                 );
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();

@@ -51,7 +51,12 @@ class Metamodel_relationclassesController {
             }
             await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             client.release();
@@ -80,15 +85,23 @@ class Metamodel_relationclassesController {
                 requireUser(req).uuid
             );
             if (sc instanceof Relationclass) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
             } else {
                 throw new HTTP500Error(`Failed to retrieve the relationclass ${req.params.uuid}.`);
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -117,6 +130,10 @@ class Metamodel_relationclassesController {
                 requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -125,9 +142,13 @@ class Metamodel_relationclassesController {
                     `Failed to retrieve the relationclasses for the scene type ${req.params.uuid}.`
                 );
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -156,6 +177,10 @@ class Metamodel_relationclassesController {
                 requireUser(req).uuid
             );
             if (sc instanceof Relationclass) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(sc.get_role_from(), req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -164,10 +189,13 @@ class Metamodel_relationclassesController {
                     `Failed to retrieve the role from for the relationclass ${req.params.uuid}.`
                 );
             }
-
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -196,6 +224,10 @@ class Metamodel_relationclassesController {
                 requireUser(req).uuid
             );
             if (sc instanceof Relationclass) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(sc.get_role_to(), req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -204,9 +236,13 @@ class Metamodel_relationclassesController {
                     `Failed to retrieve the role to for the relationclass ${req.params.uuid}.`
                 );
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -238,6 +274,10 @@ class Metamodel_relationclassesController {
                 const roles = [];
                 roles.push(sc.get_role_from());
                 roles.push(sc.get_role_to());
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(roles, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -246,9 +286,13 @@ class Metamodel_relationclassesController {
                     `Failed to retrieve the roles for the relationclass ${req.params.uuid}.`
                 );
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -279,6 +323,10 @@ class Metamodel_relationclassesController {
                 requireUser(req).uuid
             );
             if (sc instanceof Relationclass) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(201).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -287,9 +335,13 @@ class Metamodel_relationclassesController {
                     `Cannot post the meta relationclass for the scene type ${req.params.uuid}.`
                 );
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -321,6 +373,10 @@ class Metamodel_relationclassesController {
                     requireUser(req).uuid
                 );
             if (Array.isArray(sc)) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(201).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -329,9 +385,13 @@ class Metamodel_relationclassesController {
                     `Cannot post the meta relationclass for the scene type ${req.params.uuid}.`
                 );
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -374,15 +434,23 @@ class Metamodel_relationclassesController {
             }
 
             if (sc instanceof Relationclass) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
             } else {
                 throw new HTTP500Error(`Failed to update the meta relationclass ${req.params.uuid}`);
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -411,13 +479,16 @@ class Metamodel_relationclassesController {
                 );
             if (Array.isArray(deletedItems)) {
                 //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(deletedItems, req.query.filter));
             } else if (deletedItems instanceof BaseError) {
                 throw deletedItems;
             } else {
                 throw new HTTP500Error(`Failed to delete the meta relationclass ${req.params.uuid}`);
             }
-            await client.query("COMMIT");
         } catch (err) {
             await client.query("ROLLBACK");
             if (err instanceof HTTP403NORIGHT) res.status(403).json(err.message);
@@ -453,6 +524,10 @@ class Metamodel_relationclassesController {
                 );
             if (Array.isArray(sc)) {
                 //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -461,7 +536,6 @@ class Metamodel_relationclassesController {
                     `Failed to delete the meta relationclasses for the scene type ${req.params.uuid}.`
                 );
             }
-            await client.query("COMMIT");
         } catch (err) {
             await client.query("ROLLBACK");
             if (err instanceof HTTP403NORIGHT) res.status(403).json(err.message);

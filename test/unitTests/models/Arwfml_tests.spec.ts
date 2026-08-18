@@ -54,9 +54,10 @@ describe("ARWFML tests", async function () {
 
   const deleteModel = (modelName: string, modelUuid: string) => {
     it(`Should delete the ${modelName} model`, async () => {
+      // This used to POST to the same path, so it re-created the scene type it
+      // claimed to remove and asserted nothing about deletion at all.
       const res1 = await server
-        .post(`/metamodel/sceneTypes/${modelUuid}`)
-        .set("content-type", "application/json")
+        .delete(`/metamodel/sceneTypes/${modelUuid}`)
         .set("accept", "application/json")
         .set("Cookie", "authcookie=" + token);
       expect(res1).to.exist;
@@ -123,48 +124,48 @@ describe("ARWFML tests", async function () {
   describe("DELETE ArchiMate Application Layer Metamodel", function () {
     deleteModel(
       "ArchiMateApplicationLayerMetamodel",
-      "b3b35b86-2636-4987-8cc4-814f468f6c4b",
+      "69898db3-3f22-40e7-b425-ec4ef7e8bf29",
     );
   });
 
   describe("DELETE ArchiMate Business Layer Metamodel", function () {
     deleteModel(
       "ArchiMateBusinessLayerMetamodel",
-      "c3b35b86-2636-4987-8cc4-814f468f6c4b",
+      "856b257a-6e63-4f97-9d0a-8141d7ecb668",
     );
   });
 
   describe("DELETE ArchiMate Core Layers Metamodel", function () {
     deleteModel(
       "ArchiMateCoreLayersMetamodel",
-      "d3b35b86-2636-4987-8cc4-814f468f6c4b",
+      "bbcefdb9-f2f8-4c71-97d9-6090f91e61aa",
     );
   });
 
   describe("DELETE ArchiMate Technology Layer Metamodel", function () {
     deleteModel(
       "ArchiMateTechnologyLayerMetamodel",
-      "e3b35b86-2636-4987-8cc4-814f468f6c4b",
+      "0614d7fa-20aa-409a-9bfa-cdcec4e2354b",
     );
   });
 
   describe("DELETE BPMN Metamodel", function () {
-    deleteModel("BPMNMetamodel", "f3b35b86-2636-4987-8cc4-814f468f6c4b");
+    deleteModel("BPMNMetamodel", "afb0ca37-d4bb-47ab-911d-b4e3eedd1f79");
   });
 
   describe("DELETE E3-Value Metamodel", function () {
-    deleteModel("E3-ValueMetamodel", "g3b35b86-2636-4987-8cc4-814f468f6c4b");
+    deleteModel("E3-ValueMetamodel", "1fef5ed1-1417-4c41-88ba-280a62b5644a");
   });
 
   describe("DELETE Flow Scene", function () {
-    deleteModel("FlowScene", "h3b35b86-2636-4987-8cc4-814f468f6c4b");
+    deleteModel("FlowScene", "9c71b8fd-c31e-447f-b617-77af5e33f7da");
   });
 
   describe("DELETE Object Space", function () {
-    deleteModel("ObjectSpace", "i3b35b86-2636-4987-8cc4-814f468f6c4b");
+    deleteModel("ObjectSpace", "a3b35b86-2636-4987-8cc4-814f468f6c4b");
   });
 
   describe("DELETE State Change", function () {
-    deleteModel("StateChange", "j3b35b86-2636-4987-8cc4-814f468f6c4b");
+    deleteModel("StateChange", "239c5597-6cc9-498a-bf61-432cf85b3835");
   });
 });

@@ -6,6 +6,7 @@ import {CRUD} from "../common/crud.interface";
 import Metamodel_attribute_types_connection from "./Metamodel_attribute_types.connection";
 import Metamodel_common_functions from "./Metamodel_common_functions.connection";
 import {BaseError, HTTP403NORIGHT,} from "../services/middleware/error_handling/standard_errors.middleware";
+import {readable_uuids} from "../services/authorization";
 
 /**
  * @description - This is the class that handles the CRUD operations for the Meta Attribute.
@@ -13,7 +14,166 @@ import {BaseError, HTTP403NORIGHT,} from "../services/middleware/error_handling/
  * @class Metamodel_attributesConnection
  * @implements {CRUD}
  */
+/**
+ * @description - The table that links each kind of parent to its attributes, and
+ * the column in it that names the parent. Interpolated into the batch query
+ * below, so it is a closed set of literals here and never a value from a request.
+ */
+const ATTRIBUTE_LINK = {
+  scene_type: { table: "scene_has_attributes", parent: "uuid_scene_type" },
+  class: { table: "class_has_attributes", parent: "uuid_class" },
+  relationclass: { table: "class_has_attributes", parent: "uuid_class" },
+  port: { table: "port_has_attributes", parent: "uuid_port" },
+} as const;
+
+/**
+ * @description - The kinds of meta object an attribute can belong to.
+ */
+export type MetaAttributeParentType = keyof typeof ATTRIBUTE_LINK;
+
 class Metamodel_attributesConnection implements CRUD {
+  /**
+   * @description - Read every attribute of many parents at once.
+   *
+   * Two things made the per-parent path expensive. Each attribute was re-read by
+   * uuid after the list query had already returned its row, and each one then
+   * loaded its attribute type from scratch — and an attribute type is not a row
+   * but a subtree, carrying a role and a table of columns whose entries are
+   * themselves attributes. A scene type where forty attributes are all of type
+   * "String" therefore built that same subtree forty times.
+   *
+   * Here the level is one query, and each *distinct* attribute type is loaded
+   * once, by the same function as before so that what it returns is unchanged.
+   *
+   * The result is keyed by parent uuid; a parent with no attributes is absent
+   * rather than present with an empty list.
+   * @param {PoolClient} client - The client to the database.
+   * @param {UUID[]} parentUuids - The parents to load the attributes of.
+   * @param {MetaAttributeParentType} parentType - What kind of object those parents are.
+   * @param {UUID} userUuid - The caller, whose read rights filter the result.
+   * @returns {Promise<Map<UUID, Attribute[]>>} - The attributes per parent.
+   */
+  async getAllByParentUuids(
+    client: PoolClient,
+    parentUuids: UUID[],
+    parentType: MetaAttributeParentType,
+    userUuid?: UUID,
+  ): Promise<Map<UUID, Attribute[]>> {
+    const byParent = new Map<UUID, Attribute[]>();
+    if (parentUuids.length === 0) return byParent;
+
+    const link = ATTRIBUTE_LINK[parentType];
+    if (!link) {
+      throw new Error(
+        `Error the type ${parentType} cannot be a parent for a attribute`,
+      );
+    }
+
+    try {
+      // Ordered by the sequence recorded on the link, which is the position the
+      // attribute occupies in the interface. The per-parent query carried no
+      // ORDER BY and happened to come back in that order; over a join spanning
+      // many parents it does not, because an attribute shared by several of them
+      // is found once and placed wherever the join puts it. Stating the order
+      // makes it both correct and no longer dependent on the query plan.
+      //
+      // m.* and a.* reproduce attribute_uuid_query exactly. The three values
+      // taken from the link table are aliased and then removed before the object
+      // is built: plainToInstance copies every property of the row onto it, so an
+      // un-stripped join column becomes a field of the response.
+      const res = await client.query(
+        `SELECT m.*,
+                a.*,
+                l.${link.parent} AS mmar_parent,
+                l.sequence       AS mmar_sequence,
+                l.ui_component   AS mmar_ui_component
+         FROM ${link.table} l
+                  JOIN attribute a ON a.uuid_metaobject = l.uuid_attribute
+                  JOIN metaobject m ON m.uuid = a.uuid_metaobject
+         WHERE l.${link.parent} = ANY ($1::uuid[])
+         ORDER BY l.sequence NULLS FIRST, m.name`,
+        [parentUuids],
+      );
+      if (res.rowCount === 0) return byParent;
+
+      // getByUuid refused an attribute the caller may not read, and the caller
+      // dropped it from the list. That check is kept, as one query for the level.
+      let rows = res.rows;
+      if (userUuid) {
+        const readable = await readable_uuids(
+          client,
+          rows.map((row) => row.uuid_metaobject as UUID),
+          userUuid,
+        );
+        rows = rows.filter((row) => readable.has(row.uuid_metaobject as UUID));
+      }
+
+      const types = await this.getAttributeTypes(client, rows);
+
+      for (const row of rows) {
+        const {
+          mmar_parent,
+          mmar_sequence,
+          mmar_ui_component,
+          ...attributeRow
+        } = row;
+
+        const attribute = Attribute.fromJS(attributeRow) as Attribute;
+        attribute.set_sequence(mmar_sequence);
+        attribute.set_ui_component(mmar_ui_component);
+
+        const type = types.get(row.attribute_type_uuid as UUID);
+        // The old path cloned the type onto each attribute; the clone is kept so
+        // that one attribute cannot alter the type another one sees.
+        if (type) {
+          attribute.set_attribute_type(
+            AttributeType.fromJS(type) as AttributeType,
+          );
+        }
+
+        const existing = byParent.get(mmar_parent as UUID);
+        if (existing) existing.push(attribute);
+        else byParent.set(mmar_parent as UUID, [attribute]);
+      }
+      return byParent;
+    } catch (err) {
+      throw new Error(
+        `Error getting attribute for ${parentUuids.join(", ")}: ${err}`,
+      );
+    }
+  }
+
+  /**
+   * @description - Load the attribute type of each distinct type referenced by a
+   * set of attribute rows, once each.
+   * @param {PoolClient} client - The client to the database.
+   * @param {Record<string, unknown>[]} rows - The attribute rows.
+   * @returns {Promise<Map<UUID, AttributeType>>} - The type per attribute_type_uuid.
+   */
+  private async getAttributeTypes(
+    client: PoolClient,
+    rows: Record<string, unknown>[],
+  ): Promise<Map<UUID, AttributeType>> {
+    const byUuid = new Map<UUID, AttributeType>();
+    const wanted = new Set<UUID>();
+    for (const row of rows) {
+      const uuid = row.attribute_type_uuid as UUID | null;
+      if (uuid) wanted.add(uuid);
+    }
+
+    for (const uuid of wanted) {
+      // Deliberately without the caller: the previous path reached the attribute
+      // type through getAllByParentUuid(client, attributeUuid) and passed no user,
+      // so the type itself was never rights-checked.
+      const type = await Metamodel_attribute_types_connection.getByUuid(
+        client,
+        uuid,
+      );
+      if (type instanceof AttributeType) byUuid.set(uuid, type);
+    }
+    return byUuid;
+  }
+
   async getAll(
     client: PoolClient,
     userUuid?: UUID,
@@ -97,72 +257,38 @@ class Metamodel_attributesConnection implements CRUD {
    * @export - This function is exported so that it can be used by other files.
    * @method
    */
+  /**
+   * @description - Read every attribute of one parent. Delegates to the batched
+   * form so that both paths return the same thing.
+   * @param {PoolClient} client - The client to the database.
+   * @param {UUID} uuidParent - The parent to load the attributes of.
+   * @param {UUID} userUuid - The caller, whose read rights filter the result.
+   * @returns {Promise<Attribute[] | BaseError>} - The attributes of that parent.
+   */
   async getAllByParentUuid(
     client: PoolClient,
     uuidParent: UUID,
     userUuid?: UUID,
   ): Promise<Attribute[] | BaseError> {
     try {
-      let attribute_query: string;
-      let seq_query: string;
-      const returnAttribute = new Array<Attribute>();
-      const uuid_type =
-        await Metamodel_common_functions.getMetaTypeWithMetaUuid(
-          client,
-          uuidParent,
+      const uuid_type = await Metamodel_common_functions.getMetaTypeWithMetaUuid(
+        client,
+        uuidParent,
+      );
+      if (uuid_type === undefined) return [];
+      if (!(uuid_type in ATTRIBUTE_LINK)) {
+        throw new Error(
+          `Error the uuid ${uuidParent} cannot be a parent for a attribute`,
         );
-      if (uuid_type !== undefined) {
-        switch (uuid_type) {
-          case "scene_type":
-            attribute_query = queries.getQuery_get(
-              "scene_type_attributes_query",
-            );
-            seq_query =
-              "SELECT * FROM scene_has_attributes WHERE uuid_scene_type = $1 AND uuid_attribute = $2";
-            break;
-
-          case "class":
-            attribute_query = queries.getQuery_get("class_attributes_query");
-            seq_query =
-              "SELECT * FROM class_has_attributes WHERE uuid_class = $1 AND uuid_attribute = $2";
-            break;
-
-          case "port":
-            attribute_query = queries.getQuery_get("port_attributes_query");
-            seq_query =
-              "SELECT * FROM port_has_attributes WHERE uuid_port = $1 AND uuid_attribute = $2";
-            break;
-
-          case "relationclass":
-            attribute_query = queries.getQuery_get("class_attributes_query");
-            seq_query =
-              "SELECT * FROM class_has_attributes WHERE uuid_class = $1 AND uuid_attribute = $2";
-            break;
-
-          default:
-            throw new Error(
-              `Error the uuid ${uuidParent} cannot be a parent for a attribute`,
-            );
-        }
-        const res_attributes = await client.query(attribute_query, [
-          uuidParent,
-        ]);
-        for (const attr of res_attributes.rows) {
-          const newAttr = await this.getByUuid(client, attr.uuid, userUuid);
-          const res_seq_ui = await client.query(seq_query, [
-            uuidParent,
-            attr.uuid,
-          ]);
-          if (newAttr instanceof Attribute) {
-            if (res_seq_ui.rowCount == 1) {
-              newAttr.set_sequence(res_seq_ui.rows[0].sequence);
-              newAttr.set_ui_component(res_seq_ui.rows[0].ui_component);
-            }
-            returnAttribute.push(newAttr);
-          }
-        }
       }
-      return returnAttribute;
+
+      const byParent = await this.getAllByParentUuids(
+        client,
+        [uuidParent],
+        uuid_type as MetaAttributeParentType,
+        userUuid,
+      );
+      return byParent.get(uuidParent) ?? [];
     } catch (err) {
       throw new Error(`Error getting attribute for ${uuidParent}: ${err}`);
     }

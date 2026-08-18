@@ -39,6 +39,10 @@ class Metamodel_procedureController {
                 requireUser(req).uuid
             );
             if (sc instanceof Procedure) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -47,9 +51,13 @@ class Metamodel_procedureController {
                     `Failed to retrieve the meta procedure ${req.params.uuid}.`
                 );
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -69,16 +77,24 @@ class Metamodel_procedureController {
                 );
             if (Array.isArray(sc)) {
                 procedure.push(...sc);
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(procedure, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
             } else {
                 throw new HTTP500Error(`Failed to retrieve the procedures.`);
             }
-            await client.query("COMMIT");
 
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -98,16 +114,24 @@ class Metamodel_procedureController {
                 );
             if (Array.isArray(sc)) {
                 procedure.push(...sc);
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(procedure, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
             } else {
                 throw new HTTP500Error(`Failed to retrieve the procedures.`);
             }
-            await client.query("COMMIT");
 
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -125,6 +149,10 @@ class Metamodel_procedureController {
                 requireUser(req).uuid
             );
             if (sc instanceof Procedure) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(sc, req.query.filter));
             } else if (typeof sc === "undefined") {
                 throw new HTTP500Error(`Cannot post the procedure ${req.body}.`);
@@ -135,9 +163,13 @@ class Metamodel_procedureController {
                     req.params.uuid
                 );
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -151,15 +183,23 @@ class Metamodel_procedureController {
             const sc = await Metamodel_procedure_connection.deleteAll(client, requireUser(req).uuid);
             if (Array.isArray(sc)) {
                 //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(sc);
             } else if (sc instanceof BaseError) {
                 throw sc;
             } else {
                 throw new HTTP500Error(`Failed to delete all procedures.`);
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -187,6 +227,10 @@ class Metamodel_procedureController {
                 requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(sc);
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -195,9 +239,13 @@ class Metamodel_procedureController {
                     `Failed to retrieve the meta procedures for the scene type ${req.params.uuid}.`
                 );
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -229,6 +277,10 @@ class Metamodel_procedureController {
                 requireUser(req).uuid
             );
             if (sc instanceof Procedure) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(201).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -237,9 +289,13 @@ class Metamodel_procedureController {
                     `Cannot post the meta procedure ${req.params.uuid}.`
                 );
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -271,6 +327,10 @@ class Metamodel_procedureController {
                 requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(201).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -279,9 +339,13 @@ class Metamodel_procedureController {
                     `Cannot post the meta procedure for the scene type ${req.params.uuid}.`
                 );
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -321,7 +385,12 @@ class Metamodel_procedureController {
             }
             await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -348,6 +417,10 @@ class Metamodel_procedureController {
                 requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(sc);
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -356,9 +429,13 @@ class Metamodel_procedureController {
                     `Cannot delete the meta procedure ${req.params.uuid}.`
                 );
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -396,7 +473,12 @@ class Metamodel_procedureController {
             }
             await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();

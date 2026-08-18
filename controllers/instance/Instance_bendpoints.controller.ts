@@ -43,6 +43,10 @@ class Instance_bendpointsController {
                 requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -51,9 +55,13 @@ class Instance_bendpointsController {
                     `Failed to find the bendpoint instances for the relationclass ${req.params.uuid}.`
                 );
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -82,6 +90,10 @@ class Instance_bendpointsController {
                 requireUser(req).uuid
             );
             if (sc instanceof ClassInstance) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -90,9 +102,13 @@ class Instance_bendpointsController {
                     `Failed to find the bendpoint instance ${req.params.uuid}.`
                 );
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -124,6 +140,10 @@ class Instance_bendpointsController {
                 requireUser(req).uuid
             );
             if (sc instanceof ClassInstance) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -132,9 +152,13 @@ class Instance_bendpointsController {
                     `Failed to update the bendpoint instance ${req.params.uuid}.`
                 );
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -166,15 +190,23 @@ class Instance_bendpointsController {
                 requireUser(req).uuid
             );
             if (Array.isArray(sc)) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
             } else {
                 throw new HTTP500Error(`Failed to create the bendpoint instance for the relationclass ${req.params.uuid}.`);
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -206,6 +238,10 @@ class Instance_bendpointsController {
             );
             if (Array.isArray(sc)) {
                 //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
@@ -214,9 +250,13 @@ class Instance_bendpointsController {
                     `Failed to delete the bendpoint instance ${req.params.uuid}.`
                 );
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();

@@ -28,15 +28,23 @@ class Metamodel_attribute_typesController {
         requireUser(req).uuid,
       );
       if (Array.isArray(sc)) {
+        // The transaction is made durable before the client is told it succeeded:
+        // answering first left a window in which a caller could act on a 201
+        // and not yet see what it had been promised.
+        await client.query("COMMIT");
         res.status(200).json(filter_object(sc, req.query.filter));
       } else if (sc instanceof BaseError) {
         throw sc;
       } else {
         throw new HTTP500Error(`Cannot get all the meta attribute types.`);
       }
-      await client.query("COMMIT");
     } catch (err) {
-      await client.query("ROLLBACK");
+      try {
+          await client.query("ROLLBACK");
+      } catch {
+          // The connection is already gone; the error below is the
+          // one worth reporting.
+      }
       next(err);
     } finally {
       (await client).release();
@@ -65,6 +73,10 @@ class Metamodel_attribute_typesController {
         requireUser(req).uuid,
       );
       if (sc instanceof AttributeType) {
+        // The transaction is made durable before the client is told it succeeded:
+        // answering first left a window in which a caller could act on a 201
+        // and not yet see what it had been promised.
+        await client.query("COMMIT");
         res.status(200).json(filter_object(sc, req.query.filter));
       } else if (sc instanceof BaseError) {
         throw sc;
@@ -73,9 +85,13 @@ class Metamodel_attribute_typesController {
           `Cannot get the meta attribute type ${req.params.uuid}.`,
         );
       }
-      await client.query("COMMIT");
     } catch (err) {
-      await client.query("ROLLBACK");
+      try {
+          await client.query("ROLLBACK");
+      } catch {
+          // The connection is already gone; the error below is the
+          // one worth reporting.
+      }
       next(err);
     } finally {
       (await client).release();
@@ -104,6 +120,10 @@ class Metamodel_attribute_typesController {
         requireUser(req).uuid,
       );
       if (Array.isArray(sc)) {
+        // The transaction is made durable before the client is told it succeeded:
+        // answering first left a window in which a caller could act on a 201
+        // and not yet see what it had been promised.
+        await client.query("COMMIT");
         res.status(200).json(filter_object(sc, req.query.filter));
       } else if (sc instanceof BaseError) {
         throw sc;
@@ -112,9 +132,13 @@ class Metamodel_attribute_typesController {
           `Cannot get the meta attribute types for the meta attribute ${req.params.uuid}.`,
         );
       }
-      await client.query("COMMIT");
     } catch (err) {
-      await client.query("ROLLBACK");
+      try {
+          await client.query("ROLLBACK");
+      } catch {
+          // The connection is already gone; the error below is the
+          // one worth reporting.
+      }
       next(err);
     } finally {
       (await client).release();
@@ -146,6 +170,10 @@ class Metamodel_attribute_typesController {
           requireUser(req).uuid,
         );
       if (sc instanceof AttributeType) {
+        // The transaction is made durable before the client is told it succeeded:
+        // answering first left a window in which a caller could act on a 201
+        // and not yet see what it had been promised.
+        await client.query("COMMIT");
         res.status(201).json(filter_object(sc, req.query.filter));
       } else if (sc instanceof BaseError) {
         throw sc;
@@ -154,9 +182,13 @@ class Metamodel_attribute_typesController {
           `Cannot post the meta attribute type for the meta attribute ${req.params.uuid}.`,
         );
       }
-      await client.query("COMMIT");
     } catch (err) {
-      await client.query("ROLLBACK");
+      try {
+          await client.query("ROLLBACK");
+      } catch {
+          // The connection is already gone; the error below is the
+          // one worth reporting.
+      }
       next(err);
     } finally {
       (await client).release();
@@ -199,6 +231,10 @@ class Metamodel_attribute_typesController {
         );
       }
       if (sc instanceof AttributeType) {
+        // The transaction is made durable before the client is told it succeeded:
+        // answering first left a window in which a caller could act on a 201
+        // and not yet see what it had been promised.
+        await client.query("COMMIT");
         res.status(200).json(filter_object(sc, req.query.filter));
       } else if (sc instanceof BaseError) {
         throw sc;
@@ -207,9 +243,13 @@ class Metamodel_attribute_typesController {
           `Failed to patch the meta attribute type ${req.params.uuid}.`,
         );
       }
-      await client.query("COMMIT");
     } catch (err) {
-      await client.query("ROLLBACK");
+      try {
+          await client.query("ROLLBACK");
+      } catch {
+          // The connection is already gone; the error below is the
+          // one worth reporting.
+      }
       next(err);
     } finally {
       (await client).release();
@@ -240,6 +280,10 @@ class Metamodel_attribute_typesController {
         requireUser(req).uuid,
       );
       if (sc instanceof AttributeType) {
+        // The transaction is made durable before the client is told it succeeded:
+        // answering first left a window in which a caller could act on a 201
+        // and not yet see what it had been promised.
+        await client.query("COMMIT");
         res.status(201).json(filter_object(sc, req.query.filter));
       } else if (sc instanceof BaseError) {
         throw sc;
@@ -248,9 +292,13 @@ class Metamodel_attribute_typesController {
           `Failed to post the meta attribute type ${req.params.uuid}.`,
         );
       }
-      await client.query("COMMIT");
     } catch (err) {
-      await client.query("ROLLBACK");
+      try {
+          await client.query("ROLLBACK");
+      } catch {
+          // The connection is already gone; the error below is the
+          // one worth reporting.
+      }
       next(err);
     } finally {
       (await client).release();
@@ -280,6 +328,10 @@ class Metamodel_attribute_typesController {
         );
       if (Array.isArray(resultQuery)) {
         //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
+        // The transaction is made durable before the client is told it succeeded:
+        // answering first left a window in which a caller could act on a 201
+        // and not yet see what it had been promised.
+        await client.query("COMMIT");
         res.status(200).json(filter_object(resultQuery, req.query.filter));
       } else if (resultQuery instanceof BaseError) {
         throw resultQuery;
@@ -288,7 +340,6 @@ class Metamodel_attribute_typesController {
           `Failed to delete the meta attribute type ${req.params.uuid}.`,
         );
       }
-      await client.query("COMMIT");
     } catch (err) {
       await client.query("ROLLBACK");
       if (err instanceof HTTP403NORIGHT) res.status(403).json(err.message);

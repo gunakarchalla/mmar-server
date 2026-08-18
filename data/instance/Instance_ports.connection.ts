@@ -27,6 +27,67 @@ class Instance_portsConnection implements CRUD {
      * @method
      *
      */
+    /**
+     * @description - Read every port instance of many parents at once, with the
+     * attributes of all of those ports fetched together.
+     *
+     * The result is keyed by parent uuid; a parent with no ports is absent rather
+     * than present with an empty list.
+     * @param {PoolClient} client - The client to the database.
+     * @param {UUID[]} parentUuids - The parents to load the ports of.
+     * @param {"class" | "scene"} parentType - Whether those parents are classes or scenes.
+     * @returns {Promise<Map<UUID, PortInstance[]>>} - The ports per parent.
+     */
+    async getAllByParentUuids(
+        client: PoolClient,
+        parentUuids: UUID[],
+        parentType: "class" | "scene"
+    ): Promise<Map<UUID, PortInstance[]>> {
+        const byParent = new Map<UUID, PortInstance[]>();
+        if (parentUuids.length === 0) return byParent;
+
+        // A closed set of literals, never a value from a request.
+        const parentColumn =
+            parentType === "class" ? "uuid_class_instance" : "uuid_scene_instance";
+
+        try {
+            const res = await client.query(
+                `SELECT io.*, pi2.*
+                 FROM port_instance pi2
+                          JOIN instance_object io ON io.uuid = pi2.uuid_instance_object
+                 WHERE pi2.${parentColumn} = ANY ($1::uuid[])`,
+                [parentUuids]
+            );
+            if (res.rowCount === 0) return byParent;
+
+            const ports = res.rows.map(
+                (row) => PortInstance.fromJS(row) as PortInstance
+            );
+            const attributes =
+                await Instance_attribute_connection.getAllByParentUuids(
+                    client,
+                    ports.map((port) => port.get_uuid()),
+                    "port"
+                );
+
+            res.rows.forEach((row, index) => {
+                const port = ports[index];
+                port.set_attribute_instance(
+                    attributes.get(port.get_uuid()) ?? []
+                );
+                const parent = row[parentColumn] as UUID;
+                const existing = byParent.get(parent);
+                if (existing) existing.push(port);
+                else byParent.set(parent, [port]);
+            });
+            return byParent;
+        } catch (err) {
+            throw new Error(
+                `Error getting the ports for the parents ${parentUuids.join(", ")}: ${err}`
+            );
+        }
+    }
+
     async getByUuid(
         client: PoolClient,
         portUuid: UUID,

@@ -6,6 +6,7 @@ import Metamodel_common_functions from "./Metamodel_common_functions.connection"
 import {
     BaseError,
     HTTP403NORIGHT,
+    HTTP404Error,
     HTTP409CONFLICT,
     HTTP500Error,
 } from "../services/middleware/error_handling/standard_errors.middleware";
@@ -271,7 +272,8 @@ class Metamodel_metaobjectsConnection implements CRUD {
         const metaobject_check = queries.getQuery_get("metaobject_query");
         const resultMetaobject = await client.query(metaobject_check, [uuidToDelete]);
         if (resultMetaobject.rowCount == 0) {
-            return new HTTP500Error(`The meta object ${uuidToDelete} does not exist`);
+            // Nothing to delete is a statement about the request, not a server fault.
+            return new HTTP404Error(`The meta object ${uuidToDelete} does not exist`);
         }
 
         // Execute the query

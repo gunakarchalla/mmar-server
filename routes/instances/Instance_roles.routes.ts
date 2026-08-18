@@ -5,12 +5,17 @@ import {
   verif_role_instance_deletion,
 } from "../../data/services/rule_engine/instance_rule_engine/Instance_roles.verificator";
 import { authenticate_token } from "../../data/services/middleware/auth.middleware";
+import { validate_uuid_params } from "../../data/services/middleware/uuid_params.middleware";
 
 /**
  * @description - These are the routes for the roles instances.
  * @type {Router}
  */
 const roleInstanceRouter = Router();
+
+// A malformed uuid is a bad request, not a database error: without this the
+// value reaches PostgreSQL, fails to cast, and comes back to the caller as a 500.
+validate_uuid_params(roleInstanceRouter);
 
 roleInstanceRouter.get(
   /* 

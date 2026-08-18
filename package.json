@@ -15,7 +15,9 @@
     "tjs": "node ./config/tjs.mjs",
     "test:unit": "mocha --exit -r reflect-metadata -r ts-node/register test/unitTests/Auth_middleware.spec.ts test/unitTests/Transaction_context.spec.ts test/unitTests/Security.spec.ts test/unitTests/Collection_difference.spec.ts",
     "lint": "eslint --ext .ts .",
-    "lint:fix": "eslint --ext .ts . --fix"
+    "lint:fix": "eslint --ext .ts . --fix",
+    "test:reset": "node test/reset_test_database.js",
+    "test:db": "npm run test:reset && npm test"
   },
   "nodemonConfig": {
     "watch": [

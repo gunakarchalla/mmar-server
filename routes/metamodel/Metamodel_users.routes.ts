@@ -2,8 +2,13 @@ import { Router } from "express";
 import { authenticate_token } from "../../data/services/middleware/auth.middleware";
 import Users_controller from "../../controllers/meta/Users_controller";
 import User_lookup_controller from "../../controllers/meta/User_lookup_controller";
+import { validate_uuid_params } from "../../data/services/middleware/uuid_params.middleware";
 
 const usersRouter: Router = Router();
+
+// A malformed uuid is a bad request, not a database error: without this the
+// value reaches PostgreSQL, fails to cast, and comes back to the caller as a 500.
+validate_uuid_params(usersRouter);
 
 usersRouter.get(
   /*

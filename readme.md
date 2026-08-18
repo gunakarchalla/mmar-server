@@ -184,6 +184,91 @@ two concurrent revocations can each see another owner and between them remove th
 one. `Scene_access_controller` shows the shape: one `begin_transaction`, every helper on
 that client, commit at the end.
 
+## Reading a tree of objects
+
+A scene instance is a tree — classes, their attributes, their ports, the attributes of
+those ports — and the obvious way to load it is to walk it: fetch the children, then ask
+each child for its own children. That is what the data layer used to do, and it cost one
+query per node. Measured on a scene of 150 objects holding seven attributes each, a single
+`GET /instances/sceneInstances/:uuid` issued **5,604 table scans and took about 1.1
+seconds**, on an idle server with a warm cache.
+
+Each level is now one query regardless of how wide it is. `getAllByParentUuids` takes every
+parent at that level and returns the children keyed by parent:
+
+```ts
+const [attributes, ports] = await Promise.all([
+    Instance_attribute_connection.getAllByParentUuids(client, classUuids, "class"),
+    Instance_port_connection.getAllByParentUuids(client, classUuids, "class"),
+]);
+for (const currentClass of returnClasses) {
+    currentClass.set_attribute_instances(attributes.get(currentClass.get_uuid()) ?? []);
+}
+```
+
+The same read now costs **108 scans and about 100 ms** — 52 times fewer round trips, 11
+times faster — and returns byte-for-byte the same document, so no client changed.
+
+The rule for new code: when loading the children of many parents, pass the parents as an
+array and let PostgreSQL do the grouping (`WHERE parent = ANY($1::uuid[])`). Calling a
+`getByUuid` in a loop reintroduces exactly the cost above.
+
+The metamodel reads are batched the same way, and there the dominant cost was not the rows
+but the repetition: every attribute loaded its attribute type from scratch, and an
+attribute type is a subtree carrying a role and a table of columns whose entries are
+themselves attributes. A scene type where forty attributes are all of type `String` built
+that subtree forty times. Each distinct type is now loaded once, by the same function as
+before. Across four real metamodels that took **9,434 table scans and 1.5 s down to 2,716
+and 0.75 s**.
+
+**Verify a read rewrite against the response, not against the tests.** The suite asserts
+status codes and a handful of fields; it passed in full while an earlier attempt at this
+silently dropped a subtree and reordered arrays. `test/read_equivalence/` captures the
+documents an endpoint returns and diffs two captures — see the README there for the three
+traps it caught.
+
+## Answering only once the work is durable
+
+A handler used to send its response and then commit. The window between the two is
+small but real: a client that acted on a `201` could issue its next request before the
+row it had just been promised existed. Creating a user and immediately signing in as
+them returned *wrong password or username*, intermittently, and more often the faster the
+server got.
+
+Every handler now commits first. New code should use `withTransaction`, which makes the
+ordering structural — the handler returns its body and the helper sends it, so the two
+cannot be written the wrong way round:
+
+```ts
+post_user: RequestHandler = withTransaction(
+    async (client, req) => Users_connection.create(client, User.fromJS(req.body), requireUser(req).uuid),
+    { status: 201 }
+);
+```
+
+It also contains a failing `ROLLBACK`, which used to throw out of the catch block and take
+`next(err)` with it, leaving the request hanging instead of failing.
+
+## Statuses
+
+A malformed uuid in the path is rejected with `400` by `validate_uuid_params`, installed on
+every router that declares such a route. Without it the value travelled to PostgreSQL,
+failed to cast, and came back as a `500` — the server reporting its own error for what was
+plainly a bad request. Asking to delete something that does not exist answers `404`.
+
+## Ownership that the schema does not express
+
+A bendpoint is a class instance that a relationclass instance bends through, and it has no
+meaning without that relation. Nothing in the schema says so: the link lives in
+`relationclass_instance.line_points`, a `text[]` of JSON documents naming class instances,
+and `class_instance.uuid_relationclass_bendpoint` points at the *meta* class rather than at
+the relation. There is therefore no foreign key for the database to cascade along, and
+deleting a relation used to leave its bendpoints behind — class instances in the scene that
+nothing referenced and no client could reach.
+
+`Instance_relationclasses.deleteByUuid` resolves that ownership itself, reading
+`line_points` before the relation is deleted, since deleting it takes them with it.
+
 ## Indexes
 
 PostgreSQL creates an index for a primary key or a unique constraint, never for a foreign
@@ -201,19 +286,25 @@ Adding a foreign key means adding its index in the same change.
 ```bash
 npm run lint        # eslint over the whole project
 npm run test:unit   # the tests that need no database
+npm run test:reset  # recreate the test database from init.sql
 npm test            # the full suite, needs a database and a running server
+npm run test:db     # reset, then run the full suite
 ```
+
+Point the suite at a database of its own by putting its settings in `.env.test`, with a
+`PGDATABASE` ending in `_test` — `test/reset_test_database.js` refuses to drop anything
+else, so it cannot be aimed at the development database by accident.
 
 `npm test` drives the real API against a real database, so it needs both up: see
 `.github/workflows/ci.yml`, which loads `mmar-database/init.sql` into a throwaway
 PostgreSQL, starts the server and runs the suite the same way.
 
-Run it against a **fresh** database. The specs are not isolated from one another: they
-share one schema, and `TestEnvironmentSetup.tearDown` only removes the uuids a spec lists
-explicitly, so anything else it created survives into the next one. Running the same specs
-twice against a long-lived database therefore produces different failures each time — which
-makes a red result there meaningless as a signal. CI gets a new container per run for that
-reason, and giving the suite real isolation is outstanding work.
+Run it against a **fresh** database. `TestEnvironmentSetup` records which rows exist before
+the first spec runs and every `tearDown` removes everything created since, so a spec no
+longer inherits whatever the previous one forgot to delete — the suite used to produce a
+different set of failures each time it ran, and the same spec could pass alone and fail in
+the suite. That sweep is a safety net, not a substitute for starting clean: it cannot undo
+changes to rows that were already there.
 
 ## Contributing
 

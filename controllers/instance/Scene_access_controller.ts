@@ -1,6 +1,4 @@
 import {RequestHandler} from "express";
-import {PoolClient} from "pg";
-import {database_connection} from "../../index";
 import {
     HTTP400Error,
     HTTP403NORIGHT,
@@ -18,7 +16,7 @@ import {
     AccessLevel,
 } from "../../data/instance/Instance_scene_access.connection";
 import { requireUser } from "../../data/services/middleware/auth.middleware";
-import { begin_transaction } from "../../data/services/transaction";
+import { withTransaction } from "../../data/services/transaction";
 import {record_security_event} from "../../data/services/security_audit.service";
 
 const VALID_LEVELS: AccessLevel[] = ['read', 'edit', 'delete'];
@@ -30,40 +28,6 @@ function tripleToLevel(read: boolean, edit: boolean, del: boolean): AccessLevel 
     return null;
 }
 
-/**
- * @description - Run a handler inside a single transaction on a single connection.
- *
- * Each of these endpoints asks the data layer several questions in a row, and the
- * decision it takes depends on all of them agreeing — whether the caller may
- * share, who already has access, whether this is the last owner. Every question
- * used to be asked on a connection of its own, so a request could take three, and
- * the answers came from three different snapshots. One transaction makes the
- * sequence atomic and gives the writes the acting user for the history trigger.
- * @param {(client: PoolClient, ...) => Promise<void>} run - The handler body.
- * @returns {RequestHandler} - The wrapped handler.
- */
-function in_transaction(
-    run: (client: PoolClient, ...args: Parameters<RequestHandler>) => Promise<void>
-): RequestHandler {
-    return async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-        try {
-            await begin_transaction(client);
-            await run(client, req, res, next);
-            await client.query("COMMIT");
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the original error is what matters.
-            }
-            next(err);
-        } finally {
-            client.release();
-        }
-    };
-}
-
 class Scene_access_controller {
     /**
      * @description - List all users with access to a scene instance.
@@ -71,7 +35,7 @@ class Scene_access_controller {
      * @yield {status: 200, body: AccessRow[]} - All access entries.
      * @throws {HTTP403NORIGHT} - Caller lacks view access.
      */
-    get_scene_instance_access: RequestHandler = in_transaction(async (client, req, res) => {
+    get_scene_instance_access: RequestHandler = withTransaction(async (client, req, res) => {
         /*
         #swagger.tags = ['Instance']
         #swagger.summary = 'List all users with access to a scene instance'
@@ -98,7 +62,7 @@ class Scene_access_controller {
      * @yield {status: 200, body: AccessRow} - The upserted access entry.
      * @throws {HTTP403NORIGHT} - Caller lacks delete access.
      */
-    post_scene_instance_access: RequestHandler = in_transaction(async (client, req, res) => {
+    post_scene_instance_access: RequestHandler = withTransaction(async (client, req, res) => {
         /*
         #swagger.tags = ['Instance']
         #swagger.summary = 'Grant or upsert access for a user on a scene instance'
@@ -149,7 +113,7 @@ class Scene_access_controller {
      * @throws {HTTP403NORIGHT} - Caller lacks delete access.
      * @throws {HTTP409CONFLICT} - Would leave zero delete-owners.
      */
-    patch_scene_instance_access: RequestHandler = in_transaction(async (client, req, res) => {
+    patch_scene_instance_access: RequestHandler = withTransaction(async (client, req, res) => {
         /*
         #swagger.tags = ['Instance']
         #swagger.summary = 'Change a user\'s access level on a scene instance'
@@ -211,7 +175,7 @@ class Scene_access_controller {
      * @throws {HTTP403NORIGHT} - Caller lacks delete access.
      * @throws {HTTP409CONFLICT} - Would leave zero delete-owners.
      */
-    delete_scene_instance_access: RequestHandler = in_transaction(async (client, req, res) => {
+    delete_scene_instance_access: RequestHandler = withTransaction(async (client, req, res) => {
         /*
         #swagger.tags = ['Instance']
         #swagger.summary = 'Revoke a user\'s access to a scene instance'
@@ -257,7 +221,7 @@ class Scene_access_controller {
      * @param req.params.uuid - Scene instance UUID.
      * @yield {status: 200, body: {level: 'read'|'edit'|'delete'|null}}
      */
-    get_my_access: RequestHandler = in_transaction(async (client, req, res) => {
+    get_my_access: RequestHandler = withTransaction(async (client, req, res) => {
         /*
         #swagger.tags = ['Instance']
         #swagger.summary = 'Get caller\'s effective access level for a scene instance'

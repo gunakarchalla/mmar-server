@@ -14,6 +14,44 @@ import {BaseError, HTTP403NORIGHT} from "../services/middleware/error_handling/s
  */
 class Instance_rolesConnection implements CRUD {
     /**
+     * @description - Read many role instances in one query.
+     *
+     * Attributes that originate from a role each used to fetch theirs
+     * individually, which is one round trip per attribute on top of the attribute
+     * itself. Duplicates in the argument cost nothing: the result is keyed by
+     * uuid, so several attributes pointing at the same role share it.
+     * @param {PoolClient} client - The client to the database.
+     * @param {UUID[]} roleUuids - The roles to read.
+     * @returns {Promise<Map<UUID, RoleInstance>>} - The roles that exist, by uuid.
+     */
+    async getByUuids(
+        client: PoolClient,
+        roleUuids: UUID[]
+    ): Promise<Map<UUID, RoleInstance>> {
+        const byUuid = new Map<UUID, RoleInstance>();
+        if (roleUuids.length === 0) return byUuid;
+
+        try {
+            const res = await client.query(
+                `SELECT *
+                 FROM role_instance ri
+                          JOIN instance_object io ON io.uuid = ri.uuid_instance_object
+                 WHERE io.uuid = ANY ($1::uuid[])`,
+                [roleUuids]
+            );
+            for (const row of res.rows) {
+                const role = RoleInstance.fromJS(row) as RoleInstance;
+                byUuid.set(role.get_uuid(), role);
+            }
+            return byUuid;
+        } catch (err) {
+            throw new Error(
+                `Error getting the roles ${roleUuids.join(", ")}: ${err}`
+            );
+        }
+    }
+
+    /**
      * @description - This function gets the role by the uuid.
      * @param {PoolClient} client - The client to the database.
      * @param {UUID} roleUuid - The uuid of the role to get.

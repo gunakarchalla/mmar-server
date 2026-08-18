@@ -325,17 +325,75 @@ class Instance_relationclassesConnection implements CRUD {
      * @export
      * @method
      */
+    /**
+     * @description - The class instances a relationclass instance uses as its
+     * bendpoints.
+     *
+     * A bendpoint belongs to the relation that bends through it and has no meaning
+     * without it, but nothing in the schema says so: line_points is a text[] of
+     * JSON documents on relationclass_instance, and
+     * class_instance.uuid_relationclass_bendpoint references the *meta* class
+     * rather than the relationclass instance. The ownership therefore has to be
+     * resolved here, and it has to be read before the relation is deleted, since
+     * deleting it takes line_points with it.
+     * @param {PoolClient} client - The client to the database.
+     * @param {UUID} relationclassInstanceUuid - The relation to inspect.
+     * @returns {Promise<UUID[]>} - The uuids of its bendpoint class instances.
+     */
+    private async getBendpointUuids(
+        client: PoolClient,
+        relationclassInstanceUuid: UUID
+    ): Promise<UUID[]> {
+        const res = await client.query(
+            "SELECT line_points FROM relationclass_instance WHERE uuid_class_instance = $1",
+            [relationclassInstanceUuid]
+        );
+        const points: string[] = res.rows[0]?.line_points ?? [];
+
+        const uuids: UUID[] = [];
+        for (const point of points) {
+            try {
+                const parsed = typeof point === "string" ? JSON.parse(point) : point;
+                const uuid = parsed?.UUID ?? parsed?.uuid;
+                if (typeof uuid === "string") uuids.push(uuid);
+            } catch {
+                // A line point that is not a JSON document names no bendpoint.
+            }
+        }
+        return uuids;
+    }
+
     async deleteByUuid(
         client: PoolClient,
         uuidToDelete: UUID,
         userUuid?: UUID
     ): Promise<UUID[] | undefined | BaseError> {
         try {
-            return Instance_objects_connection.deleteByUuid(
+            // Read the bendpoints first: they are named by the row about to go.
+            const bendpointUuids = await this.getBendpointUuids(client, uuidToDelete);
+
+            const deleted = await Instance_objects_connection.deleteByUuid(
                 client,
                 uuidToDelete,
                 userUuid
             );
+            if (!Array.isArray(deleted)) return deleted;
+
+            // A bendpoint outlives its relation otherwise, leaving a class instance
+            // in the scene that nothing references and no client can reach.
+            const removed = new Set<UUID>(deleted);
+            for (const bendpointUuid of bendpointUuids) {
+                if (removed.has(bendpointUuid)) continue;
+                const cascaded = await Instance_objects_connection.deleteByUuid(
+                    client,
+                    bendpointUuid,
+                    userUuid
+                );
+                if (Array.isArray(cascaded)) {
+                    for (const uuid of cascaded) removed.add(uuid);
+                }
+            }
+            return [...removed];
         } catch (err) {
             throw new Error(`Error deleting relationclass ${uuidToDelete}: ${err}`);
         }
@@ -359,14 +417,24 @@ class Instance_relationclassesConnection implements CRUD {
         userUuid?: UUID
     ): Promise<UUID[] | undefined | BaseError> {
         try {
-            const portInstances = await this.getAllByParentUuid(client, parentUuid, userUuid);
-            if (portInstances instanceof BaseError) return portInstances;
+            const relationclassInstances = await this.getAllByParentUuid(client, parentUuid, userUuid);
+            if (relationclassInstances instanceof BaseError) return relationclassInstances;
 
-            return await Instance_objects_connection.deleteCollectionObject(
-                client,
-                portInstances,
-                userUuid
-            );
+            // Deleted one at a time through deleteByUuid rather than as a
+            // collection, so that each relation takes its bendpoints with it.
+            const removed = new Set<UUID>();
+            for (const relationclassInstance of relationclassInstances) {
+                const deleted = await this.deleteByUuid(
+                    client,
+                    relationclassInstance.get_uuid(),
+                    userUuid
+                );
+                if (deleted instanceof BaseError) return deleted;
+                if (Array.isArray(deleted)) {
+                    for (const uuid of deleted) removed.add(uuid);
+                }
+            }
+            return [...removed];
         } catch (err) {
             throw new Error(
                 `Error deleting the relationclass for the parent ${parentUuid}: ${err}`

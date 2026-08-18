@@ -30,7 +30,12 @@ class UsersgroupController {
             }
             await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -48,15 +53,23 @@ class UsersgroupController {
                 requireUser(req).uuid,
             );
             if (usergroup instanceof Usergroup) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(usergroup, req.query.filter));
             } else if (usergroup instanceof BaseError) {
                 throw usergroup;
             } else {
                 throw new HTTP500Error(`Failed to retrieve usergroup ${req.params.uuid}`,);
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -74,14 +87,21 @@ class UsersgroupController {
                 requireUser(req).uuid,
             );
             if (Array.isArray(usergroup)) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(usergroup, req.query.filter));
             } else {
                 throw new HTTP500Error(`Failed to retrieve usergroup ${req.params.uuid}`,);
             }
-
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -98,16 +118,23 @@ class UsersgroupController {
             }
             const usergroup = await UsergroupsConnection.create(client, newUserGroup, requireUser(req).uuid);
             if (usergroup instanceof Usergroup) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(201).json(usergroup);
             } else if (usergroup instanceof BaseError) {
                 throw usergroup;
             } else {
                 throw new HTTP500Error("Usergroup could not be created");
             }
-
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -139,15 +166,23 @@ class UsersgroupController {
                 );
             }
             if (sc instanceof Usergroup) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(sc, req.query.filter));
             } else if (sc instanceof BaseError) {
                 throw sc;
             } else {
                 throw new HTTP500Error(`Failed to update usergroup ${req.params.uuid}`);
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -165,15 +200,23 @@ class UsersgroupController {
                 requireUser(req).uuid,
             );
             if (Array.isArray(usergroup)) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(usergroup, req.query.filter));
             } else if (usergroup instanceof BaseError) {
                 throw usergroup;
             } else {
                 throw new HTTP500Error("Usergroup could not be deleted");
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -192,15 +235,23 @@ class UsersgroupController {
                 requireUser(req).uuid,
             );
             if (usergroup instanceof Usergroup) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(usergroup, req.query.filter));
             } else if (usergroup instanceof BaseError) {
                 throw usergroup;
             } else {
                 throw new HTTP500Error("Usergroup could not be deleted");
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -219,15 +270,23 @@ class UsersgroupController {
                 requireUser(req).uuid,
             );
             if (usergroup instanceof Usergroup) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(usergroup, req.query.filter));
             } else if (usergroup instanceof BaseError) {
                 throw usergroup;
             } else {
                 throw new HTTP500Error("User could not be added to usergroup");
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -249,6 +308,10 @@ class UsersgroupController {
                 req.body.has_delete_right
             );
             if (usergroup instanceof Usergroup) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(usergroup, req.query.filter));
             } else if (usergroup instanceof BaseError) {
                 throw usergroup;
@@ -256,9 +319,13 @@ class UsersgroupController {
                 throw new HTTP500Error("Object could not be added to usergroup");
 
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();
@@ -308,15 +375,23 @@ class UsersgroupController {
                 req.body.has_delete_right
             );
             if (usergroup instanceof Usergroup) {
+                // The transaction is made durable before the client is told it succeeded:
+                // answering first left a window in which a caller could act on a 201
+                // and not yet see what it had been promised.
+                await client.query("COMMIT");
                 res.status(200).json(filter_object(usergroup, req.query.filter));
             } else if (usergroup instanceof BaseError) {
                 throw usergroup;
             } else {
                 throw new HTTP500Error("Object could not be deleted from usergroup");
             }
-            await client.query("COMMIT");
         } catch (err) {
-            await client.query("ROLLBACK");
+            try {
+                await client.query("ROLLBACK");
+            } catch {
+                // The connection is already gone; the error below is the
+                // one worth reporting.
+            }
             next(err);
         } finally {
             (await client).release();

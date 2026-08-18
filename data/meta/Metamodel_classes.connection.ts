@@ -7,6 +7,7 @@ import Metamodel_attributes_connection from "./Metamodel_attributes.connection";
 import Metamodel_ports_connection from "./Metamodel_ports.connection";
 import Metamodel_common_functions from "./Metamodel_common_functions.connection";
 import {BaseError, HTTP403NORIGHT,} from "../services/middleware/error_handling/standard_errors.middleware";
+import {readable_uuids} from "../services/authorization";
 
 /**
  * @description - This is the class that handles the CRUD operations for the Meta classes.
@@ -110,7 +111,6 @@ class Metamodel_classesConnection implements CRUD {
     userUuid?: UUID,
   ): Promise<Class[] | BaseError> {
     try {
-      let class_query: string;
       const returnClasses = new Array<Class>();
       const uuid_type =
         await Metamodel_common_functions.getMetaTypeWithMetaUuid(
@@ -120,17 +120,68 @@ class Metamodel_classesConnection implements CRUD {
       if (uuid_type !== undefined) {
         switch (uuid_type) {
           case "scene_type":
-            class_query = queries.getQuery_get("classes_scene_query");
             break;
           default:
             throw new Error(
               `Error the uuid ${uuidParent} cannot be a parent for a class`,
             );
         }
-        const res_classes = await client.query(class_query, [uuidParent]);
-        for (const cl of res_classes.rows) {
-          const newClass = await this.getByUuid(client, cl.uuid, userUuid);
-          if (newClass instanceof Class) returnClasses.push(newClass);
+        // class_uuid_query is reproduced here as m.* and c.* over the whole
+        // level. classes_scene_query cannot be used directly: it is a SELECT *
+        // over a join that includes contains_classes, and plainToInstance copies
+        // every property of the row onto the object, so building a class from
+        // that row would put the join's own uuid_scene_type and uuid_class into
+        // the response. The per-class path never showed them because it re-read
+        // each class on its own.
+        const res_classes = await client.query(
+          `SELECT m.*, c.*
+           FROM metaobject m
+                    JOIN class c ON c.uuid_metaobject = m.uuid
+                    JOIN contains_classes cc ON cc.uuid_class = c.uuid_metaobject
+           WHERE cc.uuid_scene_type = $1
+             AND m.uuid NOT IN (SELECT uuid_class FROM relationclass)`,
+          [uuidParent],
+        );
+        if (res_classes.rowCount === 0) return returnClasses;
+
+        // getByUuid refused a class the caller may not read, and it was left out
+        // of the list. Kept, as one query for the level.
+        let rows = res_classes.rows;
+        if (userUuid) {
+          const readable = await readable_uuids(
+            client,
+            rows.map((row) => row.uuid as UUID),
+            userUuid,
+          );
+          rows = rows.filter((row) => readable.has(row.uuid as UUID));
+        }
+
+        for (const row of rows) {
+          returnClasses.push(Class.fromJS(row) as Class);
+        }
+        const classUuids = returnClasses.map((cl) => cl.get_uuid());
+
+        // The attributes of every class at once, and the ports of every class at
+        // once, rather than four queries per class and several per attribute.
+        const [attributes, ports] = await Promise.all([
+          Metamodel_attributes_connection.getAllByParentUuids(
+            client,
+            classUuids,
+            "class",
+            userUuid,
+          ),
+          Metamodel_ports_connection.getAllByParentUuids(
+            client,
+            classUuids,
+            userUuid,
+          ),
+        ]);
+
+        for (const currentClass of returnClasses) {
+          currentClass.set_attribute(
+            attributes.get(currentClass.get_uuid()) ?? [],
+          );
+          currentClass.set_port(ports.get(currentClass.get_uuid()) ?? []);
         }
       }
       return returnClasses;
