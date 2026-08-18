@@ -1,7 +1,7 @@
 import {RequestHandler} from "express";
 import {database_connection, queries} from "../../../index";
 import {ObjectInstance, UUID} from "../../../../mmar-global-data-structure";
-import {API404Error, HTTP403Constrain,} from "../middleware/error_handling/standard_errors.middleware";
+import {HTTP404Error, HTTP403Constrain,} from "../middleware/error_handling/standard_errors.middleware";
 import {applyRules_ocl} from "./Metamodel_ocl";
 import {applyRules_jsonRulesEngine} from "./Metamodel_jsonRulesEngine";
 import Metamodel_common_functions from "../../meta/Metamodel_common_functions.connection";
@@ -89,7 +89,7 @@ export async function custom_rules_inner_object_instance_body(
                     return {state: true, failed: null, passed: null};
             }
         } else {
-            throw new API404Error(
+            throw new HTTP404Error(
                 `Cannot find object instance with uuid ${uuidToTest}.`
             );
         }

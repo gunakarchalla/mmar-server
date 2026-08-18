@@ -4,7 +4,6 @@ import {queries} from "../../index";
 import {CRUD} from "../common/crud.interface";
 import Instance_objects_connection from "./Instance_objects.connection";
 import Metamodel_common_functions from "../meta/Metamodel_common_functions.connection";
-import instance_rolesConnection from "./Instance_roles.connection";
 import Instance_rolesConnection from "./Instance_roles.connection";
 import {BaseError, HTTP403NORIGHT} from "../services/middleware/error_handling/standard_errors.middleware";
 
@@ -202,7 +201,7 @@ class Instance_attributesConnection implements CRUD {
                 if (res_attribute.rows[0].role_instance_from !== null) {
                     const uuid_role_instance_from =
                         res_attribute.rows[0].role_instance_from;
-                    const role_instance_from = await instance_rolesConnection.getByUuid(
+                    const role_instance_from = await Instance_rolesConnection.getByUuid(
                         client,
                         uuid_role_instance_from,
                         userUuid

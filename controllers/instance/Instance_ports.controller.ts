@@ -22,7 +22,7 @@ class Instance_portsController {
      * @param res
      * @param next
      * @yield {status: 200, body: {PortInstance}} - The port instance.
-     * @throws {API404Error} - If the port instance is not found.
+     * @throws {HTTP404Error} - If the port instance is not found.
      * @throws {HTTP500Error} - If the acquisition of the port instance fails.
      * @memberof Instance_port_controller
      * @method
@@ -69,7 +69,7 @@ class Instance_portsController {
      * @param res
      * @param next
      * @yield {status: 200, body: {PortInstance[]}} - The port instance(s) of the scene instance.
-     * @throws {API404Error} - If the scene instance is not found.
+     * @throws {HTTP404Error} - If the scene instance is not found.
      * @throws {HTTP500Error} - If the acquisition of the port instances fails.
      * @memberof Instance_port_controller
      * @method

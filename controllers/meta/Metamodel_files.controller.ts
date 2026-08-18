@@ -1,7 +1,7 @@
 import { RequestHandler } from "express";
 import { database_connection } from "../../index";
 import {
-    API404Error,
+    HTTP404Error,
     BaseError,
     HTTP400Error,
     HTTP500Error,
@@ -60,7 +60,7 @@ class Metamodel_filesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {File}} - The file.
-     * @throws {API404Error} - If the file is not found.
+     * @throws {HTTP404Error} - If the file is not found.
      * @throws {HTTP500Error} - If the acquisition of the file fails.
      * @memberof Metamodel_file_controller
      * @method
@@ -72,7 +72,7 @@ class Metamodel_filesController {
             await begin_transaction(client);
 
             const uuid = (req.query.uuid as string | undefined) || req.params.uuid;
-            if (!uuid) throw new API404Error("Missing file uuid parameter");
+            if (!uuid) throw new HTTP404Error("Missing file uuid parameter");
 
             const sc = await Metamodel_files_connection.getByUuid(
                 client,
@@ -110,7 +110,7 @@ class Metamodel_filesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {File}} - The file.
-     * @throws {API404Error} - If the file is not found.
+     * @throws {HTTP404Error} - If the file is not found.
      * @throws {HTTP500Error} - If the acquisition of the file fails.
      * @memberof Metamodel_file_controller
      * @method
@@ -121,7 +121,7 @@ class Metamodel_filesController {
         try {
             await begin_transaction(client);
             const name = req.query.name as string | undefined;
-            if (!name) throw new API404Error("Missing file name parameter");
+            if (!name) throw new HTTP404Error("Missing file name parameter");
 
             const sc = await Metamodel_files_connection.getByName(
                 client,
@@ -158,7 +158,7 @@ class Metamodel_filesController {
         try {
             await begin_transaction(client);
 
-            if (!req.file) throw new API404Error(`Cannot find the file.`);
+            if (!req.file) throw new HTTP404Error(`Cannot find the file.`);
 
             const { originalname, buffer, mimetype } = req.file;
             const newFile = File.fromJS(req.body) as File;
@@ -312,7 +312,7 @@ class Metamodel_filesController {
         try {
             await begin_transaction(client);
 
-            // if (!req.file) throw new API404Error(`Cannot find the file.`);
+            // if (!req.file) throw new HTTP404Error(`Cannot find the file.`);
 
             const specified_uuid = req.params.uuid;
             // const {originalname, buffer, mimetype} = req.file;
@@ -359,7 +359,7 @@ class Metamodel_filesController {
         try {
             await begin_transaction(client);
 
-            if (!req.file) throw new API404Error(`Cannot find the file.`);
+            if (!req.file) throw new HTTP404Error(`Cannot find the file.`);
 
             const specified_uuid = uuidv4();
             const { originalname, buffer, mimetype } = req.file;

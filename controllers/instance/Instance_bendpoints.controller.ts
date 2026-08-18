@@ -23,7 +23,7 @@ class Instance_bendpointsController {
      * @param res
      * @param next
      * @yield {status: 200, body: {ClassInstance[]}} - The bendpoint instances of the relationclass instance.
-     * @throws {API404Error} - If the relationclass instance is not found.
+     * @throws {HTTP404Error} - If the relationclass instance is not found.
      * @throws {HTTP500Error} - If the acquisition of the bendpoint instances fails.
      * @memberof Instance_bendpoint_controller
      * @method
@@ -74,7 +74,7 @@ class Instance_bendpointsController {
      * @param res
      * @param next
      * @yield {status: 200, body: {ClassInstance}} - The bendpoint instance.
-     * @throws {API404Error} - If the bendpoint instance is not found.
+     * @throws {HTTP404Error} - If the bendpoint instance is not found.
      * @throws {HTTP500Error} - If the acquisition of the bendpoint instance fails.
      * @memberof Instance_bendpoint_controller
      * @method

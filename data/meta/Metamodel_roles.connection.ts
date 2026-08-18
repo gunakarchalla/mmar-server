@@ -8,7 +8,7 @@ import Metamodel_references_connection from "./Metamodel_references.connection";
 import Metamodel_common_functions from "./Metamodel_common_functions.connection";
 import Metamodel_common_functionsController from "./Metamodel_common_functions.connection";
 import {
-  API404Error,
+  HTTP404Error,
   BaseError,
   HTTP403NORIGHT,
 } from "../services/middleware/error_handling/standard_errors.middleware";
@@ -384,7 +384,7 @@ class Metamodel_rolesConnection implements CRUD {
             handleReferenceUpdate(reference, updateQueries.class_reference),
           );
         } else {
-          return new API404Error(
+          return new HTTP404Error(
             `Error: the class ${reference.uuid} does not exist`,
           );
         }
@@ -495,7 +495,7 @@ class Metamodel_rolesConnection implements CRUD {
               ]),
             );
           } else {
-            return new API404Error(
+            return new HTTP404Error(
               `Error: the class ${reference.uuid} does not exist`,
             );
           }

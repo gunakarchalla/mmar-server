@@ -27,7 +27,7 @@ class Metamodel_scenetypesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {SceneType}} - The scene type.
-     * @throws {API404Error} - If the scene type is not found.
+     * @throws {HTTP404Error} - If the scene type is not found.
      * @throws {HTTP403NORIGHT} - If the user has no right to access the scene type.
      * @throws {HTTP500Error} - If the acquisition of the scene type fails.
      * @memberof Metamodel_scenetypes_controller

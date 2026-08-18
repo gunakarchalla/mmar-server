@@ -24,7 +24,7 @@ class Metamodel_procedureController {
      * @param res
      * @param next
      * @yield {status: 200, body: {Procedure}} - The meta procedure.
-     * @throws {API404Error} - If the meta procedure is not found.
+     * @throws {HTTP404Error} - If the meta procedure is not found.
      * @throws {HTTP500Error} - If the acquisition of the meta procedure fails.
      * @memberof Metamodel_procedure_controller
      * @method
@@ -213,7 +213,7 @@ class Metamodel_procedureController {
      * @param next
      * @yield {status: 200, body: {Procedure[]}} - The meta procedures.
      * @throws {HTTP500Error} - If the acquisition of the meta procedures fails.
-     * @throws {API404Error} - If the scene type is not found.
+     * @throws {HTTP404Error} - If the scene type is not found.
      * @memberof Metamodel_procedure_controller
      * @method
      */

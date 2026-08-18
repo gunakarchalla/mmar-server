@@ -25,7 +25,7 @@ class Instance_rolesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {RoleInstance}} - The role instance.
-     * @throws {API404Error} - If the role instance is not found.
+     * @throws {HTTP404Error} - If the role instance is not found.
      * @throws {HTTP500Error} - If the acquisition of the role instance fails.
      * @memberof Instance_role_controller
      * @method
@@ -72,7 +72,7 @@ class Instance_rolesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {RoleInstance}} - The role from instance.
-     * @throws {API404Error} - If the relationclass instance is not found.
+     * @throws {HTTP404Error} - If the relationclass instance is not found.
      * @throws {HTTP500Error} - If the acquisition of the role from instance fails.
      * @memberof Instance_role_controller
      * @method
@@ -124,7 +124,7 @@ class Instance_rolesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {RoleInstance}} - The role to instance.
-     * @throws {API404Error} - If the relationclass instance is not found.
+     * @throws {HTTP404Error} - If the relationclass instance is not found.
      * @throws {HTTP500Error} - If the acquisition of the role to instance fails.
      * @memberof Instance_role_controller
      * @method
@@ -176,7 +176,7 @@ class Instance_rolesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {RoleInstance[]}} - The role instances.
-     * @throws {API404Error} - If the scene instance is not found.
+     * @throws {HTTP404Error} - If the scene instance is not found.
      * @throws {HTTP500Error} - If the acquisition of the role instances fails.
      * @memberof Instance_role_controller
      * @method

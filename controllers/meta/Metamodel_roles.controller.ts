@@ -22,7 +22,7 @@ class Metamodel_rolesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {Role}} - The meta role.
-     * @throws {API404Error} - If the meta role is not found.
+     * @throws {HTTP404Error} - If the meta role is not found.
      * @throws {HTTP500Error} - If the acquisition of the meta role fails.
      * @memberof Metamodel_roles_controller
      * @method

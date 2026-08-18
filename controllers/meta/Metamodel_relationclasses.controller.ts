@@ -69,7 +69,7 @@ class Metamodel_relationclassesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {Relationclass}} - The relationclass.
-     * @throws {API404Error} - If the relationclass is not found.
+     * @throws {HTTP404Error} - If the relationclass is not found.
      * @throws {HTTP500Error} - If the acquisition of the relationclass fails.
      * @memberof Metamodel_relationclasses_controller
      * @method
@@ -114,7 +114,7 @@ class Metamodel_relationclassesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {Relationclass[]}} - The meta relationclasses.
-     * @throws {API404Error} - If the scene type is not found.
+     * @throws {HTTP404Error} - If the scene type is not found.
      * @throws {HTTP500Error} - If the acquisition of the meta relationclasses fails.
      * @memberof Metamodel_relationclasses_controller
      * @method
@@ -161,7 +161,7 @@ class Metamodel_relationclassesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {UUID}} - The uuid of the meta role from.
-     * @throws {API404Error} - If the meta relationclass is not found.
+     * @throws {HTTP404Error} - If the meta relationclass is not found.
      * @throws {HTTP500Error} - If the acquisition of the meta role from fails.
      * @memberof Metamodel_relationclasses_controller
      * @method
@@ -208,7 +208,7 @@ class Metamodel_relationclassesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {UUID}} - The uuid of the meta role to.
-     * @throws {API404Error} - If the meta relationclass is not found.
+     * @throws {HTTP404Error} - If the meta relationclass is not found.
      * @throws {HTTP500Error} - If the acquisition of the meta role to fails.
      * @memberof Metamodel_relationclasses_controller
      * @method
@@ -255,7 +255,7 @@ class Metamodel_relationclassesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {Role[]}} - The meta roles.
-     * @throws {API404Error} - If the meta relationclass is not found.
+     * @throws {HTTP404Error} - If the meta relationclass is not found.
      * @throws {HTTP500Error} - If the acquisition of the meta roles fails.
      * @memberof Metamodel_relationclasses_controller
      * @method

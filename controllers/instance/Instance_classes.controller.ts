@@ -23,7 +23,7 @@ class Instance_classesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {ClassInstance}} - The class instance.
-     * @throws {API404Error} - If the class instance is not found.
+     * @throws {HTTP404Error} - If the class instance is not found.
      * @throws {HTTP500Error} - If the acquisition of the class instance fails.
      * @memberof Instance_classes_controller
      * @method
@@ -71,7 +71,7 @@ class Instance_classesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {ClassInstance[]}} - The class instance(s) of the relationclass instance.
-     * @throws {API404Error} - If the relationclass instance is not found.
+     * @throws {HTTP404Error} - If the relationclass instance is not found.
      * @throws {HTTP500Error} - If the acquisition of the class instances fails.
      * @memberof Instance_classes_controller
      * @method

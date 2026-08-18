@@ -24,7 +24,7 @@ class Metamodel_rulesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {Rule | undefined}} - The rule(s).
-     * @throws {API404Error} - If the rule is not found.
+     * @throws {HTTP404Error} - If the rule is not found.
      * @throws {HTTP500Error} - If the acquisition of the rules fails.
      * @memberof Metamodel_rules_controller
      * @method
@@ -70,7 +70,7 @@ class Metamodel_rulesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {Rule[]}} - The rules.
-     * @throws {API404Error} - If the meta object is not found.
+     * @throws {HTTP404Error} - If the meta object is not found.
      * @throws {HTTP500Error} - If the acquisition of the rules fails.
      * @memberof Metamodel_rules_controller
      * @method

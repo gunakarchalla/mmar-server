@@ -13,7 +13,7 @@
     <div class="jumbotron">
         <h1>Home</h1>
         <p>Home page</p>
-        You are log in as {{username}}
+        You are log in as <%= username %>
         <form name="logout_form" id="logout_form" method="get" action="/login/signout">
             <input type="hidden" name="perform_logout" value="1">
             <input type="submit" value="Logout" id="perform_logout_button">

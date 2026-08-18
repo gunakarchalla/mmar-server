@@ -57,7 +57,7 @@ class Metamodel_attribute_typesController {
    * @param res
    * @param next
    * @yield {status: 200, body: {AttributeType}} - The attribute type.
-   * @throws {API404Error} - If the attribute type is not found.
+   * @throws {HTTP404Error} - If the attribute type is not found.
    * @throws {HTTP500Error} - If the acquisition of the attribute type fails.
    * @memberof Metamodel_attribute_types_controller
    * @method
@@ -105,7 +105,7 @@ class Metamodel_attribute_typesController {
    * @param next
    * @yield {status: 200, body: {AttributeType[]}} - The attribute types.
    * @throws {HTTP500Error} - If the acquisition of the attribute types fails.
-   * @throws {API404Error} - If the meta attribute is not found.
+   * @throws {HTTP404Error} - If the meta attribute is not found.
    * @memberof Metamodel_attribute_types_controller
    * @method
    */

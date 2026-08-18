@@ -46,24 +46,6 @@ export class BaseError extends Error {
 }
 
 /**
- * @description - This is the class for the 404 not found error
- * @export - The class is exported so that it can be used by other files.
- * @class API404Error
- * @extends {BaseError}
- */
-export class API404Error extends BaseError {
-    /** @description - This is the standard 404 error */
-    constructor(
-        description = "Object not found",
-        name = "Object not found",
-        httpCode = HttpStatusCode.NOT_FOUND,
-        isOperational = true
-    ) {
-        super(name, httpCode, isOperational, description);
-    }
-}
-
-/**
  * @description - This is the class for the 401 not authorized error
  * @export - The class is exported so that it can be used by other files.
  * @class API401Error

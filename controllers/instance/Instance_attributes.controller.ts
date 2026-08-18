@@ -24,7 +24,7 @@ class Instance_attributesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {InstanceAttribute}} - The attribute instance
-     * @throws {API404Error} - If the attribute instance is not found.
+     * @throws {HTTP404Error} - If the attribute instance is not found.
      * @throws {HTTP500Error} - If the acquisition of the attribute instance fails.
      * @memberof Instance_attribute_controller
      * @method
@@ -70,7 +70,7 @@ class Instance_attributesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {InstanceAttribute[]}} - The attribute instances of the class instance.
-     * @throws {API404Error} - If the class instance is not found.
+     * @throws {HTTP404Error} - If the class instance is not found.
      * @throws {HTTP500Error} - If the acquisition of the attribute instances fails.
      * @memberof Instance_attribute_controller
      * @method
@@ -115,7 +115,7 @@ class Instance_attributesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {InstanceAttribute[]}} - The attribute instances of the scene instance.
-     * @throws {API404Error} - If the scene instance is not found
+     * @throws {HTTP404Error} - If the scene instance is not found
      * @throws {HTTP500Error} - If the acquisition of the attribute instances fails.
      * @memberof Instance_attribute_controller
      * @method

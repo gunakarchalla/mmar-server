@@ -67,7 +67,7 @@ class Metamodel_classesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {Class}} - The meta class.
-     * @throws {API404Error} - If the meta class is not found.
+     * @throws {HTTP404Error} - If the meta class is not found.
      * @throws {HTTP500Error} - If the acquisition of the meta class fails.
      * @memberof Metamodel_classes_controller
      * @method
@@ -115,7 +115,7 @@ class Metamodel_classesController {
      * @param next
      * @yield {status: 200, body: {Class[]}} - The meta classes.
      * @throws {HTTP500Error} - If the acquisition of the meta classes fails.
-     * @throws {API404Error} - If the scene type is not found.
+     * @throws {HTTP404Error} - If the scene type is not found.
      * @memberof Metamodel_classes_controller
      * @method
      */

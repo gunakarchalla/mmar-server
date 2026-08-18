@@ -22,7 +22,7 @@ class Instance_relationclassesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {RelationclassInstance}} - The relationclass instance.
-     * @throws {API404Error} - If the relationclass instance is not found.
+     * @throws {HTTP404Error} - If the relationclass instance is not found.
      * @throws {HTTP500Error} - If the acquisition of the relationclass instance fails.
      * @memberof Instance_relationclass_controller
      * @method
@@ -73,7 +73,7 @@ class Instance_relationclassesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {RelationclassInstance[]}} - The relationclass instance(s) of the scene instance.
-     * @throws {API404Error} - If the scene instance is not found.
+     * @throws {HTTP404Error} - If the scene instance is not found.
      * @throws {HTTP500Error} - If the acquisition of the relationclass instances fails.
      * @memberof Instance_relationclass_controller
      * @method

@@ -22,7 +22,7 @@ class Instance_scenesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {SceneInstance[]}} - The scene instance(s) of the scene type.
-     * @throws {API404Error} - If the scene type is not found.
+     * @throws {HTTP404Error} - If the scene type is not found.
      * @throws {HTTP500Error} - If the acquisition of the scene instances fails.
      * @memberof Instance_scene_controller
      * @method
@@ -69,7 +69,7 @@ class Instance_scenesController {
      * @param res
      * @param next
      * @yield {status: 200, body: {SceneInstance}} - The scene instance.
-     * @throws {API404Error} - If the scene instance is not found.
+     * @throws {HTTP404Error} - If the scene instance is not found.
      * @throws {HTTP500Error} - If the acquisition of the scene instance fails.
      * @memberof Instance_scene_controller
      * @method
@@ -171,48 +171,6 @@ class Instance_scenesController {
      * @method
      */
     post_scene_instances: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client); // Start a transaction
-            const newSceneInstance = SceneInstance.fromJS(req.body) as SceneInstance;
-            newSceneInstance.uuid_scene_type = req.params.uuid;
-            const sc = await Instance_scene_connection.create(
-                client,
-                newSceneInstance,
-                requireUser(req).uuid
-            );
-            if (sc instanceof SceneInstance) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(201).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to create scene instance for scene type ${req.params.uuid}`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            client.release();
-        }
-    };
-
-    test_post_scene_instances_wholeUser: RequestHandler = async (
-        req,
-        res,
-        next
-    ) => {
         const client = await database_connection.getPool().connect();
 
         try {

@@ -58,7 +58,7 @@ class Metamodel_attributesController {
    * @param res
    * @param next
    * @yield {status: 200, body: {Attribute}} - The meta attribute.
-   * @throws {API404Error} - If the meta attribute is not found.
+   * @throws {HTTP404Error} - If the meta attribute is not found.
    * @throws {HTTP500Error} - If the acquisition of the meta attribute fails.
    * @memberof Metamodel_attributes_controller
    * @method
@@ -106,7 +106,7 @@ class Metamodel_attributesController {
    * @param next
    * @yield {status: 200, body: {Attribute[]}} - The meta attributes.
    * @throws {HTTP500Error} - If the acquisition of the meta attributes fails.
-   * @throws {API404Error} - If the scene type is not found.
+   * @throws {HTTP404Error} - If the scene type is not found.
    * @memberof Metamodel_attributes_controller
    * @method
    */
@@ -151,7 +151,7 @@ class Metamodel_attributesController {
    * @param next
    * @yield {status: 200, body: {Attribute[]}} - The meta attributes.
    * @throws {HTTP500Error} - If the acquisition of the meta attributes fails.
-   * @throws {API404Error} - If the meta class is not found.
+   * @throws {HTTP404Error} - If the meta class is not found.
    * @memberof Metamodel_attributes_controller
    * @method
    */
@@ -197,7 +197,7 @@ class Metamodel_attributesController {
    * @param next
    * @yield {status: 200, body: {Attribute}} - The meta attribute created.
    * @throws {HTTP500Error} - If the creation of the meta attribute fails.
-   * @throws {API404Error} - If the meta attribute is not found.
+   * @throws {HTTP404Error} - If the meta attribute is not found.
    * @memberof Metamodel_attributes_controller
    * @method
    */

@@ -53,7 +53,7 @@ class Metamodel_portsController {
      * @param res
      * @param next
      * @yield {status: 200, body: {Port}} - The meta port.
-     * @throws {API404Error} - If the meta port is not found.
+     * @throws {HTTP404Error} - If the meta port is not found.
      * @throws {HTTP500Error} - If the acquisition of the meta port fails.
      * @memberof Metamodel_ports_controller
      * @method
@@ -99,7 +99,7 @@ class Metamodel_portsController {
      * @param next
      * @yield {status: 200, body: {Port[]}} - The meta ports.
      * @throws {HTTP500Error} - If the acquisition of the meta ports fails.
-     * @throws {API404Error} - If the scene type is not found.
+     * @throws {HTTP404Error} - If the scene type is not found.
      * @memberof Metamodel_ports_controller
      * @method
      */

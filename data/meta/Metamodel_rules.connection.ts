@@ -1,7 +1,7 @@
 import {Rule, UUID} from "../../../mmar-global-data-structure";
 import {PoolClient} from "pg";
 import {queries} from "../..";
-import {API404Error, BaseError} from "../services/middleware/error_handling/standard_errors.middleware";
+import {HTTP404Error, BaseError} from "../services/middleware/error_handling/standard_errors.middleware";
 import {CRUD} from "../common/crud.interface";
 
 /**
@@ -177,7 +177,7 @@ class Metamodel_rulesConnection implements CRUD {
                 return await this.getByUuid(client, newRule.uuid, userUuid);
             } else {
                 // the linked meta object does not exist in the database, we throw an error
-                throw new API404Error(
+                throw new HTTP404Error(
                     `MetaObject with the uuid ${newRule.assigned_uuid_metaobject} cannot be found in the database`
                 );
             }
