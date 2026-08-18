@@ -41,13 +41,11 @@ class Instance_classesConnection implements CRUD {
             let returnClass;
 
 
-            // if (userUuid) {
-            //     const read_check = queries.getQuery_get("read_check");
-            //     const res = await client.query(read_check, [instanceClassUuid, userUuid]);
-            //     if (res.rowCount == 0) {
-            //         return new HTTP403NORIGHT(`The user ${userUuid} has no right to read the class instance ${instanceClassUuid}`);
-            //     }
-            // }
+            // Authorization happens at the scene boundary, never per instance
+            // object: the routes that address this object by uuid resolve the
+            // scene instance that owns it and check that instead. Do not add a
+            // per-object right check here — it would also fire for every child
+            // of a scene read, which has already been authorized.
 
 
             const res_classes = await client.query(classes_query, [instanceClassUuid]);

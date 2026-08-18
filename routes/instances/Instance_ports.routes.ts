@@ -3,6 +3,10 @@ import Instance_port_controller from "../../controllers/instance/Instance_ports.
 import { verif_port_instance_body } from "../../data/services/rule_engine/instance_rule_engine/Instance_ports.verificator";
 import { authenticate_token } from "../../data/services/middleware/auth.middleware";
 import { validate_uuid_params } from "../../data/services/middleware/uuid_params.middleware";
+import {
+  authorize_instance_object,
+  authorize_scene_instance,
+} from "../../data/services/middleware/scene_authorization.middleware";
 
 /**
  * @description - These are the routes for the ports instances.
@@ -51,6 +55,7 @@ portInstanceRouter.get(
   */
   "/portsInstances/:uuid",
   authenticate_token,
+  authorize_instance_object("read"),
   Instance_port_controller.get_port_instances_by_uuid
 );
 
@@ -103,6 +108,7 @@ portInstanceRouter.patch(
   "/portsInstances/:uuid",
   verif_port_instance_body,
   authenticate_token,
+  authorize_instance_object("edit"),
   Instance_port_controller.patch_port_instance_by_uuid
 );
 
@@ -126,6 +132,7 @@ portInstanceRouter.delete(
   */
   "/portsInstances/:uuid",
   authenticate_token,
+  authorize_instance_object("delete"),
   Instance_port_controller.delete_port_instances_by_uuid
 );
 
@@ -174,6 +181,7 @@ portInstanceRouter.get(
   */
   "/sceneInstances/:uuid/portsInstances",
   authenticate_token,
+  authorize_scene_instance("read"),
   Instance_port_controller.get_port_instances_for_scene
 );
 
@@ -226,6 +234,7 @@ portInstanceRouter.post(
   "/sceneInstances/:uuid/portsInstances",
   verif_port_instance_body,
   authenticate_token,
+  authorize_scene_instance("edit"),
   Instance_port_controller.post_port_instances
 );
 
@@ -249,6 +258,7 @@ portInstanceRouter.delete(
   */
   "/sceneInstances/:uuid/portsInstances",
   authenticate_token,
+  authorize_scene_instance("delete"),
   Instance_port_controller.delete_port_instances_for_scene
 );
 

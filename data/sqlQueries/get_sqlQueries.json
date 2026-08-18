@@ -313,6 +313,10 @@
       "query": "SELECT 1 WHERE EXISTS ( SELECT 1 FROM can_create_instances har JOIN has_user_user_group huug ON har.uuid_user_group = huug.uuid_user_group WHERE har.uuid_metaobject = $1 AND huug.uuid_user = $2) OR public.is_administrator($2);"
     },
     {
+      "name": "instance_object_owning_scene_query",
+      "query": "WITH RECURSIVE owner_walk(uuid) AS (SELECT $1::uuid UNION SELECT COALESCE(ats.uuid_scene_instance, pi.uuid_scene_instance, pi.uuid_class_instance, ai.assigned_uuid_scene_instance, ai.assigned_uuid_class_instance, ai.assigned_uuid_port_instance, ai.role_instance_from, ri.uuid_has_reference_scene_instance, ri.uuid_has_reference_class_instance, ri.uuid_has_reference_relationclass_instance, ri.uuid_has_reference_port_instance, ri.uuid_has_reference_attribute_instance) FROM owner_walk ow LEFT JOIN assigned_to_scene ats ON ats.uuid_class_instance = ow.uuid LEFT JOIN port_instance pi ON pi.uuid_instance_object = ow.uuid LEFT JOIN attribute_instance ai ON ai.uuid_instance_object = ow.uuid LEFT JOIN role_instance ri ON ri.uuid_instance_object = ow.uuid) SELECT si.uuid_instance_object AS uuid_scene_instance FROM scene_instance si JOIN owner_walk ow ON ow.uuid = si.uuid_instance_object LIMIT 1;"
+    },
+    {
       "name": "sceneinstance_exist_check",
       "query": "SELECT 1 FROM scene_instance WHERE uuid_instance_object = $1;"
     },

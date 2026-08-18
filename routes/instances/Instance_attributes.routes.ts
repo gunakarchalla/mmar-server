@@ -3,6 +3,10 @@ import Instance_attribute_controller from "../../controllers/instance/Instance_a
 import { verif_attribute_instance_body } from "../../data/services/rule_engine/instance_rule_engine/Instance_attributes.verificator";
 import { authenticate_token } from "../../data/services/middleware/auth.middleware";
 import { validate_uuid_params } from "../../data/services/middleware/uuid_params.middleware";
+import {
+  authorize_instance_object,
+  authorize_scene_instance,
+} from "../../data/services/middleware/scene_authorization.middleware";
 
 /**
  * @description - These are the routes for the attributes instances.
@@ -53,6 +57,7 @@ attributeInstanceRouter.get(
   */
   "/attributesInstances/:uuid",
   authenticate_token,
+  authorize_instance_object("read"),
   Instance_attribute_controller.get_attribute_instance_by_uuid
 );
 
@@ -107,6 +112,7 @@ attributeInstanceRouter.patch(
   "/attributesInstances/:uuid",
   verif_attribute_instance_body,
   authenticate_token,
+  authorize_instance_object("edit"),
   Instance_attribute_controller.patch_attribute_instance_by_uuid
 );
 
@@ -151,6 +157,7 @@ attributeInstanceRouter.post(
   "/attributesInstances/:uuid",
   verif_attribute_instance_body,
   authenticate_token,
+  authorize_instance_object("edit"),
   Instance_attribute_controller.post_attribute_instance_by_uuid
 );
 
@@ -176,6 +183,7 @@ attributeInstanceRouter.delete(
   */
   "/attributesInstances/:uuid",
   authenticate_token,
+  authorize_instance_object("delete"),
   Instance_attribute_controller.delete_attribute_instance_by_uuid
 );
 
@@ -186,6 +194,7 @@ attributeInstanceRouter.delete(
 attributeInstanceRouter.get(
   "/classesInstances/:uuid/attributesInstances",
   authenticate_token,
+  authorize_instance_object("read"),
   Instance_attribute_controller.get_attribute_instance_for_class
 );
 
@@ -193,12 +202,14 @@ attributeInstanceRouter.post(
   "/classesInstances/:uuid/attributesInstances",
   verif_attribute_instance_body,
   authenticate_token,
+  authorize_instance_object("edit"),
   Instance_attribute_controller.post_attribute_instance_for_class
 );
 
 attributeInstanceRouter.delete(
   "/classesInstances/:uuid/attributesInstances",
   authenticate_token,
+  authorize_instance_object("delete"),
   Instance_attribute_controller.delete_attribute_instance_for_class
 );
 
@@ -209,6 +220,7 @@ attributeInstanceRouter.delete(
 attributeInstanceRouter.get(
   "/relationclassesInstances/:uuid/attributesInstances",
   authenticate_token,
+  authorize_instance_object("read"),
   Instance_attribute_controller.get_attribute_instance_for_class
 );
 
@@ -216,12 +228,14 @@ attributeInstanceRouter.post(
   "/relationclassesInstances/:uuid/attributesInstances",
   verif_attribute_instance_body,
   authenticate_token,
+  authorize_instance_object("edit"),
   Instance_attribute_controller.post_attribute_instance_for_class
 );
 
 attributeInstanceRouter.delete(
   "/relationclassesInstances/:uuid/attributesInstances",
   authenticate_token,
+  authorize_instance_object("delete"),
   Instance_attribute_controller.delete_attribute_instance_for_class
 );
 
@@ -232,6 +246,7 @@ attributeInstanceRouter.delete(
 attributeInstanceRouter.get(
   "/sceneInstances/:uuid/attributesInstances",
   authenticate_token,
+  authorize_scene_instance("read"),
   Instance_attribute_controller.get_attribute_instance_for_scene
 );
 
@@ -239,12 +254,14 @@ attributeInstanceRouter.post(
   "/sceneInstances/:uuid/attributesInstances",
   verif_attribute_instance_body,
   authenticate_token,
+  authorize_scene_instance("edit"),
   Instance_attribute_controller.post_attribute_instance_for_scene
 );
 
 attributeInstanceRouter.delete(
   "/sceneInstances/:uuid/attributesInstances",
   authenticate_token,
+  authorize_scene_instance("delete"),
   Instance_attribute_controller.delete_attribute_instance_for_scene
 );
 

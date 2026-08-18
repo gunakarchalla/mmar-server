@@ -6,6 +6,10 @@ import {
 } from "../../data/services/rule_engine/instance_rule_engine/Instance_roles.verificator";
 import { authenticate_token } from "../../data/services/middleware/auth.middleware";
 import { validate_uuid_params } from "../../data/services/middleware/uuid_params.middleware";
+import {
+  authorize_instance_object,
+  authorize_scene_instance,
+} from "../../data/services/middleware/scene_authorization.middleware";
 
 /**
  * @description - These are the routes for the roles instances.
@@ -54,6 +58,7 @@ roleInstanceRouter.get(
   */
   "/rolesInstances/:uuid",
   authenticate_token,
+  authorize_instance_object("read"),
   Instance_role_controller.get_role_instances_by_uuid
 );
 
@@ -106,6 +111,7 @@ roleInstanceRouter.patch(
   "/rolesInstances/:uuid",
   verif_role_instance_body,
   authenticate_token,
+  authorize_instance_object("edit"),
   Instance_role_controller.patch_role_instance_by_uuid
 );
 
@@ -148,6 +154,7 @@ roleInstanceRouter.post(
   "/rolesInstances/:uuid",
   verif_role_instance_body,
   authenticate_token,
+  authorize_instance_object("edit"),
   Instance_role_controller.post_role_instance_by_uuid
 );
 
@@ -172,6 +179,7 @@ roleInstanceRouter.delete(
   "/rolesInstances/:uuid",
   verif_role_instance_deletion,
   authenticate_token,
+  authorize_instance_object("delete"),
   Instance_role_controller.delete_role_instances_by_uuid
 );
 
@@ -218,6 +226,7 @@ roleInstanceRouter.get(
   */
   "/relationclassesInstances/:uuid/roleFrom",
   authenticate_token,
+  authorize_instance_object("read"),
   Instance_role_controller.get_rolefrom_for_relationclass_instances
 );
 
@@ -257,7 +266,8 @@ roleInstanceRouter.get(
   }
   */
   "/relationclassesInstances/:uuid/roleTo",
-  authenticate_token, 
+  authenticate_token,
+  authorize_instance_object("read"),
   Instance_role_controller.get_roleto_for_relationclass_instances
 );
 
@@ -310,6 +320,7 @@ roleInstanceRouter.post(
   "/relationclassesInstances/:uuid/rolesInstances",
   verif_role_instance_body,
   authenticate_token,
+  authorize_instance_object("edit"),
   Instance_role_controller.post_role_instances_for_relationclass_instances
 );
 
@@ -334,6 +345,7 @@ roleInstanceRouter.delete(
   "/relationclassesInstances/:uuid/rolesInstances",
   verif_role_instance_deletion,
   authenticate_token,
+  authorize_instance_object("delete"),
   Instance_role_controller.delete_role_instances_for_parent
 );
 
@@ -381,6 +393,7 @@ roleInstanceRouter.get(
   */
   "/sceneInstances/:uuid/rolesInstances",
   authenticate_token,
+  authorize_scene_instance("read"),
   Instance_role_controller.get_roles_instances_for_scene
 );
 
@@ -433,6 +446,7 @@ roleInstanceRouter.post(
   "/sceneInstances/:uuid/rolesInstances",
   verif_role_instance_body,
   authenticate_token,
+  authorize_scene_instance("edit"),
   Instance_role_controller.post_role_instances
 );
 
@@ -457,6 +471,7 @@ roleInstanceRouter.delete(
   "/sceneInstances/:uuid/rolesInstances",
   verif_role_instance_deletion,
   authenticate_token,
+  authorize_scene_instance("delete"),
   Instance_role_controller.delete_role_instances_for_parent
 );
 

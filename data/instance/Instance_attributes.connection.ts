@@ -178,14 +178,12 @@ class Instance_attributesConnection implements CRUD {
             const attribute_query = queries.getQuery_get("instance_attribute_uuid_query");
             let newAttribute;
 
-            // if (userUuid) {
-            //     const read_check = queries.getQuery_get("read_check");
-            //     const res = await client.query(read_check, [attributeUuid, userUuid]);
-            //     if (res.rowCount == 0) {
-            //         return new HTTP403NORIGHT(`The user ${userUuid} has no right to read the attribute instance ${attributeUuid}`);
-            //     }
+            // Authorization happens at the scene boundary, never per instance
+            // object: the routes that address this object by uuid resolve the
+            // scene instance that owns it and check that instead. Do not add a
+            // per-object right check here — it would also fire for every child
+            // of a scene read, which has already been authorized.
 
-            // }
 
             const res_attribute = await client.query(attribute_query, [attributeUuid]);
 

@@ -36,11 +36,11 @@ class Instance_relationclassesConnection implements CRUD {
             const relclasses_query: string =
                 "select * from instance_object io, relationclass_instance ri, class_instance ci where io.uuid=ci.uuid_instance_object AND ri.uuid_class_instance=ci.uuid_instance_object AND ri.uuid_class_instance =$1 ";
             let newRelClass;
-            // if (userUuid) {
-            //     const read_check = queries.getQuery_get("read_check");
-            //     const res = await client.query(read_check, [relclassUuid, userUuid]);
-            //     if (res.rowCount == 0) return new HTTP403NORIGHT(`The user ${userUuid} has no right to read the relationclass ${relclassUuid}`);
-            // }
+            // Authorization happens at the scene boundary, never per instance
+            // object: the routes that address this object by uuid resolve the
+            // scene instance that owns it and check that instead. Do not add a
+            // per-object right check here — it would also fire for every child
+            // of a scene read, which has already been authorized.
 
             const res_relclass = await client.query(relclasses_query, [relclassUuid]);
 

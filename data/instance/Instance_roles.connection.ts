@@ -71,11 +71,11 @@ class Instance_rolesConnection implements CRUD {
         const role_query = queries.getQuery_get("instance_role_uuid_query");
         let newRole;
         try {
-            // if (userUuid) {
-            //     const read_check = queries.getQuery_get("read_check");
-            //     const res = await client.query(read_check, [roleUuid, userUuid]);
-            //     if (res.rowCount == 0) return new HTTP403NORIGHT(`The user ${userUuid} has no right to read the role ${roleUuid}`);
-            // }
+            // Authorization happens at the scene boundary, never per instance
+            // object: the routes that address this object by uuid resolve the
+            // scene instance that owns it and check that instead. Do not add a
+            // per-object right check here — it would also fire for every child
+            // of a scene read, which has already been authorized.
             const res_role = await client.query(role_query, [roleUuid]);
 
             if (res_role.rowCount == 1) {

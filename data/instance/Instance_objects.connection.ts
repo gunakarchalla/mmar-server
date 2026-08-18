@@ -35,13 +35,11 @@ class Instance_objectsConnection implements CRUD {
                 "instance_object_uuid_query"
             );
 
-            // if (userUuid) {
-            //     const read_check = queries.getQuery_get("read_check");
-            //     const res = await client.query(read_check, [objectUUID, userUuid]);
-            //     if (res.rowCount == 0) {
-            //         return new HTTP403NORIGHT(`The user ${userUuid} has no right to read the instance object ${objectUUID}`);
-            //     }
-            // }
+            // Authorization happens at the scene boundary, never per instance
+            // object: the routes that address this object by uuid resolve the
+            // scene instance that owns it and check that instead. Do not add a
+            // per-object right check here — it would also fire for every child
+            // of a scene read, which has already been authorized.
 
             const res_object = await client.query(get_object_query, [objectUUID]);
             if (res_object.rowCount === 0) return undefined;
@@ -77,11 +75,11 @@ class Instance_objectsConnection implements CRUD {
             const query_del = queries.getQuery_delete("delete_instance_object");
             const query_get = queries.getQuery_delete("get_cascaded_delete_object");
 
-            // if (userUUID) {
-            //     const delete_check = queries.getQuery_get("delete_check");
-            //     const res = await client.query(delete_check, [objectUUID, userUUID]);
-            //     if (res.rowCount == 0) return new HTTP403NORIGHT(`The user ${userUUID} has no right to delete the instance object ${objectUUID}`);
-            // }
+            // Authorization happens at the scene boundary, never per instance
+            // object: the routes that address this object by uuid resolve the
+            // scene instance that owns it and check that instead. Do not add a
+            // per-object right check here — it would also fire for every child
+            // of a scene read, which has already been authorized.
 
             await client.query(query_del, [objectUUID]);
             const res_uuids = await client.query(query_get, [objectUUID]);
@@ -235,11 +233,11 @@ class Instance_objectsConnection implements CRUD {
             ];
 
 
-            // if (userUUID) {
-            //     const write_check = queries.getQuery_get("write_check");
-            //     const res = await client.query(write_check, [instanceObjectUUID, userUUID]);
-            //     if (res.rowCount == 0) return new HTTP403NORIGHT(`The user ${userUUID} has no right to update the instance object ${instanceObjectUUID}`);
-            // }
+            // Authorization happens at the scene boundary, never per instance
+            // object: the routes that address this object by uuid resolve the
+            // scene instance that owns it and check that instead. Do not add a
+            // per-object right check here — it would also fire for every child
+            // of a scene read, which has already been authorized.
             await client.query(query_update_instanceObj, params);
             return await this.getByUuid(client, instanceObjectUUID);
         } catch (err) {

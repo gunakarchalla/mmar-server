@@ -3,6 +3,9 @@ import Instance_bendpoint_controller from "../../controllers/instance/Instance_b
 import { verif_class_instance_body } from "../../data/services/rule_engine/instance_rule_engine/Instance_classes.verificator";
 import { authenticate_token } from "../../data/services/middleware/auth.middleware";
 import { validate_uuid_params } from "../../data/services/middleware/uuid_params.middleware";
+import {
+  authorize_instance_object,
+} from "../../data/services/middleware/scene_authorization.middleware";
 
 /**
  * @description - These are the routes for the bendpoints instances.
@@ -62,6 +65,7 @@ bendpointInstanceRouter.patch(
   */
   "/bendpointsInstances/:uuid",
   authenticate_token,
+  authorize_instance_object("edit"),
   Instance_bendpoint_controller.patch_bendpoint_instance_by_uuid 
 );
 
@@ -85,6 +89,7 @@ bendpointInstanceRouter.delete(
   */
   "/bendpointsInstances/:uuid",
   authenticate_token,
+  authorize_instance_object("delete"),
   Instance_bendpoint_controller.delete_bendpoint_instances_by_uuid 
 );
 
@@ -133,6 +138,7 @@ bendpointInstanceRouter.get(
   */
   "/relationclassesInstances/:uuid/bendpointsInstances",
   authenticate_token,
+  authorize_instance_object("read"),
   Instance_bendpoint_controller.get_bendpoint_instances_for_relationclass
 );
 
@@ -185,6 +191,7 @@ bendpointInstanceRouter.post(
   "/relationclassesInstances/:uuid/bendpointsInstances",
   verif_class_instance_body, 
   authenticate_token,
+  authorize_instance_object("edit"),
   Instance_bendpoint_controller.post_bendpoint_instance_by_uuid
 );
 
