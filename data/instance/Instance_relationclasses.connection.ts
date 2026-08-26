@@ -55,18 +55,19 @@ class Instance_relationclassesConnection implements CRUD {
                 );
                 if (Array.isArray(attributes)) newRelClass.set_attribute_instances(attributes);
 
-                const roleFrom = await Instance_role_connection.getByUuid(
-                    client,
+                // Both ends in one query rather than one each: a relation always
+                // has two roles, so this halves the round trips of every read of
+                // one, and getAllByParentUuid below reads every end of every
+                // relation of a scene in a single query on the same loader.
+                const roles = await Instance_role_connection.getByUuids(client, [
                     cl.uuid_role_instance_from,
-                    userUuid
-                );
+                    cl.uuid_role_instance_to,
+                ]);
+
+                const roleFrom = roles.get(cl.uuid_role_instance_from);
                 if (roleFrom instanceof RoleInstance) newRelClass.set_role_instance_from(roleFrom);
 
-                const roleTo = await Instance_role_connection.getByUuid(
-                    client,
-                    cl.uuid_role_instance_to,
-                    userUuid
-                );
+                const roleTo = roles.get(cl.uuid_role_instance_to);
                 if (roleTo instanceof RoleInstance) newRelClass.set_role_instance_to(roleTo);
             }
 
@@ -93,23 +94,63 @@ class Instance_relationclassesConnection implements CRUD {
     async getAllByParentUuid(
         client: PoolClient,
         uuidParent: UUID,
-        userUuid?: UUID
+        _userUuid?: UUID
     ): Promise<RelationclassInstance[] | BaseError> {
-        const classes_query =
-            "select ri.uuid_class_instance from scene_instance si, relationclass_instance ri , assigned_to_scene ats where ats.uuid_class_instance = ri.uuid_class_instance and ats.uuid_scene_instance = si.uuid_instance_object and si.uuid_instance_object =$1 ";
-
-        const returnRelClasses = new Array<RelationclassInstance>();
         try {
-            const res_relclasses = await client.query(classes_query, [uuidParent]);
-            for (const cl of res_relclasses.rows) {
-                const newRelClass = await this.getByUuid(
-                    client,
-                    cl.uuid_class_instance,
-                    userUuid
-                );
-                if (newRelClass instanceof RelationclassInstance) returnRelClasses.push(newRelClass);
+            // The relations of the scene, then - for all of them at once - their
+            // attributes and both ends of each. Calling getByUuid per relation
+            // instead cost one query for the relation, one to resolve the type of
+            // its attribute parent, one to list those attributes and two more for
+            // its roles: five per relation where this is three in total.
+            //
+            // The column order is io, ri, ci exactly as in the single-relation
+            // query above, so fromJS sees the same row it always did.
+            const res_relclasses = await client.query(
+                `SELECT io.*, ri.*, ci.*
+                 FROM scene_instance si
+                          JOIN assigned_to_scene ats ON ats.uuid_scene_instance = si.uuid_instance_object
+                          JOIN relationclass_instance ri ON ri.uuid_class_instance = ats.uuid_class_instance
+                          JOIN class_instance ci ON ci.uuid_instance_object = ri.uuid_class_instance
+                          JOIN instance_object io ON io.uuid = ci.uuid_instance_object
+                 WHERE si.uuid_instance_object = $1`,
+                [uuidParent]
+            );
+            if (res_relclasses.rowCount === 0) return [];
 
+            const returnRelClasses = res_relclasses.rows.map(
+                (row) => RelationclassInstance.fromJS(row) as RelationclassInstance
+            );
+
+            // Both ends of every relation in one call. Duplicates cost nothing:
+            // getByUuids keys its result by uuid.
+            const roleUuids: UUID[] = [];
+            for (const row of res_relclasses.rows) {
+                if (row.uuid_role_instance_from) roleUuids.push(row.uuid_role_instance_from);
+                if (row.uuid_role_instance_to) roleUuids.push(row.uuid_role_instance_to);
             }
+
+            const [attributes, roles] = await Promise.all([
+                Instance_attribute_connection.getAllByParentUuids(
+                    client,
+                    returnRelClasses.map((relClass) => relClass.get_uuid()),
+                    "relationclass"
+                ),
+                Instance_role_connection.getByUuids(client, roleUuids),
+            ]);
+
+            res_relclasses.rows.forEach((row, index) => {
+                const relClass = returnRelClasses[index];
+                relClass.set_attribute_instances(
+                    attributes.get(relClass.get_uuid()) ?? []
+                );
+
+                const roleFrom = roles.get(row.uuid_role_instance_from);
+                if (roleFrom instanceof RoleInstance) relClass.set_role_instance_from(roleFrom);
+
+                const roleTo = roles.get(row.uuid_role_instance_to);
+                if (roleTo instanceof RoleInstance) relClass.set_role_instance_to(roleTo);
+            });
+
             return returnRelClasses;
         } catch (err) {
             throw new Error(

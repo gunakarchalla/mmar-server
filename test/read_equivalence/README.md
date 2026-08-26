@@ -91,6 +91,26 @@ different copy of the module and patching that one logs nothing; and it raises
 `Error.stackTraceLimit`, because the default of ten frames stops short of the middleware
 that started the call.
 
+`read_probe.js` is the same instrument pointed at `GET /instances/sceneInstances/:uuid`,
+which is what phase 5 was about: a per-object fan-out shows up there as one statement
+repeated once per object, and disappearing means the count stops scaling with the size of
+the scene. It reports scans as well, and the two disagree in exactly the way described
+below - batching the scene read from 93 statements to 20 moved the scan count only from
+760 to 668.
+
+```bash
+node test/reset_test_database.js
+MMAR_QUERY_STACKS=1 <env> node --require ./test/read_equivalence/pg_query_log.js \
+    ../dist/mmar-server/index.js &
+node test/read_equivalence/read_probe.js
+```
+
+One trap when probing a **scratch A/B build**: `pg_query_log.js` patches
+`../../../dist/mmar-server/node_modules/pg`, which is not the copy a `git archive` build
+resolves through its `node_modules` symlink. Patching the wrong copy logs nothing at all
+and the probe reports a confident `0 queries`. Set `MMAR_PG_PATH` to the copy that build
+actually loads.
+
 Prefer this to `sum(seq_scan)+sum(idx_scan)` whenever the question is *where* the work is.
 Those counters are index probes, so a batched query over 150 parents counts as ~150 and
 looks exactly like a per-object fan-out. Phase 4 was scoped from a scan count that made a

@@ -7,6 +7,20 @@ import Metamodel_common_functions from "../meta/Metamodel_common_functions.conne
 import {BaseError, HTTP403NORIGHT} from "../services/middleware/error_handling/standard_errors.middleware";
 
 /**
+ * @description - Which column of role_instance points back at each kind of parent.
+ * Interpolated into the batch query below, so it is a closed set of literals here
+ * and never a value taken from a request. These are the same five columns the
+ * instance_role_for_*_query entries of get_sqlQueries.json select on.
+ */
+const PARENT_COLUMN = {
+    scene_type: "uuid_has_reference_scene_instance",
+    class: "uuid_has_reference_class_instance",
+    relationclass: "uuid_has_reference_relationclass_instance",
+    attribute: "uuid_has_reference_attribute_instance",
+    port: "uuid_has_reference_port_instance",
+} as const;
+
+/**
  * @description - This is the class that handles the CRUD operations for the Role Instances.
  * @export - The class is exported so that it can be used by other files.
  * @class Instance_rolesConnection
@@ -103,56 +117,44 @@ class Instance_rolesConnection implements CRUD {
     async getAllByParentUuid(
         client: PoolClient,
         uuidParent: UUID,
-        userUuid?: UUID
+        _userUuid?: UUID
     ): Promise<RoleInstance[] | BaseError> {
         try {
-            let role_query: string;
-            const returnRoles = new Array<RoleInstance>();
             const uuid_type =
                 await Metamodel_common_functions.getMetaobjectWithInstanceUuid(
                     client,
                     uuidParent
                 );
-            if (uuid_type !== undefined) {
-                switch (uuid_type.type) {
-                    case "scene_type":
-                        role_query = queries.getQuery_get(
-                            "instance_role_for_scene_instance_query"
-                        );
-                        break;
-                    case "class":
-                        role_query = queries.getQuery_get(
-                            "instance_role_for_class_instance_query"
-                        );
-                        break;
-                    case "relationclass":
-                        role_query = queries.getQuery_get(
-                            "instance_role_for_relationclass_instance_query"
-                        );
-                        break;
-                    case "attribute":
-                        role_query = queries.getQuery_get(
-                            "instance_role_for_attribute_instance_query"
-                        );
-                        break;
-                    case "port":
-                        role_query = queries.getQuery_get(
-                            "instance_role_for_port_instance_query"
-                        );
-                        break;
-                    default:
-                        throw new Error(
-                            "Error the uuid provided cannot be a parent for a role"
-                        );
-                }
-                const res_role = await client.query(role_query, [uuidParent]);
-                for (const cl of res_role.rows) {
-                    const newRole = await this.getByUuid(await client, cl.uuid, userUuid);
-                    if (newRole instanceof RoleInstance) returnRoles.push(newRole);
+            if (uuid_type === undefined) return [];
 
-                }
+            const parentColumn =
+                PARENT_COLUMN[uuid_type.type as keyof typeof PARENT_COLUMN];
+            if (!parentColumn) {
+                throw new Error(
+                    "Error the uuid provided cannot be a parent for a role"
+                );
             }
-            return returnRoles;
+
+            // One query instead of one to list the roles and one more per role.
+            //
+            // This also fixes what that loop did: the listing queries selected
+            // from role_instance alone, which has no uuid column - its key is
+            // uuid_instance_object - so the getByUuid it fed was passed undefined
+            // every time and answered nothing. Every caller of this method has
+            // been receiving an empty array whatever the parent, which is why a
+            // scene instance has always read back with role_instances: [].
+            // Joining instance_object here is what getByUuid did anyway, in the
+            // same column order, so a role built from these rows is the row
+            // getByUuid would have returned.
+            const res_role = await client.query(
+                `SELECT ri.*, io.*
+                 FROM role_instance ri
+                          JOIN instance_object io ON io.uuid = ri.uuid_instance_object
+                 WHERE ri.${parentColumn} = $1`,
+                [uuidParent]
+            );
+
+            return res_role.rows.map((row) => RoleInstance.fromJS(row) as RoleInstance);
         } catch (err) {
             throw new Error(`Error getting roles for ${uuidParent}: ${err}`);
         }

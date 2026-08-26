@@ -136,9 +136,8 @@ class Instance_portsConnection implements CRUD {
     async getAllByParentUuid(
         client: PoolClient,
         uuidParent: UUID,
-        userUuid?: UUID
+        _userUuid?: UUID
     ): Promise<PortInstance[] | BaseError> {
-        let port_query: string;
         const returnPorts = new Array<PortInstance>();
         try {
             const uuid_type =
@@ -148,37 +147,31 @@ class Instance_portsConnection implements CRUD {
                 );
 
             if (uuid_type) {
+                // Which batch this parent belongs in. A relationclass instance is
+                // a class instance, so its ports hang off uuid_class_instance too,
+                // exactly as instance_port_by_class_uuid_query had it.
+                let parentType: "class" | "scene";
                 switch (uuid_type.type) {
                     case "scene_type":
-                        port_query = queries.getQuery_get(
-                            "instance_port_for_scene_instance_query"
-                        );
+                        parentType = "scene";
                         break;
                     case "class":
-                        port_query = queries.getQuery_get(
-                            "instance_port_by_class_uuid_query"
-                        );
-                        break;
                     case "relationclass":
-                        port_query = queries.getQuery_get(
-                            "instance_port_by_class_uuid_query"
-                        );
+                        parentType = "class";
                         break;
                     default:
                         throw new Error(
                             `Error the uuid ${uuidParent} cannot be a parent for a port`
                         );
                 }
-                const res_port = await client.query(port_query, [uuidParent]);
-                for (const cl of res_port.rows) {
-                    const newPort = await this.getByUuid(
-                        client,
-                        cl.uuid_instance_object,
-                        userUuid
-                    );
-                    if (newPort instanceof PortInstance) returnPorts.push(newPort);
-
-                }
+                // One query for the ports and one for all their attributes, rather
+                // than one per port plus the attribute fan-out inside each.
+                const byParent = await this.getAllByParentUuids(
+                    client,
+                    [uuidParent],
+                    parentType
+                );
+                returnPorts.push(...(byParent.get(uuidParent) ?? []));
             }
             return returnPorts;
         } catch (err) {
