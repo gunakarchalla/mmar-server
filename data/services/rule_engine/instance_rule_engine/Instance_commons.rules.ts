@@ -12,15 +12,17 @@ import {
 } from "../../../../../mmar-global-data-structure";
 import {HTTP403Constrain, HTTP500Error} from "../../middleware/error_handling/standard_errors.middleware";
 import {PoolClient} from "pg";
-import Metamodel_attributes_connection from "../../../meta/Metamodel_attributes.connection";
-import Metamodel_scenetypes_connection from "../../../meta/Metamodel_scenetypes.connection";
-import Metamodel_classes_connection from "../../../meta/Metamodel_classes.connection";
-import Metamodel_relationclasses_connection from "../../../meta/Metamodel_relationclasses.connection";
-import Metamodel_ports_connection from "../../../meta/Metamodel_ports.connection";
-import Metamodel_roles_connection from "../../../meta/Metamodel_roles.connection";
+import {meta_object_exists} from "./Metamodel_probe";
 
 /**
  * This rule check the existence of the related meta object in the database
+ *
+ * Each branch used to call the matching Metamodel_*_connection.getByUuid and
+ * compare the result to undefined, which loads an entire subtree to answer a
+ * yes/no question and asks it again for every object in the body. meta_object_exists
+ * runs the same WHERE clause as one row, once per distinct uuid per request.
+ * The branches, their order - RelationclassInstance extends ClassInstance and so
+ * has to come first - and the messages are otherwise unchanged.
  *
  * @category Rules
  * @param client
@@ -32,10 +34,7 @@ export async function metaObjectExists(
 ): Promise<boolean> {
   if (objectToTest instanceof AttributeInstance) {
     if (
-      (await Metamodel_attributes_connection.getByUuid(
-        client,
-        objectToTest.uuid_attribute
-      )) != undefined
+      await meta_object_exists(client, "attribute", objectToTest.uuid_attribute)
     ) {
       return true;
     } else {
@@ -45,10 +44,7 @@ export async function metaObjectExists(
     }
   } else if (objectToTest instanceof SceneInstance) {
     if (
-      (await Metamodel_scenetypes_connection.getByUuid(
-        client,
-        objectToTest.uuid_scene_type
-      )) != undefined
+      await meta_object_exists(client, "scene_type", objectToTest.uuid_scene_type)
     ) {
       return true;
     } else {
@@ -58,10 +54,7 @@ export async function metaObjectExists(
     }
   } else if (objectToTest instanceof RelationclassInstance) {
     if (
-      (await Metamodel_relationclasses_connection.getByUuid(
-        client,
-        objectToTest.uuid_relationclass
-      )) != undefined
+      await meta_object_exists(client, "relationclass", objectToTest.uuid_relationclass)
     ) {
       return true;
     } else {
@@ -70,12 +63,7 @@ export async function metaObjectExists(
       );
     }
   } else if (objectToTest instanceof ClassInstance) {
-    if (
-      (await Metamodel_classes_connection.getByUuid(
-        client,
-        objectToTest.uuid_class
-      )) != undefined
-    ) {
+    if (await meta_object_exists(client, "class", objectToTest.uuid_class)) {
       return true;
     } else {
       throw new HTTP403Constrain(
@@ -83,12 +71,7 @@ export async function metaObjectExists(
       );
     }
   } else if (objectToTest instanceof PortInstance) {
-    if (
-      (await Metamodel_ports_connection.getByUuid(
-        client,
-        objectToTest.uuid_port
-      )) != undefined
-    ) {
+    if (await meta_object_exists(client, "port", objectToTest.uuid_port)) {
       return true;
     } else {
       throw new HTTP403Constrain(
@@ -96,12 +79,7 @@ export async function metaObjectExists(
       );
     }
   } else if (objectToTest instanceof RoleInstance) {
-    if (
-      (await Metamodel_roles_connection.getByUuid(
-        client,
-        objectToTest.uuid_role
-      )) != undefined
-    ) {
+    if (await meta_object_exists(client, "role", objectToTest.uuid_role)) {
       return true;
     } else {
       throw new HTTP403Constrain(

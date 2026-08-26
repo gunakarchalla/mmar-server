@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "async_hooks";
 import { Pool, PoolClient } from "pg";
 import { environment } from "./environment";
 
@@ -22,10 +23,41 @@ export async function with_client<T>(
 
     const borrowed = await database_connection.getInstance().getPool().connect();
     try {
-        return await run(borrowed);
+        // A fresh memo for this borrow, and only this borrow. Callers that ask
+        // the database the same question repeatedly - the rule engine asks "does
+        // this meta object exist" once per object in the body, for a handful of
+        // distinct uuids - can answer from it instead. Scoping it to the borrow
+        // rather than to the connection matters: pool clients are recycled, so a
+        // cache keyed on the client object would outlive the work that filled it
+        // and answer the next request from a metamodel that may have changed.
+        return await memos.run(new Map(), () => run(borrowed));
     } finally {
         borrowed.release();
     }
+}
+
+/**
+ * @description - What has already been looked up during the current borrow.
+ */
+const memos = new AsyncLocalStorage<Map<string, unknown>>();
+
+/**
+ * @description - Answer from the current borrow's memo, or compute and remember.
+ *
+ * Outside a borrow there is nothing to scope a memo to, so the value is computed
+ * every time. That is slower and never wrong, which is the right way round.
+ * @param {string} key - Identifies the question being asked.
+ * @param {() => Promise<T>} compute - How to answer it against the database.
+ * @returns {Promise<T>} - The answer.
+ */
+export async function memoised<T>(key: string, compute: () => Promise<T>): Promise<T> {
+    const store = memos.getStore();
+    if (!store) return await compute();
+    if (store.has(key)) return store.get(key) as T;
+
+    const value = await compute();
+    store.set(key, value);
+    return value;
 }
 
 /**
