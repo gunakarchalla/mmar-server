@@ -1,17 +1,13 @@
 import {RequestHandler} from "express";
-import {database_connection} from "../..";
 import {plainToInstance} from "class-transformer";
 import {Attribute} from "../../../mmar-global-data-structure";
 import {
     BaseError,
-    HTTP403NORIGHT,
-    HTTP409CONFLICT,
     HTTP500Error,
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";
-import {filter_object} from "../../data/services/middleware/object_filter";
 import Metamodel_attributes_connection from "../../data/meta/Metamodel_attributes.connection";
 import { requireUser } from "../../data/services/middleware/auth.middleware";
-import { begin_transaction } from "../../data/services/transaction";
+import { withTransaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the meta attributes.
@@ -19,38 +15,19 @@ import { begin_transaction } from "../../data/services/transaction";
  * @class - Metamodel_attributes_controller
  */
 class Metamodel_attributesController {
-  get_all_attributes: RequestHandler = async (req, res, next) => {
-    const client = await database_connection.getPool().connect();
-
-    try {
-      await begin_transaction(client);
-      const sc = await Metamodel_attributes_connection.getAll(
-        client,
-        requireUser(req).uuid,
-      );
-      if (Array.isArray(sc)) {
-        // The transaction is made durable before the client is told it succeeded:
-        // answering first left a window in which a caller could act on a 201
-        // and not yet see what it had been promised.
-        await client.query("COMMIT");
-        res.status(200).json(filter_object(sc, req.query.filter));
-      } else if (sc instanceof BaseError) {
-        throw sc;
-      } else {
-        throw new HTTP500Error(`Failed to retrieve meta attributes`);
-      }
-    } catch (err) {
-      try {
-          await client.query("ROLLBACK");
-      } catch {
-          // The connection is already gone; the error below is the
-          // one worth reporting.
-      }
-      next(err);
-    } finally {
-      (await client).release();
-    }
-  };
+  get_all_attributes: RequestHandler = withTransaction(async (client, req) => {
+  const sc = await Metamodel_attributes_connection.getAll(
+    client,
+    requireUser(req).uuid,
+  );
+  if (Array.isArray(sc)) {
+    return sc;
+  } else if (sc instanceof BaseError) {
+    throw sc;
+  } else {
+    throw new HTTP500Error(`Failed to retrieve meta attributes`);
+  }
+  });
 
   /**
    * @description - Get a specific meta attribute by its UUID.
@@ -63,41 +40,22 @@ class Metamodel_attributesController {
    * @memberof Metamodel_attributes_controller
    * @method
    */
-  get_attribute_by_uuid: RequestHandler = async (req, res, next) => {
-    const client = await database_connection.getPool().connect();
-
-    try {
-      await begin_transaction(client);
-      const sc = await Metamodel_attributes_connection.getByUuid(
-        client,
-        req.params.uuid,
-        requireUser(req).uuid,
-      );
-      if (sc instanceof Attribute) {
-        // The transaction is made durable before the client is told it succeeded:
-        // answering first left a window in which a caller could act on a 201
-        // and not yet see what it had been promised.
-        await client.query("COMMIT");
-        res.status(200).json(filter_object(sc, req.query.filter));
-      } else if (sc instanceof BaseError) {
-        throw sc;
-      } else {
-        throw new HTTP500Error(
-          `Failed to retrieve meta attribute ${req.params.uuid}`,
-        );
-      }
-    } catch (err) {
-      try {
-          await client.query("ROLLBACK");
-      } catch {
-          // The connection is already gone; the error below is the
-          // one worth reporting.
-      }
-      next(err);
-    } finally {
-      (await client).release();
-    }
-  };
+  get_attribute_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+  const sc = await Metamodel_attributes_connection.getByUuid(
+    client,
+    req.params.uuid,
+    requireUser(req).uuid,
+  );
+  if (sc instanceof Attribute) {
+    return sc;
+  } else if (sc instanceof BaseError) {
+    throw sc;
+  } else {
+    throw new HTTP500Error(
+      `Failed to retrieve meta attribute ${req.params.uuid}`,
+    );
+  }
+  });
 
   /**
    * @description - Get all the meta attributes for a specific scene type by its UUID.
@@ -110,39 +68,20 @@ class Metamodel_attributesController {
    * @memberof Metamodel_attributes_controller
    * @method
    */
-  get_attributes_for_scene: RequestHandler = async (req, res, next) => {
-    const client = await database_connection.getPool().connect();
-
-    try {
-      await begin_transaction(client);
-      const sc = await Metamodel_attributes_connection.getAllByParentUuid(
-        client,
-        req.params.uuid,
-        requireUser(req).uuid,
-      );
-      if (Array.isArray(sc)) {
-        // The transaction is made durable before the client is told it succeeded:
-        // answering first left a window in which a caller could act on a 201
-        // and not yet see what it had been promised.
-        await client.query("COMMIT");
-        res.status(200).json(filter_object(sc, req.query.filter));
-      } else if (sc instanceof BaseError) {
-        throw sc;
-      } else {
-        throw new HTTP500Error(`Failed to retrieve meta attributes`);
-      }
-    } catch (err) {
-      try {
-          await client.query("ROLLBACK");
-      } catch {
-          // The connection is already gone; the error below is the
-          // one worth reporting.
-      }
-      next(err);
-    } finally {
-      (await client).release();
-    }
-  };
+  get_attributes_for_scene: RequestHandler = withTransaction(async (client, req) => {
+  const sc = await Metamodel_attributes_connection.getAllByParentUuid(
+    client,
+    req.params.uuid,
+    requireUser(req).uuid,
+  );
+  if (Array.isArray(sc)) {
+    return sc;
+  } else if (sc instanceof BaseError) {
+    throw sc;
+  } else {
+    throw new HTTP500Error(`Failed to retrieve meta attributes`);
+  }
+  });
 
   /**
    * @description - Get all the meta attributes for a specific meta class by its UUID.
@@ -155,39 +94,20 @@ class Metamodel_attributesController {
    * @memberof Metamodel_attributes_controller
    * @method
    */
-  get_attributes_for_class: RequestHandler = async (req, res, next) => {
-    const client = await database_connection.getPool().connect();
-
-    try {
-      await begin_transaction(client);
-      const sc = await Metamodel_attributes_connection.getAllByParentUuid(
-        client,
-        req.params.uuid,
-        requireUser(req).uuid,
-      );
-      if (Array.isArray(sc)) {
-        // The transaction is made durable before the client is told it succeeded:
-        // answering first left a window in which a caller could act on a 201
-        // and not yet see what it had been promised.
-        await client.query("COMMIT");
-        res.status(200).json(filter_object(sc, req.query.filter));
-      } else if (sc instanceof BaseError) {
-        throw sc;
-      } else {
-        throw new HTTP500Error(`Failed to retrieve meta attributes`);
-      }
-    } catch (err) {
-      try {
-          await client.query("ROLLBACK");
-      } catch {
-          // The connection is already gone; the error below is the
-          // one worth reporting.
-      }
-      next(err);
-    } finally {
-      (await client).release();
-    }
-  };
+  get_attributes_for_class: RequestHandler = withTransaction(async (client, req) => {
+  const sc = await Metamodel_attributes_connection.getAllByParentUuid(
+    client,
+    req.params.uuid,
+    requireUser(req).uuid,
+  );
+  if (Array.isArray(sc)) {
+    return sc;
+  } else if (sc instanceof BaseError) {
+    throw sc;
+  } else {
+    throw new HTTP500Error(`Failed to retrieve meta attributes`);
+  }
+  });
 
   /**
    * @description - Create a new meta attribute by its UUID.
@@ -201,44 +121,24 @@ class Metamodel_attributesController {
    * @memberof Metamodel_attributes_controller
    * @method
    */
-  post_attribute_by_uuid: RequestHandler = async (req, res, next) => {
-    const client = await database_connection.getPool().connect();
-
-    try {
-      await begin_transaction(client);
-
-      const newAttribute = Attribute.fromJS(req.body) as Attribute;
-      newAttribute.set_uuid(req.params.uuid);
-      const sc = await Metamodel_attributes_connection.create(
-        client,
-        newAttribute,
-        requireUser(req).uuid,
-      );
-      if (sc instanceof Attribute) {
-        // The transaction is made durable before the client is told it succeeded:
-        // answering first left a window in which a caller could act on a 201
-        // and not yet see what it had been promised.
-        await client.query("COMMIT");
-        res.status(201).json(filter_object(sc, req.query.filter));
-      } else if (sc instanceof BaseError) {
-        throw sc;
-      } else {
-        throw new HTTP500Error(
-          `Failed to post the meta attribute ${req.params.uuid}.`,
-        );
-      }
-    } catch (err) {
-      try {
-          await client.query("ROLLBACK");
-      } catch {
-          // The connection is already gone; the error below is the
-          // one worth reporting.
-      }
-      next(err);
-    } finally {
-      (await client).release();
-    }
-  };
+  post_attribute_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+  const newAttribute = Attribute.fromJS(req.body) as Attribute;
+  newAttribute.set_uuid(req.params.uuid);
+  const sc = await Metamodel_attributes_connection.create(
+    client,
+    newAttribute,
+    requireUser(req).uuid,
+  );
+  if (sc instanceof Attribute) {
+    return sc;
+  } else if (sc instanceof BaseError) {
+    throw sc;
+  } else {
+    throw new HTTP500Error(
+      `Failed to post the meta attribute ${req.params.uuid}.`,
+    );
+  }
+  }, { status: 201 });
 
   /**
    * @description - Create a new meta attribute for a specific scene type by its UUID.
@@ -251,44 +151,24 @@ class Metamodel_attributesController {
    * @memberOf Metamodel_attributesController
    * @method
    */
-  post_attribute_for_scene: RequestHandler = async (req, res, next) => {
-    const client = await database_connection.getPool().connect();
-
-    try {
-      await begin_transaction(client);
-
-      const newAttribute = plainToInstance(Attribute, req.body);
-      const sc = await Metamodel_attributes_connection.postForParentUuid(
-        client,
-        req.params.uuid,
-        newAttribute,
-        requireUser(req).uuid,
-      );
-      if (Array.isArray(sc)) {
-        // The transaction is made durable before the client is told it succeeded:
-        // answering first left a window in which a caller could act on a 201
-        // and not yet see what it had been promised.
-        await client.query("COMMIT");
-        res.status(201).json(filter_object(sc, req.query.filter));
-      } else if (sc instanceof BaseError) {
-        throw sc;
-      } else {
-        throw new HTTP500Error(
-          `Cannot post the meta attribute for the scene type ${req.params.uuid}.`,
-        );
-      }
-    } catch (err) {
-      try {
-          await client.query("ROLLBACK");
-      } catch {
-          // The connection is already gone; the error below is the
-          // one worth reporting.
-      }
-      next(err);
-    } finally {
-      (await client).release();
-    }
-  };
+  post_attribute_for_scene: RequestHandler = withTransaction(async (client, req) => {
+  const newAttribute = plainToInstance(Attribute, req.body);
+  const sc = await Metamodel_attributes_connection.postForParentUuid(
+    client,
+    req.params.uuid,
+    newAttribute,
+    requireUser(req).uuid,
+  );
+  if (Array.isArray(sc)) {
+    return sc;
+  } else if (sc instanceof BaseError) {
+    throw sc;
+  } else {
+    throw new HTTP500Error(
+      `Cannot post the meta attribute for the scene type ${req.params.uuid}.`,
+    );
+  }
+  }, { status: 201 });
 
   /**
    * @description - Create a new meta attribute for a specific meta class by its UUID.
@@ -301,44 +181,24 @@ class Metamodel_attributesController {
    * @memberOf Metamodel_attributesController
    * @method
    */
-  post_attribute_for_class: RequestHandler = async (req, res, next) => {
-    const client = await database_connection.getPool().connect();
-
-    try {
-      await begin_transaction(client);
-
-      const newAttribute = plainToInstance(Attribute, req.body);
-      const sc = await Metamodel_attributes_connection.postForParentUuid(
-        client,
-        req.params.uuid,
-        newAttribute,
-        requireUser(req).uuid,
-      );
-      if (Array.isArray(sc)) {
-        // The transaction is made durable before the client is told it succeeded:
-        // answering first left a window in which a caller could act on a 201
-        // and not yet see what it had been promised.
-        await client.query("COMMIT");
-        res.status(201).json(filter_object(sc, req.query.filter));
-      } else if (sc instanceof BaseError) {
-        throw sc;
-      } else {
-        throw new HTTP500Error(
-          `Cannot post the meta attribute for the meta class ${req.params.uuid}.`,
-        );
-      }
-    } catch (err) {
-      try {
-          await client.query("ROLLBACK");
-      } catch {
-          // The connection is already gone; the error below is the
-          // one worth reporting.
-      }
-      next(err);
-    } finally {
-      (await client).release();
-    }
-  };
+  post_attribute_for_class: RequestHandler = withTransaction(async (client, req) => {
+  const newAttribute = plainToInstance(Attribute, req.body);
+  const sc = await Metamodel_attributes_connection.postForParentUuid(
+    client,
+    req.params.uuid,
+    newAttribute,
+    requireUser(req).uuid,
+  );
+  if (Array.isArray(sc)) {
+    return sc;
+  } else if (sc instanceof BaseError) {
+    throw sc;
+  } else {
+    throw new HTTP500Error(
+      `Cannot post the meta attribute for the meta class ${req.params.uuid}.`,
+    );
+  }
+  }, { status: 201 });
 
   /**
    * @description - Modify a meta attribute by its UUID.
@@ -352,44 +212,24 @@ class Metamodel_attributesController {
    * @method
    *
    */
-  patch_attribute_by_uuid: RequestHandler = async (req, res, next) => {
-    const client = await database_connection.getPool().connect();
-
-    try {
-      await begin_transaction(client);
-
-      const newAttribute = Attribute.fromJS(req.body) as Attribute;
-      const sc = await Metamodel_attributes_connection.update(
-        client,
-        req.params.uuid,
-        newAttribute,
-        requireUser(req).uuid,
-      );
-      if (sc instanceof Attribute) {
-        // The transaction is made durable before the client is told it succeeded:
-        // answering first left a window in which a caller could act on a 201
-        // and not yet see what it had been promised.
-        await client.query("COMMIT");
-        res.status(200).json(filter_object(sc, req.query.filter));
-      } else if (sc instanceof BaseError) {
-        throw sc;
-      } else {
-        throw new HTTP500Error(
-          `Cannot patch the meta attribute ${req.params.uuid}.`,
-        );
-      }
-    } catch (err) {
-      try {
-          await client.query("ROLLBACK");
-      } catch {
-          // The connection is already gone; the error below is the
-          // one worth reporting.
-      }
-      next(err);
-    } finally {
-      (await client).release();
-    }
-  };
+  patch_attribute_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+  const newAttribute = Attribute.fromJS(req.body) as Attribute;
+  const sc = await Metamodel_attributes_connection.update(
+    client,
+    req.params.uuid,
+    newAttribute,
+    requireUser(req).uuid,
+  );
+  if (sc instanceof Attribute) {
+    return sc;
+  } else if (sc instanceof BaseError) {
+    throw sc;
+  } else {
+    throw new HTTP500Error(
+      `Cannot patch the meta attribute ${req.params.uuid}.`,
+    );
+  }
+  });
 
   /**
    * @description - Modify a meta attribute by its UUID.
@@ -403,43 +243,24 @@ class Metamodel_attributesController {
    * @method
    *
    */
-  patch_attribute_by_parent_uuid: RequestHandler = async (req, res, next) => {
-    const client = await database_connection.getPool().connect();
-
-    try {
-      await begin_transaction(client);
-      const newAttribute = plainToInstance(Attribute, req.body);
-      const sc = await Metamodel_attributes_connection.updateForParentUuid(
-        client,
-        req.params.uuid,
-        newAttribute,
-        requireUser(req).uuid,
-      );
-      if (Array.isArray(sc)) {
-        // The transaction is made durable before the client is told it succeeded:
-        // answering first left a window in which a caller could act on a 201
-        // and not yet see what it had been promised.
-        await client.query("COMMIT");
-        res.status(200).json(filter_object(sc, req.query.filter));
-      } else if (sc instanceof BaseError) {
-        throw sc;
-      } else {
-        throw new HTTP500Error(
-          `Cannot patch the meta attribute for the scene type ${req.params.uuid}.`,
-        );
-      }
-    } catch (err) {
-      try {
-          await client.query("ROLLBACK");
-      } catch {
-          // The connection is already gone; the error below is the
-          // one worth reporting.
-      }
-      next(err);
-    } finally {
-      (await client).release();
-    }
-  };
+  patch_attribute_by_parent_uuid: RequestHandler = withTransaction(async (client, req) => {
+  const newAttribute = plainToInstance(Attribute, req.body);
+  const sc = await Metamodel_attributes_connection.updateForParentUuid(
+    client,
+    req.params.uuid,
+    newAttribute,
+    requireUser(req).uuid,
+  );
+  if (Array.isArray(sc)) {
+    return sc;
+  } else if (sc instanceof BaseError) {
+    throw sc;
+  } else {
+    throw new HTTP500Error(
+      `Cannot patch the meta attribute for the scene type ${req.params.uuid}.`,
+    );
+  }
+  });
 
   /**
    * @description - Delete a meta attribute by its UUID.
@@ -451,40 +272,23 @@ class Metamodel_attributesController {
    * @memberof Metamodel_attributes_controller
    * @method
    */
-  delete_attributes_by_uuid: RequestHandler = async (req, res, next) => {
-    const client = await database_connection.getPool().connect();
-
-    try {
-      await begin_transaction(client);
-      const sc = await Metamodel_attributes_connection.deleteByUuid(
-        client,
-        req.params.uuid,
-        requireUser(req).uuid,
-      );
-      if (Array.isArray(sc)) {
-        //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
-        // The transaction is made durable before the client is told it succeeded:
-        // answering first left a window in which a caller could act on a 201
-        // and not yet see what it had been promised.
-        await client.query("COMMIT");
-        res.status(200).json(filter_object(sc, req.query.filter));
-      } else if (sc instanceof BaseError) {
-        throw sc;
-      } else {
-        throw new HTTP500Error(
-          `Cannot delete the meta attribute ${req.params.uuid}.`,
-        );
-      }
-    } catch (err) {
-      await client.query("ROLLBACK");
-      if (err instanceof HTTP403NORIGHT) res.status(403).json(err.message);
-      else if (err instanceof HTTP500Error) res.status(500).json(err.message);
-      else if (err instanceof HTTP409CONFLICT) res.status(409).json(err.message);
-      else next(err);
-    } finally {
-      (await client).release();
-    }
-  };
+  delete_attributes_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+  const sc = await Metamodel_attributes_connection.deleteByUuid(
+    client,
+    req.params.uuid,
+    requireUser(req).uuid,
+  );
+  if (Array.isArray(sc)) {
+    //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
+    return sc;
+  } else if (sc instanceof BaseError) {
+    throw sc;
+  } else {
+    throw new HTTP500Error(
+      `Cannot delete the meta attribute ${req.params.uuid}.`,
+    );
+  }
+  });
 
   /**
    * @description - Delete all meta attributes for a specific scene type by its UUID.
@@ -496,41 +300,23 @@ class Metamodel_attributesController {
    * @memberof Metamodel_attributes_controller
    * @method
    */
-  delete_attributes_for_scene: RequestHandler = async (req, res, next) => {
-    const client = await database_connection.getPool().connect();
-
-    try {
-      await begin_transaction(client);
-
-      const sc = await Metamodel_attributes_connection.deleteAllByParentUuid(
-        client,
-        req.params.uuid,
-        requireUser(req).uuid,
-      );
-      if (Array.isArray(sc)) {
-        //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
-        // The transaction is made durable before the client is told it succeeded:
-        // answering first left a window in which a caller could act on a 201
-        // and not yet see what it had been promised.
-        await client.query("COMMIT");
-        res.status(200).json(filter_object(sc, req.query.filter));
-      } else if (sc instanceof BaseError) {
-        throw sc;
-      } else {
-        throw new HTTP500Error(
-          `Cannot delete the meta attribute for the scene type ${req.params.uuid}.`,
-        );
-      }
-    } catch (err) {
-      await client.query("ROLLBACK");
-      if (err instanceof HTTP403NORIGHT) res.status(403).json(err.message);
-      else if (err instanceof HTTP500Error) res.status(500).json(err.message);
-      else if (err instanceof HTTP409CONFLICT) res.status(409).json(err.message);
-      else next(err);
-    } finally {
-      (await client).release();
-    }
-  };
+  delete_attributes_for_scene: RequestHandler = withTransaction(async (client, req) => {
+  const sc = await Metamodel_attributes_connection.deleteAllByParentUuid(
+    client,
+    req.params.uuid,
+    requireUser(req).uuid,
+  );
+  if (Array.isArray(sc)) {
+    //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
+    return sc;
+  } else if (sc instanceof BaseError) {
+    throw sc;
+  } else {
+    throw new HTTP500Error(
+      `Cannot delete the meta attribute for the scene type ${req.params.uuid}.`,
+    );
+  }
+  });
 
   /**
    * @description - Delete all meta attributes for a specific meta class by its UUID.
@@ -542,41 +328,23 @@ class Metamodel_attributesController {
    * @memberof Metamodel_attributes_controller
    * @method
    */
-  delete_attributes_for_class: RequestHandler = async (req, res, next) => {
-    const client = await database_connection.getPool().connect();
-
-    try {
-      await begin_transaction(client);
-
-      const sc = await Metamodel_attributes_connection.deleteAllByParentUuid(
-        client,
-        req.params.uuid,
-        requireUser(req).uuid,
-      );
-      if (Array.isArray(sc)) {
-        //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
-        // The transaction is made durable before the client is told it succeeded:
-        // answering first left a window in which a caller could act on a 201
-        // and not yet see what it had been promised.
-        await client.query("COMMIT");
-        res.status(200).send(filter_object(sc, req.query.filter));
-      } else if (sc instanceof BaseError) {
-        throw sc;
-      } else {
-        throw new HTTP500Error(
-          `Cannot delete the meta attribute for the meta class ${req.params.uuid}.`,
-        );
-      }
-    } catch (err) {
-      await client.query("ROLLBACK");
-      if (err instanceof HTTP403NORIGHT) res.status(403).json(err.message);
-      else if (err instanceof HTTP500Error) res.status(500).json(err.message);
-      else if (err instanceof HTTP409CONFLICT) res.status(409).json(err.message);
-      else next(err);
-    } finally {
-      (await client).release();
-    }
-  };
+  delete_attributes_for_class: RequestHandler = withTransaction(async (client, req) => {
+  const sc = await Metamodel_attributes_connection.deleteAllByParentUuid(
+    client,
+    req.params.uuid,
+    requireUser(req).uuid,
+  );
+  if (Array.isArray(sc)) {
+    //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
+    return sc;
+  } else if (sc instanceof BaseError) {
+    throw sc;
+  } else {
+    throw new HTTP500Error(
+      `Cannot delete the meta attribute for the meta class ${req.params.uuid}.`,
+    );
+  }
+  });
 }
 
 export default new Metamodel_attributesController();

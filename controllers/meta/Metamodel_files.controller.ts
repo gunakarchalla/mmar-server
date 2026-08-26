@@ -1,5 +1,4 @@
 import { RequestHandler } from "express";
-import { database_connection } from "../../index";
 import {
     HTTP404Error,
     BaseError,
@@ -9,10 +8,9 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import Metamodel_files_connection from "../../data/meta/Metamodel_files.connection";
 import { File } from "../../../mmar-global-data-structure";
-import { filter_object } from "../../data/services/middleware/object_filter";
 import { compressImage } from "../../data/services/compress.service";
 import { requireUser } from "../../data/services/middleware/auth.middleware";
-import { begin_transaction } from "../../data/services/transaction";
+import { withTransaction } from "../../data/services/transaction";
 import { environment } from "../../data/services/environment";
 
 /**
@@ -22,37 +20,19 @@ import { environment } from "../../data/services/environment";
  */
 class Metamodel_filesController {
 
-    get_all_files: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-        try {
-            await begin_transaction(client);
-            const sc = await Metamodel_files_connection.getAll(
-                client,
-                requireUser(req).uuid
-            );
-            if (sc instanceof Array) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(sc);
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(`Failed to retrieve files`);
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
+    get_all_files: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Metamodel_files_connection.getAll(
+            client,
+            requireUser(req).uuid
+        );
+        if (sc instanceof Array) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(`Failed to retrieve files`);
         }
-    };
+    });
 
     /**
      * @description - Get a specific file by its uuid.
@@ -65,12 +45,8 @@ class Metamodel_filesController {
      * @memberof Metamodel_file_controller
      * @method
      */
-    get_file_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-
+    get_file_by_uuid: RequestHandler = withTransaction(
+        async (client, req, res) => {
             const uuid = (req.query.uuid as string | undefined) || req.params.uuid;
             if (!uuid) throw new HTTP404Error("Missing file uuid parameter");
 
@@ -80,10 +56,11 @@ class Metamodel_filesController {
                 requireUser(req).uuid
             );
             if (sc instanceof File) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
+                // A file is answered as its own bytes under its own content type, so
+                // this handler writes the response itself rather than returning a
+                // payload for withTransaction to serialise as JSON. Sending here and
+                // committing after is safe only because the handler reads and writes
+                // nothing: there is no result a client could race.
                 res.setHeader("Content-Type", sc.get_type());
                 res.send(sc.get_data());
             } else if (sc instanceof BaseError) {
@@ -91,18 +68,8 @@ class Metamodel_filesController {
             } else {
                 throw new HTTP500Error(`Failed to retrieve file ${req.params.uuid}`);
             }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    );
 
     /**
      * @description - Get a specific file by its name.
@@ -115,11 +82,8 @@ class Metamodel_filesController {
      * @memberof Metamodel_file_controller
      * @method
      */
-    get_file_by_name: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
+    get_file_by_name: RequestHandler = withTransaction(
+        async (client, req, res) => {
             const name = req.query.name as string | undefined;
             if (!name) throw new HTTP404Error("Missing file name parameter");
 
@@ -129,10 +93,11 @@ class Metamodel_filesController {
                 requireUser(req).uuid
             );
             if (sc instanceof File) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
+                // A file is answered as its own bytes under its own content type, so
+                // this handler writes the response itself rather than returning a
+                // payload for withTransaction to serialise as JSON. Sending here and
+                // committing after is safe only because the handler reads and writes
+                // nothing: there is no result a client could race.
                 res.setHeader("Content-Type", sc.get_type());
                 res.send(sc.get_data());
             } else if (sc instanceof BaseError) {
@@ -140,307 +105,193 @@ class Metamodel_filesController {
             } else {
                 throw new HTTP500Error(`Failed to retrieve file ${req.params.uuid}`);
             }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    );
 
-    post_file_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-        try {
-            await begin_transaction(client);
+    post_file_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        if (!req.file) throw new HTTP404Error(`Cannot find the file.`);
 
-            if (!req.file) throw new HTTP404Error(`Cannot find the file.`);
+        const { originalname, buffer, mimetype } = req.file;
+        const newFile = File.fromJS(req.body) as File;
 
-            const { originalname, buffer, mimetype } = req.file;
-            const newFile = File.fromJS(req.body) as File;
+        newFile.set_data(buffer);
+        newFile.set_type(mimetype);
+        newFile.set_name(originalname);
+        newFile.set_uuid(req.params.uuid);
 
-            newFile.set_data(buffer);
-            newFile.set_type(mimetype);
-            newFile.set_name(originalname);
-            newFile.set_uuid(req.params.uuid);
+        const sc = await Metamodel_files_connection.create(
+            client,
+            newFile,
+            requireUser(req).uuid
+        );
 
-            const sc = await Metamodel_files_connection.create(
-                client,
-                newFile,
-                requireUser(req).uuid
-            );
-
-            if (sc instanceof File) {
-                // res.status(201).send(sc.get_data());
-
-                const filteredObject = filter_object(sc, req.query.filter);
-                const publicBaseUrl = environment.public_base_url || `${req.protocol}://${req.get("host")}`;
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(201).json({
-                    ...(typeof filteredObject === 'object' && filteredObject !== null ? filteredObject : {}),
-                    url: `${publicBaseUrl}/metamodel/files/${newFile.uuid}`
-                });
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(`Cannot post the file ${req.params.uuid}.`);
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
+        if (sc instanceof File) {
+            const publicBaseUrl = environment.public_base_url || `${req.protocol}://${req.get("host")}`;
+            // The ?filter is applied by withTransaction to what is returned,
+            // so the file and its url are composed here and filtered there.
+            return {
+                ...sc,
+                url: `${publicBaseUrl}/metamodel/files/${newFile.uuid}`
+            };
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(`Cannot post the file ${req.params.uuid}.`);
         }
-    };
+    }, { status: 201 });
 
-    patch_file_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-        try {
-            await begin_transaction(client);
+    patch_file_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        let originalname, buffer, mimetype;
 
-            let originalname, buffer, mimetype;
-
-            if (!req.file) {
-                // No multipart upload, so the content has to come from the JSON
-                // body as a serialised buffer. Each step is checked: reading
-                // req.body.data.data outright turned a malformed request into a
-                // TypeError and a 500 rather than a 400.
-                const payload = req.body?.["data"]?.["data"];
-                if (!payload) {
-                    throw new HTTP400Error(
-                        `No file uploaded, and the request body carries no data to store.`
-                    );
-                }
-                originalname = req.body["name"];
-                buffer = Buffer.from(payload);
-                mimetype = req.body["type"];
-            }
-            else {
-                ({ originalname, buffer, mimetype } = req.file);
-            }
-
-            const specified_uuid = req.params.uuid;
-            const newFile = File.fromJS(req.body) as File;
-
-            newFile.set_data(buffer);
-            newFile.set_type(mimetype);
-            newFile.set_name(originalname);
-            newFile.uuid = specified_uuid;
-
-            const hardPatch = req.query.hardpatch === "true" ? true : false;
-            const compress = req.query.compress === "true" ? true : false;
-            const targetWidth: number | undefined = req.query.targetWidth ? parseInt(req.query.targetWidth as string) : undefined;
-            const quality: number | undefined = req.query.quality ? parseInt(req.query.quality as string) : undefined;
-
-            if (compress) {
-                if (targetWidth === undefined || targetWidth <= 0 || quality === undefined || quality <= 0 || quality > 100) {
-                    throw new HTTP400Error(
-                        `Compression needs a positive targetWidth and a quality between 1 and 100.`
-                    );
-                }
-                if (newFile.get_type().split("/")[0] !== "image") {
-                    throw new HTTP400Error(`Compression is only supported for image files.`);
-                }
-                const compressedBuffer = await compressImage(newFile, targetWidth, quality);
-                newFile.set_data(compressedBuffer);
-            }
-
-
-            let sc;
-
-            if (hardPatch) {
-                sc = await Metamodel_files_connection.hardUpdate(
-                    client,
-                    specified_uuid,
-                    newFile,
-                    requireUser(req).uuid
-                );
-
-            } else {
-                sc = await Metamodel_files_connection.update(
-                    client,
-                    specified_uuid,
-                    newFile,
-                    requireUser(req).uuid
+        if (!req.file) {
+            // No multipart upload, so the content has to come from the JSON
+            // body as a serialised buffer. Each step is checked: reading
+            // req.body.data.data outright turned a malformed request into a
+            // TypeError and a 500 rather than a 400.
+            const payload = req.body?.["data"]?.["data"];
+            if (!payload) {
+                throw new HTTP400Error(
+                    `No file uploaded, and the request body carries no data to store.`
                 );
             }
-
-            if (sc instanceof File) {
-                const filteredObject = filter_object(sc, req.query.filter);
-                const publicBaseUrl = environment.public_base_url || `${req.protocol}://${req.get("host")}`;
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json({
-                    ...(typeof filteredObject === "object" && filteredObject !== null ? filteredObject : {}),
-                    url: `${publicBaseUrl}/metamodel/files/${newFile.uuid}`
-                });
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(`Cannot patch the file ${req.params.uuid}.`);
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
+            originalname = req.body["name"];
+            buffer = Buffer.from(payload);
+            mimetype = req.body["type"];
         }
-    };
+        else {
+            ({ originalname, buffer, mimetype } = req.file);
+        }
 
-    //to do
-    delete_file_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-        try {
-            await begin_transaction(client);
+        const specified_uuid = req.params.uuid;
+        const newFile = File.fromJS(req.body) as File;
 
-            // if (!req.file) throw new HTTP404Error(`Cannot find the file.`);
+        newFile.set_data(buffer);
+        newFile.set_type(mimetype);
+        newFile.set_name(originalname);
+        newFile.uuid = specified_uuid;
 
-            const specified_uuid = req.params.uuid;
-            // const {originalname, buffer, mimetype} = req.file;
-            // const newFile = File.fromJS(req.body) as File;
+        const hardPatch = req.query.hardpatch === "true" ? true : false;
+        const compress = req.query.compress === "true" ? true : false;
+        const targetWidth: number | undefined = req.query.targetWidth ? parseInt(req.query.targetWidth as string) : undefined;
+        const quality: number | undefined = req.query.quality ? parseInt(req.query.quality as string) : undefined;
 
-            // newFile.set_data(buffer);
-            // newFile.set_type(mimetype);
-            // newFile.set_name(originalname);
-            // newFile.uuid = specified_uuid;
+        if (compress) {
+            if (targetWidth === undefined || targetWidth <= 0 || quality === undefined || quality <= 0 || quality > 100) {
+                throw new HTTP400Error(
+                    `Compression needs a positive targetWidth and a quality between 1 and 100.`
+                );
+            }
+            if (newFile.get_type().split("/")[0] !== "image") {
+                throw new HTTP400Error(`Compression is only supported for image files.`);
+            }
+            const compressedBuffer = await compressImage(newFile, targetWidth, quality);
+            newFile.set_data(compressedBuffer);
+        }
 
-            const sc = await Metamodel_files_connection.deleteByUuid(
+
+        let sc;
+
+        if (hardPatch) {
+            sc = await Metamodel_files_connection.hardUpdate(
                 client,
                 specified_uuid,
-                requireUser(req).uuid
-            );
-
-            if (Array.isArray(sc)) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).send(`File with UUID ${specified_uuid} has been deleted sucessfully.`);
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(`Cannot delete the file ${req.params.uuid}.`);
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
-        }
-    };
-
-    post_file: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-
-            if (!req.file) throw new HTTP404Error(`Cannot find the file.`);
-
-            const specified_uuid = uuidv4();
-            const { originalname, buffer, mimetype } = req.file;
-            const newFile = File.fromJS(req.body) as File;
-
-            newFile.set_data(buffer);
-            newFile.set_type(mimetype);
-            newFile.set_name(originalname);
-            newFile.uuid = specified_uuid;
-
-            const compress = req.query.compress === "true" ? true : false;
-            const targetWidth: number | undefined = req.query.targetWidth ? parseInt(req.query.targetWidth as string) : undefined;
-            const quality: number | undefined = req.query.quality ? parseInt(req.query.quality as string) : undefined;
-
-            if (compress) {
-                if (targetWidth === undefined || targetWidth <= 0 || quality === undefined || quality <= 0 || quality > 100) {
-                    throw new HTTP400Error(
-                        `Compression needs a positive targetWidth and a quality between 1 and 100.`
-                    );
-                }
-                if (newFile.get_type().split("/")[0] !== "image") {
-                    throw new HTTP400Error(`Compression is only supported for image files.`);
-                }
-                const compressedBuffer = await compressImage(newFile, targetWidth, quality);
-                newFile.set_data(compressedBuffer);
-            }
-
-            const sc = await Metamodel_files_connection.create(
-                client,
                 newFile,
                 requireUser(req).uuid
             );
 
-            if (sc instanceof File) {
-                // res.status(201).send(sc.get_data());
-                const publicBaseUrl = environment.public_base_url || `${req.protocol}://${req.get("host")}`;
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(201).json({ url: `${publicBaseUrl}/metamodel/files/${newFile.uuid}`, uuid: newFile.uuid });
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(`Cannot post the file ${specified_uuid}.`);
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
+        } else {
+            sc = await Metamodel_files_connection.update(
+                client,
+                specified_uuid,
+                newFile,
+                requireUser(req).uuid
+            );
         }
-    };
 
-    public get_all_uuids: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-        try {
-            await begin_transaction(client);
-            const queryResult = await client.query("SELECT uuid_metaobject FROM file;");
-            await client.query("COMMIT");
-
-            res.status(200).json({
-                uuids: queryResult.rows.map(row => row.uuid_metaobject),
-            });
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            client.release();
+        if (sc instanceof File) {
+            const publicBaseUrl = environment.public_base_url || `${req.protocol}://${req.get("host")}`;
+            // The ?filter is applied by withTransaction to what is returned,
+            // so the file and its url are composed here and filtered there.
+            return {
+                ...sc,
+                url: `${publicBaseUrl}/metamodel/files/${newFile.uuid}`
+            };
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(`Cannot patch the file ${req.params.uuid}.`);
         }
-    };
+    });
+
+    delete_file_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        const specified_uuid = req.params.uuid;
+
+        const sc = await Metamodel_files_connection.deleteByUuid(
+            client,
+            specified_uuid,
+            requireUser(req).uuid
+        );
+
+        if (Array.isArray(sc)) {
+            // The uuids that were deleted, as every other delete in the API
+            // answers. It used to be a prose confirmation sent as text/plain.
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(`Cannot delete the file ${req.params.uuid}.`);
+        }
+    });
+
+    post_file: RequestHandler = withTransaction(async (client, req) => {
+        if (!req.file) throw new HTTP404Error(`Cannot find the file.`);
+
+        const specified_uuid = uuidv4();
+        const { originalname, buffer, mimetype } = req.file;
+        const newFile = File.fromJS(req.body) as File;
+
+        newFile.set_data(buffer);
+        newFile.set_type(mimetype);
+        newFile.set_name(originalname);
+        newFile.uuid = specified_uuid;
+
+        const compress = req.query.compress === "true" ? true : false;
+        const targetWidth: number | undefined = req.query.targetWidth ? parseInt(req.query.targetWidth as string) : undefined;
+        const quality: number | undefined = req.query.quality ? parseInt(req.query.quality as string) : undefined;
+
+        if (compress) {
+            if (targetWidth === undefined || targetWidth <= 0 || quality === undefined || quality <= 0 || quality > 100) {
+                throw new HTTP400Error(
+                    `Compression needs a positive targetWidth and a quality between 1 and 100.`
+                );
+            }
+            if (newFile.get_type().split("/")[0] !== "image") {
+                throw new HTTP400Error(`Compression is only supported for image files.`);
+            }
+            const compressedBuffer = await compressImage(newFile, targetWidth, quality);
+            newFile.set_data(compressedBuffer);
+        }
+
+        const sc = await Metamodel_files_connection.create(
+            client,
+            newFile,
+            requireUser(req).uuid
+        );
+
+        if (sc instanceof File) {
+            const publicBaseUrl = environment.public_base_url || `${req.protocol}://${req.get("host")}`;
+            return { url: `${publicBaseUrl}/metamodel/files/${newFile.uuid}`, uuid: newFile.uuid };
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(`Cannot post the file ${specified_uuid}.`);
+        }
+    }, { status: 201 });
+
+    public get_all_uuids: RequestHandler = withTransaction(async (client) => {
+        const queryResult = await client.query("SELECT uuid_metaobject FROM file;");
+        return { uuids: queryResult.rows.map((row) => row.uuid_metaobject) };
+    });
 }
 
 export default new Metamodel_filesController();

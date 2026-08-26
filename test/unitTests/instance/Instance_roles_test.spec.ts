@@ -308,7 +308,7 @@ describe("Instance roles tests", function () {
           name: "Test scene type",
         });
       expect(resScene).to.exist;
-      expect(resScene.status).to.equal(200);
+      expect(resScene.status).to.equal(201);
 
       const resRole = await server
         .post(`/metamodel/sceneTypes/${uuids.scenetypeUuid1}/roles`)
@@ -386,7 +386,7 @@ describe("Instance roles tests", function () {
           ],
         });
       expect(resScene).to.exist;
-      expect(resScene.status).to.equal(200);
+      expect(resScene.status).to.equal(201);
 
       const resRole = await server
         .post(`/metamodel/sceneTypes/${uuids.scenetypeUuid2}/roles`)
@@ -517,7 +517,7 @@ describe("Instance roles tests", function () {
           ],
         });
       expect(resScene).to.exist;
-      expect(resScene.status).to.equal(200);
+      expect(resScene.status).to.equal(201);
 
       const resRole = await server
         .post(`/metamodel/sceneTypes/${uuids.scenetypeUuid3}/roles`)
@@ -772,7 +772,7 @@ describe("Instance roles tests", function () {
           ],
         });
       expect(resScene).to.exist;
-      expect(resScene.status).to.equal(200);
+      expect(resScene.status).to.equal(201);
 
       const resPort = await server
         .post(`/metamodel/ports/${uuids.portUuid5}`)

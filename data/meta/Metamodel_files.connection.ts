@@ -4,7 +4,6 @@ import { File, UUID } from "../../../mmar-global-data-structure";
 import Metamodel_metaobject_connection from "./Metamodel_metaobjects.connection";
 import { queries } from "../../index";
 import { BaseError, HTTP403NORIGHT } from "../services/middleware/error_handling/standard_errors.middleware";
-import { begin_transaction } from "../../data/services/transaction";
 
 class Metamodel_filesConnection implements CRUD {
 
@@ -40,7 +39,6 @@ class Metamodel_filesConnection implements CRUD {
         userUuid?: UUID
     ): Promise<File | undefined | BaseError> {
         try {
-            await begin_transaction(client);
             const query =
                 "INSERT INTO file (uuid_metaobject, data, type) VALUES ($1, $2, $3)";
             const created_metaObject = await Metamodel_metaobject_connection.create(
@@ -65,12 +63,10 @@ class Metamodel_filesConnection implements CRUD {
             ]);
 
             const createdFile = await this.update(client, created_metaObject.get_uuid(), newFile, userUuid);
-            await client.query("COMMIT");
 
             return createdFile;
 
         } catch (error) {
-            await client.query("ROLLBACK");
             throw new Error(`Error creating the file.`);
         }
     }
@@ -101,7 +97,6 @@ class Metamodel_filesConnection implements CRUD {
         userUuid?: UUID
     ): Promise<File | undefined | BaseError> {
         try {
-            await begin_transaction(client);
             let return_file;
             const query =
                 "SELECT * FROM file f JOIN metaobject m ON f.uuid_metaobject = m.uuid WHERE f.uuid_metaobject = $1 LIMIT 1";
@@ -115,13 +110,11 @@ class Metamodel_filesConnection implements CRUD {
             }
 
             const res = await client.query(query, [uuidToGet]);
-            await client.query("COMMIT");
             if (res.rowCount == 1) {
                 return_file = File.fromJS(res.rows[0]) as File;
             }
             return return_file;
         } catch (error) {
-            await client.query("ROLLBACK");
             throw new Error(`Error getting the file with uuid ${uuidToGet}.`);
         }
     }
@@ -133,7 +126,6 @@ class Metamodel_filesConnection implements CRUD {
         userUuid?: UUID
     ): Promise<File | undefined | BaseError> {
         try {
-            await begin_transaction(client);
             let return_file;
             const query =
                 "select * from file f, metaobject m where f.uuid_metaobject = m.uuid and m.name = $1 limit 1";
@@ -150,14 +142,12 @@ class Metamodel_filesConnection implements CRUD {
 
 
             const res = await client.query(query, [name]);
-            await client.query("COMMIT");
             if (res.rowCount == 1) {
                 // the user has the rights to read the file
                 return_file = File.fromJS(res.rows[0]) as File;
             }
             return return_file;
         } catch (error) {
-            await client.query("ROLLBACK");
             throw new Error(`Error getting the file with name ${name}.`);
         }
     }
@@ -169,7 +159,6 @@ class Metamodel_filesConnection implements CRUD {
         userUuid?: UUID
     ): Promise<File | undefined | BaseError> {
         try {
-            await begin_transaction(client);
             const query =
                 "UPDATE file SET data = $1, type = $2 WHERE uuid_metaobject = $3";
 
@@ -190,10 +179,8 @@ class Metamodel_filesConnection implements CRUD {
 
             await client.query(query, [newFile.data, newFile.type, uuidToUpdate]);
 
-            await client.query("COMMIT");
             return await this.getByUuid(client, uuidToUpdate, userUuid);
         } catch (error) {
-            await client.query("ROLLBACK");
             throw new Error(`Error updating the file with uuid ${uuidToUpdate}.`);
         }
     }
@@ -206,7 +193,6 @@ class Metamodel_filesConnection implements CRUD {
     ): Promise<File | undefined | BaseError> {
         // The same logic as update is maintained here, but acts as place holder for future implementation of hard update
         try {
-            await begin_transaction(client);
             const query =
                 "UPDATE file SET data = $1, type = $2 WHERE uuid_metaobject = $3";
 
@@ -227,10 +213,8 @@ class Metamodel_filesConnection implements CRUD {
 
             await client.query(query, [newFile.data, newFile.type, uuidToUpdate]);
 
-            await client.query("COMMIT");
             return await this.getByUuid(client, uuidToUpdate, userUuid);
         } catch (error) {
-            await client.query("ROLLBACK");
             throw new Error(`Error updating the file with uuid ${uuidToUpdate}.`);
         }
     }

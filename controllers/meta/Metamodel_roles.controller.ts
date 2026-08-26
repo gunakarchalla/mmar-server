@@ -1,14 +1,12 @@
 import {RequestHandler} from "express";
-import {database_connection} from "../..";
 import {Role} from "../../../mmar-global-data-structure";
 import {
     BaseError,
     HTTP500Error,
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";
-import {filter_object} from "../../data/services/middleware/object_filter";
 import Metamodel_roles_connection from "../../data/meta/Metamodel_roles.connection";
 import { requireUser } from "../../data/services/middleware/auth.middleware";
-import { begin_transaction } from "../../data/services/transaction";
+import { withTransaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the meta roles.
@@ -27,42 +25,22 @@ class Metamodel_rolesController {
      * @memberof Metamodel_roles_controller
      * @method
      */
-    get_roles_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-
-            const role = await Metamodel_roles_connection.getByUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid
+    get_roles_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        const role = await Metamodel_roles_connection.getByUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid
+        );
+        if (role instanceof Role) {
+            return role;
+        } else if (role instanceof BaseError) {
+            throw role;
+        } else {
+            throw new HTTP500Error(
+                `Failed to retrieve the meta role ${req.params.uuid}.`
             );
-            if (role instanceof Role) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(role, req.query.filter));
-            } else if (role instanceof BaseError) {
-                throw role;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to retrieve the meta role ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    });
 
     /**
      * @description - Get all the meta roles.
@@ -73,37 +51,17 @@ class Metamodel_rolesController {
      * @memberof Metamodel_roles_controller
      * @method
      */
-    get_roles: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-
-            const roles = await Metamodel_roles_connection.getAll(
-                client,
-                requireUser(req).uuid
-            );
-            if (Array.isArray(roles)) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(roles, req.query.filter));
-            } else {
-                throw new HTTP500Error(`Failed to retrieve the meta roles.`);
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
+    get_roles: RequestHandler = withTransaction(async (client, req) => {
+        const roles = await Metamodel_roles_connection.getAll(
+            client,
+            requireUser(req).uuid
+        );
+        if (Array.isArray(roles)) {
+            return roles;
+        } else {
+            throw new HTTP500Error(`Failed to retrieve the meta roles.`);
         }
-    };
+    });
 
     /**
      * @description - Modify a specific meta role by its uuid.
@@ -116,44 +74,24 @@ class Metamodel_rolesController {
      * @memberof Metamodel_roles_controller
      * @method
      */
-    patch_role_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-
-            //let newRole = request_to_role(req.body);
-            const newRole = Role.fromJS(req.body) as Role;
-            const sc = await Metamodel_roles_connection.update(
-                client,
-                req.params.uuid,
-                newRole,
-                requireUser(req).uuid
-            );
-            if (sc instanceof Role) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to update the meta role ${req.params.uuid}.`);
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
+    patch_role_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        //let newRole = request_to_role(req.body);
+        const newRole = Role.fromJS(req.body) as Role;
+        const sc = await Metamodel_roles_connection.update(
+            client,
+            req.params.uuid,
+            newRole,
+            requireUser(req).uuid
+        );
+        if (sc instanceof Role) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to update the meta role ${req.params.uuid}.`);
         }
-    };
+    });
 
     /**
      * @description - Create a new meta role by its uuid.
@@ -166,44 +104,24 @@ class Metamodel_rolesController {
      * @memberof Metamodel_roles_controller
      * @method
      */
-    post_role_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-
-            const newRole = Role.fromJS(req.body) as Role;
-            newRole.uuid = req.params.uuid;
-            const sc = await Metamodel_roles_connection.create(
-                client,
-                newRole,
-                requireUser(req).uuid
+    post_role_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        const newRole = Role.fromJS(req.body) as Role;
+        newRole.uuid = req.params.uuid;
+        const sc = await Metamodel_roles_connection.create(
+            client,
+            newRole,
+            requireUser(req).uuid
+        );
+        if (sc instanceof Role) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to create the meta role ${req.params.uuid}.`
             );
-            if (sc instanceof Role) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(201).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to create the meta role ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    }, { status: 201 });
 
     /**
      * @description - Create a new meta role for a specific relationclass by its uuid.
@@ -216,43 +134,23 @@ class Metamodel_rolesController {
      * @memberof Metamodel_roles_controller
      * @method
      */
-    post_roles_for_relationclass: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-
-            const newRole = Role.fromJS(req.body) as Role;
-            const sc = await Metamodel_roles_connection.postRoles(
-                client,
-                newRole,
-                requireUser(req).uuid
+    post_roles_for_relationclass: RequestHandler = withTransaction(async (client, req) => {
+        const newRole = Role.fromJS(req.body) as Role;
+        const sc = await Metamodel_roles_connection.postRoles(
+            client,
+            newRole,
+            requireUser(req).uuid
+        );
+        if (Array.isArray(sc)) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to create the meta role for the relation class ${req.params.uuid}.`
             );
-            if (Array.isArray(sc)) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(201).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to create the meta role for the relation class ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    }, { status: 201 });
 
     /**
      * @description - Create a new meta role.
@@ -264,42 +162,22 @@ class Metamodel_rolesController {
      * @memberof Metamodel_roles_controller
      * @method
      */
-    post_roles: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-
-            //let newRole = request_to_role(req.body);
-            const newRole = Role.fromJS(req.body) as Role;
-            const sc = await Metamodel_roles_connection.postRoles(
-                client,
-                newRole,
-                requireUser(req).uuid
-            );
-            if (Array.isArray(sc)) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(201).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(`Failed to create the meta role.`);
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
+    post_roles: RequestHandler = withTransaction(async (client, req) => {
+        //let newRole = request_to_role(req.body);
+        const newRole = Role.fromJS(req.body) as Role;
+        const sc = await Metamodel_roles_connection.postRoles(
+            client,
+            newRole,
+            requireUser(req).uuid
+        );
+        if (Array.isArray(sc)) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(`Failed to create the meta role.`);
         }
-    };
+    }, { status: 201 });
 
     /**
      * @description - Delete a specific meta role by its uuid.
@@ -311,42 +189,23 @@ class Metamodel_rolesController {
      * @memberof Metamodel_roles_controller
      * @method
      */
-    delete_roles_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-            const sc = await Metamodel_roles_connection.deleteByUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid
+    delete_roles_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Metamodel_roles_connection.deleteByUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid
+        );
+        if (Array.isArray(sc)) {
+            //The result does not contain any uuid, i.e. the metaobject is not linked to any instance
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to delete the meta role ${req.params.uuid}.`
             );
-            if (Array.isArray(sc)) {
-                //The result does not contain any uuid, i.e. the metaobject is not linked to any instance
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(sc);
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to delete the meta role ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    });
 }
 
 export default new Metamodel_rolesController();

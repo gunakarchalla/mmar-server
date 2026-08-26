@@ -61,7 +61,7 @@ describe("Metamodel sceneTypes tests", function () {
                     description: "This is a BPMN metamodel",
                 });
             expect(res1).to.exist;
-            expect(res1.status).to.equal(200);
+            expect(res1.status).to.equal(201);
             expect(res1.body).to.deep.include({
                 uuid: uuids.sceneTypeUuid,
                 name: "BPMN Diagram",
@@ -112,7 +112,7 @@ describe("Metamodel sceneTypes tests", function () {
                     ],
                 });
             expect(res1).to.exist;
-            expect(res1.status).to.equal(200);
+            expect(res1.status).to.equal(201);
             expect(res1.body).to.deep.include({
                 uuid: uuids.sceneTypeUuid2,
                 name: "BPMN Diagram",
@@ -324,7 +324,7 @@ describe("Metamodel sceneTypes tests", function () {
 
             expect(res1).to.exist;
             expect(res1.status).to.equal(409);
-            expect(res1.body).to.contain(uuids.roleUuid);
+            expect(res1.body.error).to.contain(uuids.roleUuid);
         });
 
         it(`Should restrict the deletion and return the uuid ${uuids.sceneInstanceUuid}`, async () => {
@@ -357,7 +357,7 @@ describe("Metamodel sceneTypes tests", function () {
 
             expect(res1).to.exist;
             expect(res1.status).to.equal(409);
-            expect(res1.body).to.contain(uuids.sceneInstanceUuid);
+            expect(res1.body.error).to.contain(uuids.sceneInstanceUuid);
         });
     });
 });

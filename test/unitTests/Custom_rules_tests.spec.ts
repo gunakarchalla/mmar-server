@@ -93,7 +93,7 @@ describe("Instance custom rule tests", function () {
           description: "This is a BPMN metamodel",
         });
       expect(respost).to.exist;
-      expect(respost.status).to.equal(200);
+      expect(respost.status).to.equal(201);
 
       const test = await server
         .post(`/metamodel/rules/${uuids.ruleUuid}`)
@@ -107,7 +107,7 @@ describe("Instance custom rule tests", function () {
           assigned_uuid_metaobject: uuids.sceneTypeUuid,
         });
       expect(test).to.exist;
-      expect(test.status).to.equal(200);
+      expect(test.status).to.equal(201);
 
       const res1 = await server
         .get(`/metamodel/rules/${uuids.ruleUuid}`)

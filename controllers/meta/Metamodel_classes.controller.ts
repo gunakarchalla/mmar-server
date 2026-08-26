@@ -1,17 +1,13 @@
 import {plainToInstance} from "class-transformer";
 import {RequestHandler} from "express";
-import {database_connection} from "../..";
 import {Class} from "../../../mmar-global-data-structure";
 import {
     BaseError,
-    HTTP403NORIGHT,
-    HTTP409CONFLICT,
     HTTP500Error,
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";
-import {filter_object} from "../../data/services/middleware/object_filter";
 import Metamodel_classes_connection from "../../data/meta/Metamodel_classes.connection";
 import { requireUser } from "../../data/services/middleware/auth.middleware";
-import { begin_transaction } from "../../data/services/transaction";
+import { withTransaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the meta classes.
@@ -29,37 +25,19 @@ class Metamodel_classesController {
      * @memberof Metamodel_classes_controller
      * @method
      */
-    get_all_classes: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-            const classes = await Metamodel_classes_connection.getAll(
-                client,
-                requireUser(req).uuid
-            );
-            if (Array.isArray(classes)) {
-                res
-                    .status(200)
-                    .json(filter_object(classes, req.query.filter));
-            } else if (classes instanceof BaseError) {
-                throw classes;
-            } else {
-                throw new HTTP500Error("Failed to retrieve meta classes.");
-            }
-            await client.query("COMMIT");
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            client.release();
+    get_all_classes: RequestHandler = withTransaction(async (client, req) => {
+        const classes = await Metamodel_classes_connection.getAll(
+            client,
+            requireUser(req).uuid
+        );
+        if (Array.isArray(classes)) {
+            return classes;
+        } else if (classes instanceof BaseError) {
+            throw classes;
+        } else {
+            throw new HTTP500Error("Failed to retrieve meta classes.");
         }
-    };
+    });
 
     /**
      * @description - Get a specific meta class by its UUID.
@@ -72,41 +50,22 @@ class Metamodel_classesController {
      * @memberof Metamodel_classes_controller
      * @method
      */
-    get_class_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-            const sc = await Metamodel_classes_connection.getByUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid
+    get_class_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Metamodel_classes_connection.getByUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid
+        );
+        if (sc instanceof Class) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc
+        } else {
+            throw new HTTP500Error(
+                `Failed to retrieve the meta class ${req.params.uuid}.`
             );
-            if (sc instanceof Class) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc
-            } else {
-                throw new HTTP500Error(
-                    `Failed to retrieve the meta class ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    });
 
     /**
      * @description - Get all the meta classes for a specific scene type.
@@ -119,41 +78,22 @@ class Metamodel_classesController {
      * @memberof Metamodel_classes_controller
      * @method
      */
-    get_classes_for_scene: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-            const sc = await Metamodel_classes_connection.getAllByParentUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid
+    get_classes_for_scene: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Metamodel_classes_connection.getAllByParentUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid
+        );
+        if (Array.isArray(sc)) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to retrieve the meta classes for the scene ${req.params.uuid}.`
             );
-            if (Array.isArray(sc)) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(sc);
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to retrieve the meta classes for the scene ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    });
 
     /**
      * @description - Create a new meta class by its uuid.
@@ -166,39 +106,24 @@ class Metamodel_classesController {
      * @memberOf Metamodel_classesController
      * @method
      */
-    post_class_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            const newClass = Class.fromJS(req.body) as Class;
-            newClass.uuid = req.params.uuid;
-            const sc = await Metamodel_classes_connection.create(
-                client,
-                newClass,
-                requireUser(req).uuid
+    post_class_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        const newClass = Class.fromJS(req.body) as Class;
+        newClass.uuid = req.params.uuid;
+        const sc = await Metamodel_classes_connection.create(
+            client,
+            newClass,
+            requireUser(req).uuid
+        );
+        if (sc instanceof Class) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Cannot post the meta class ${req.params.uuid}.`
             );
-            if (sc instanceof Class) {
-                res.status(201).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Cannot post the meta class ${req.params.uuid}.`
-                );
-            }
-            await client.query("COMMIT");
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    }, { status: 201 });
 
     /**
      * @description - Create a new class for a specific scene type by its uuid.
@@ -211,39 +136,24 @@ class Metamodel_classesController {
      * @memberOf Metamodel_classesController
      * @method
      */
-    post_class_for_scenetype: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            const newClass = plainToInstance(Class, req.body);
-            const sc = await Metamodel_classes_connection.postClassesForSceneType(
-                client,
-                req.params.uuid,
-                newClass,
-                requireUser(req).uuid
+    post_class_for_scenetype: RequestHandler = withTransaction(async (client, req) => {
+        const newClass = plainToInstance(Class, req.body);
+        const sc = await Metamodel_classes_connection.postClassesForSceneType(
+            client,
+            req.params.uuid,
+            newClass,
+            requireUser(req).uuid
+        );
+        if (Array.isArray(sc)) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Cannot post the meta class for the scene type ${req.params.uuid}.`
             );
-            if (Array.isArray(sc)) {
-                res.status(201).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Cannot post the meta class for the scene type ${req.params.uuid}.`
-                );
-            }
-            await client.query("COMMIT");
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    }, { status: 201 });
 
     /**
      * @description - Modify a specific meta class by its uuid.
@@ -256,56 +166,37 @@ class Metamodel_classesController {
      * @memberOf Metamodel_classesController
      * @method
      */
-    patch_class_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
+    patch_class_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        const newClass = Class.fromJS(req.body) as Class;
 
-        try {
-            await begin_transaction(client);
-            const newClass = Class.fromJS(req.body) as Class;
+        const hardPatch = req.query.hardpatch === "true";
+        let sc;
 
-            const hardPatch = req.query.hardpatch === "true";
-            let sc;
-
-            if (hardPatch) {
-                sc = await Metamodel_classes_connection.hardUpdate(
-                    client,
-                    req.params.uuid,
-                    newClass,
-                    requireUser(req).uuid
-                );
-            } else {
-                sc = await Metamodel_classes_connection.update(
-                    client,
-                    req.params.uuid,
-                    newClass,
-                    requireUser(req).uuid
-                );
-            }
-            if (sc instanceof Class) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Cannot patch the meta class ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
+        if (hardPatch) {
+            sc = await Metamodel_classes_connection.hardUpdate(
+                client,
+                req.params.uuid,
+                newClass,
+                requireUser(req).uuid
+            );
+        } else {
+            sc = await Metamodel_classes_connection.update(
+                client,
+                req.params.uuid,
+                newClass,
+                requireUser(req).uuid
+            );
         }
-    };
+        if (sc instanceof Class) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Cannot patch the meta class ${req.params.uuid}.`
+            );
+        }
+    });
 
     /**
      * @description - Delete a specific class for a specific class by its uuid.
@@ -317,39 +208,23 @@ class Metamodel_classesController {
      * @memberOf Metamodel_classesController
      * @method
      */
-    delete_classes_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-        try {
-            await begin_transaction(client);
-            const sc = await Metamodel_classes_connection.deleteByUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid
+    delete_classes_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Metamodel_classes_connection.deleteByUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid
+        );
+        if (Array.isArray(sc)) {
+            //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Cannot delete the meta class ${req.params.uuid}.`
             );
-            if (Array.isArray(sc)) {
-                //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(sc);
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Cannot delete the meta class ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            await client.query("ROLLBACK");
-            if (err instanceof HTTP403NORIGHT) res.status(403).json(err.message);
-            if (err instanceof HTTP500Error) res.status(500).json(err.message);
-            if (err instanceof HTTP409CONFLICT) res.status(409).json(err.message);
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    });
 
     /**
      * @description - Delete all the classes for a specific scene type by its uuid.
@@ -361,39 +236,24 @@ class Metamodel_classesController {
      * @memberOf Metamodel_classesController
      * @method
      */
-    delete_classes_for_scene: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            const sc =
-                await Metamodel_classes_connection.deleteAllByParentUuid(
-                    client,
-                    req.params.uuid,
-                    requireUser(req).uuid
-                );
-            if (Array.isArray(sc)) {
-                //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
-                res.status(200).json(sc);
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Cannot delete the meta class for the scene type ${req.params.uuid}.`
-                );
-            }
-            await client.query("COMMIT");
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
+    delete_classes_for_scene: RequestHandler = withTransaction(async (client, req) => {
+        const sc =
+            await Metamodel_classes_connection.deleteAllByParentUuid(
+                client,
+                req.params.uuid,
+                requireUser(req).uuid
+            );
+        if (Array.isArray(sc)) {
+            //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Cannot delete the meta class for the scene type ${req.params.uuid}.`
+            );
         }
-    };
+    });
 }
 
 export default new Metamodel_classesController();

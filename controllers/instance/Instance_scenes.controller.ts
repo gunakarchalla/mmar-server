@@ -1,14 +1,12 @@
 import {RequestHandler} from "express";
-import {database_connection} from "../../index";
 import {SceneInstance} from "../../../mmar-global-data-structure";
 import {
     BaseError,
     HTTP500Error,
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";
 import Instance_scene_connection from "../../data/instance/Instance_scenes.connection";
-import {filter_object} from "../../data/services/middleware/object_filter";
 import { requireUser } from "../../data/services/middleware/auth.middleware";
-import { begin_transaction } from "../../data/services/transaction";
+import { withTransaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the scene instances.
@@ -27,41 +25,22 @@ class Instance_scenesController {
      * @memberof Instance_scene_controller
      * @method
      */
-    get_scene_instances: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client); // Start a transaction
-            const sc = await Instance_scene_connection.getAllByParentUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid
+    get_scene_instances: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Instance_scene_connection.getAllByParentUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid
+        );
+        if (Array.isArray(sc)) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to retrieve scene instances for scene type ${req.params.uuid}`
             );
-            if (Array.isArray(sc)) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to retrieve scene instances for scene type ${req.params.uuid}`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            client.release();
         }
-    };
+    });
 
     /**
      * @description - Get a specific scene instance by its uuid.
@@ -74,41 +53,22 @@ class Instance_scenesController {
      * @memberof Instance_scene_controller
      * @method
      */
-    get_scene_instance_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client); // Start a transaction
-            const sc = await Instance_scene_connection.getByUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid
+    get_scene_instance_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Instance_scene_connection.getByUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid
+        );
+        if (sc instanceof SceneInstance) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to retrieve scene instance ${req.params.uuid}`
             );
-            if (sc instanceof SceneInstance) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to retrieve scene instance ${req.params.uuid}`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            client.release();
         }
-    };
+    });
 
     /**
      * @description - Modify a specific scene instance by its uuid.
@@ -121,43 +81,24 @@ class Instance_scenesController {
      * @memberof Instance_scene_controller
      * @method
      */
-    patch_scene_instance_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client); // Start a transaction
-            const newSceneInstance = SceneInstance.fromJS(req.body) as SceneInstance;
-            const sc = await Instance_scene_connection.update(
-                client,
-                req.params.uuid,
-                newSceneInstance,
-                requireUser(req).uuid
+    patch_scene_instance_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        const newSceneInstance = SceneInstance.fromJS(req.body) as SceneInstance;
+        const sc = await Instance_scene_connection.update(
+            client,
+            req.params.uuid,
+            newSceneInstance,
+            requireUser(req).uuid
+        );
+        if (sc instanceof SceneInstance) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to update scene instance ${req.params.uuid}`
             );
-            if (sc instanceof SceneInstance) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to update scene instance ${req.params.uuid}`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            client.release();
         }
-    };
+    });
 
     /**
      * @description - Create a new scene instance for a specific scene type by its uuid.
@@ -170,43 +111,24 @@ class Instance_scenesController {
      * @memberof Instance_scene_controller
      * @method
      */
-    post_scene_instances: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client); // Start a transaction
-            const newSceneInstance = SceneInstance.fromJS(req.body) as SceneInstance;
-            newSceneInstance.uuid_scene_type = req.params.uuid;
-            const sc = await Instance_scene_connection.create(
-                client,
-                newSceneInstance,
-                requireUser(req).uuid
+    post_scene_instances: RequestHandler = withTransaction(async (client, req) => {
+        const newSceneInstance = SceneInstance.fromJS(req.body) as SceneInstance;
+        newSceneInstance.uuid_scene_type = req.params.uuid;
+        const sc = await Instance_scene_connection.create(
+            client,
+            newSceneInstance,
+            requireUser(req).uuid
+        );
+        if (sc instanceof SceneInstance) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to create scene instance for scene type ${req.params.uuid}`
             );
-            if (sc instanceof SceneInstance) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(201).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to create scene instance for scene type ${req.params.uuid}`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            client.release();
         }
-    };
+    }, { status: 201 });
 
     /**
      * @description - Create a new scene instance by its uuid.
@@ -219,43 +141,24 @@ class Instance_scenesController {
      * @memberof Instance_scene_controller
      * @method
      */
-    post_scene_instance_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client); // Start a transaction
-            const sceneInstance = SceneInstance.fromJS(req.body) as SceneInstance;
-            sceneInstance.set_uuid(req.params.uuid);
-            const sc = await Instance_scene_connection.create(
-                client,
-                sceneInstance,
-                requireUser(req).uuid
+    post_scene_instance_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        const sceneInstance = SceneInstance.fromJS(req.body) as SceneInstance;
+        sceneInstance.set_uuid(req.params.uuid);
+        const sc = await Instance_scene_connection.create(
+            client,
+            sceneInstance,
+            requireUser(req).uuid
+        );
+        if (sc instanceof SceneInstance) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to create scene instance ${req.params.uuid}`
             );
-            if (sc instanceof SceneInstance) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(201).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to create scene instance ${req.params.uuid}`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            client.release();
         }
-    };
+    }, { status: 201 });
 
     /**
      * @description - Delete all scene instances of a specific scene type by its uuid.
@@ -267,40 +170,22 @@ class Instance_scenesController {
      * @memberof Instance_scene_controller
      * @method
      */
-    delete_scene_instances: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-        try {
-            await begin_transaction(client); // Start a transaction
-            const sc = await Instance_scene_connection.deleteAllByParentUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid
+    delete_scene_instances: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Instance_scene_connection.deleteAllByParentUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid
+        );
+        if (Array.isArray(sc)) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to delete scene instances for scene type ${req.params.uuid}`
             );
-            if (Array.isArray(sc)) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to delete scene instances for scene type ${req.params.uuid}`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            client.release();
         }
-    };
+    });
 
     /**
      * @description - Delete a specific scene instance by its uuid.
@@ -312,42 +197,23 @@ class Instance_scenesController {
      * @memberof Instance_scene_controller
      * @method
      */
-    delete_scene_instance_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client); // Start a transaction
-            const sc = await Instance_scene_connection.deleteByUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid
+    delete_scene_instance_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Instance_scene_connection.deleteByUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid
+        );
+        if (Array.isArray(sc)) {
+            //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to delete scene instance ${req.params.uuid}`
             );
-            if (Array.isArray(sc)) {
-                //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(sc);
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to delete scene instance ${req.params.uuid}`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            client.release();
         }
-    };
+    });
 }
 
 export default new Instance_scenesController();

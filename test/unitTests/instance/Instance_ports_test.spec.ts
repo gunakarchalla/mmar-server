@@ -256,7 +256,7 @@ describe("Instance ports tests", function () {
           ],
         });
       expect(resScene).to.exist;
-      expect(resScene.status).to.equal(200);
+      expect(resScene.status).to.equal(201);
 
       const resPort = await server
         .post(`/metamodel/ports/${uuids.portUuid2}`)

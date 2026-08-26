@@ -1,18 +1,14 @@
 import {RequestHandler} from "express";
-import {database_connection} from "../../index";
 import {Metamodel, SceneType} from "../../../mmar-global-data-structure";
 import {
     BaseError,
-    HTTP403NORIGHT,
-    HTTP409CONFLICT,
     HTTP500Error,
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";
-import {filter_object} from "../../data/services/middleware/object_filter";
 import Metamodel_scenetypes_connection from "../../data/meta/Metamodel_scenetypes.connection";
 import Metamodel_classes_connection from "../../data/meta/Metamodel_classes.connection";
 import Metamodel_relationclassesConnection from "../../data/meta/Metamodel_relationclasses.connection";
 import { requireUser } from "../../data/services/middleware/auth.middleware";
-import { begin_transaction } from "../../data/services/transaction";
+import { withTransaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the meta scene.
@@ -33,38 +29,20 @@ class Metamodel_scenetypesController {
      * @memberof Metamodel_scenetypes_controller
      * @method
      */
-    get_scenetypes_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-        try {
-            await begin_transaction(client);
-            const sc = await Metamodel_scenetypes_connection.getByUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid,
-            );
-            if (sc instanceof SceneType) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(`Failed to retrieve scene type ${req.params.uuid}`);
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
+    get_scenetypes_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Metamodel_scenetypes_connection.getByUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid,
+        );
+        if (sc instanceof SceneType) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(`Failed to retrieve scene type ${req.params.uuid}`);
         }
-    };
+    });
 
     /**
      * @description - Get all the scene types.
@@ -76,101 +54,64 @@ class Metamodel_scenetypesController {
      * @memberof Metamodel_scenetypes_controller
      * @method
      */
-    get_scenetypes: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-        try {
-            await begin_transaction(client);
-            const mm = new Metamodel();
-            const sceneTypes = await Metamodel_scenetypes_connection.getAll(
-                client,
-                requireUser(req).uuid,
-            );
-            if (Array.isArray(sceneTypes)) {
-                mm.set_sceneType(sceneTypes);
-            }
-
-            const classes = await Metamodel_classes_connection.getAll(
-                client,
-                requireUser(req).uuid,
-            );
-            if (Array.isArray(classes)) {
-                mm.set_class(classes);
-            }
-
-            const relations = await Metamodel_relationclassesConnection.getAll(
-                client,
-                requireUser(req).uuid,
-            );
-            if (Array.isArray(relations)) {
-                mm.set_relationclass(relations);
-            }
-
-            // The transaction is made durable before the client is told it succeeded:
-            // answering first left a window in which a caller could act on a 201
-            // and not yet see what it had been promised.
-            await client.query("COMMIT");
-            res.status(200).json(filter_object(mm, req.query.filter));
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
+    get_scenetypes: RequestHandler = withTransaction(async (client, req) => {
+        const mm = new Metamodel();
+        const sceneTypes = await Metamodel_scenetypes_connection.getAll(
+            client,
+            requireUser(req).uuid,
+        );
+        if (Array.isArray(sceneTypes)) {
+            mm.set_sceneType(sceneTypes);
         }
-    };
+
+        const classes = await Metamodel_classes_connection.getAll(
+            client,
+            requireUser(req).uuid,
+        );
+        if (Array.isArray(classes)) {
+            mm.set_class(classes);
+        }
+
+        const relations = await Metamodel_relationclassesConnection.getAll(
+            client,
+            requireUser(req).uuid,
+        );
+        if (Array.isArray(relations)) {
+            mm.set_relationclass(relations);
+        }
+
+        return mm;
+    });
 
     /**
      * @description - Create a new scene type.
      * @param {SceneType} req.body - The scene type to create.
      * @param res
      * @param next
-     * @yield {status: 200, body: {SceneType}} - The created scene type.
+     * @yield {status: 201, body: {SceneType}} - The created scene type.
      * @throws {HTTP500Error} - If the creation of the scene type fails.
      * @memberof Metamodel_scenetypes_controller
      * @method
      */
-    post_scenetype: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
+    post_scenetype: RequestHandler = withTransaction(async (client, req) => {
+        const newSceneType = SceneType.fromJS(req.body) as SceneType;
 
-        try {
-            await begin_transaction(client);
-            const newSceneType = SceneType.fromJS(req.body) as SceneType;
-
-            if (req.params.uuid) {
-                newSceneType.set_uuid(req.params.uuid);
-            }
-            const sc = await Metamodel_scenetypes_connection.create(
-                client,
-                newSceneType,
-                requireUser(req).uuid,
-            );
-            if (sc instanceof SceneType) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(`Failed to create scene type.`);
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
+        if (req.params.uuid) {
+            newSceneType.set_uuid(req.params.uuid);
         }
-    };
+        const sc = await Metamodel_scenetypes_connection.create(
+            client,
+            newSceneType,
+            requireUser(req).uuid,
+        );
+        if (sc instanceof SceneType) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(`Failed to create scene type.`);
+        }
+    }, { status: 201 });
 
     /**
      * @description - Modify a specific scene type by its uuid.
@@ -183,55 +124,36 @@ class Metamodel_scenetypesController {
      * @memberOf Metamodel_scenetypesController
      * @method
      */
-    patch_scenetype: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
+    patch_scenetype: RequestHandler = withTransaction(async (client, req) => {
+        const newSceneType = SceneType.fromJS(req.body) as SceneType;
 
-        try {
-            await begin_transaction(client);
-            const newSceneType = SceneType.fromJS(req.body) as SceneType;
+        const hardPatch = req.query.hardpatch === "true";
+        let sc;
 
-            const hardPatch = req.query.hardpatch === "true";
-            let sc;
-
-            if (hardPatch) {
-                sc = await Metamodel_scenetypes_connection.hardupdate(
-                    client,
-                    req.params.uuid,
-                    newSceneType,
-                    requireUser(req).uuid,
-                );
-            } else {
-                sc = await Metamodel_scenetypes_connection.update(
-                    client,
-                    req.params.uuid,
-                    newSceneType,
-                    requireUser(req).uuid,
-                );
-            }
-
-            if (sc instanceof SceneType) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(`Failed to update scene type ${req.params.uuid}`);
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
+        if (hardPatch) {
+            sc = await Metamodel_scenetypes_connection.hardupdate(
+                client,
+                req.params.uuid,
+                newSceneType,
+                requireUser(req).uuid,
+            );
+        } else {
+            sc = await Metamodel_scenetypes_connection.update(
+                client,
+                req.params.uuid,
+                newSceneType,
+                requireUser(req).uuid,
+            );
         }
-    };
+
+        if (sc instanceof SceneType) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(`Failed to update scene type ${req.params.uuid}`);
+        }
+    });
 
     /**
      * @description - Delete a specific scene type by its uuid.
@@ -243,39 +165,21 @@ class Metamodel_scenetypesController {
      * @memberOf Metamodel_scenetypesController
      * @method
      */
-    delete_scenetypes_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-            const sc = await Metamodel_scenetypes_connection.deleteByUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid,
-            );
-            if (Array.isArray(sc)) {
-                //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(`Failed to delete scene type ${req.params.uuid}`);
-            }
-        } catch (err) {
-            await client.query("ROLLBACK");
-            if (err instanceof HTTP403NORIGHT) res.status(403).json(err.message);
-            else if (err instanceof HTTP500Error) res.status(500).json(err.message);
-            else if (err instanceof HTTP409CONFLICT)
-                res.status(409).json(err.message);
-            else next(err);
-        } finally {
-            client.release();
+    delete_scenetypes_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Metamodel_scenetypes_connection.deleteByUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid,
+        );
+        if (Array.isArray(sc)) {
+            //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(`Failed to delete scene type ${req.params.uuid}`);
         }
-    };
+    });
 
     /**
      * @description - Delete all the scene types.
@@ -287,36 +191,17 @@ class Metamodel_scenetypesController {
      * @memberOf Metamodel_scenetypesController
      * @method
      */
-    delete_scenetypes: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-            const sc = await Metamodel_scenetypes_connection.deleteAll(client, requireUser(req).uuid);
-            if (Array.isArray(sc)) {
-                //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(`Failed to delete scene types.`);
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
+    delete_scenetypes: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Metamodel_scenetypes_connection.deleteAll(client, requireUser(req).uuid);
+        if (Array.isArray(sc)) {
+            //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(`Failed to delete scene types.`);
         }
-    };
+    });
 }
 
 export default new Metamodel_scenetypesController();

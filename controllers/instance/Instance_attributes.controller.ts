@@ -6,11 +6,9 @@ import {
     HTTP500Error,
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";
 import {AttributeInstance} from "../../../mmar-global-data-structure";
-import {filter_object} from "../../data/services/middleware/object_filter";
 import Instance_attribute_connection from "../../data/instance/Instance_attributes.connection";
-import {database_connection} from "../../index";
 import { requireUser } from "../../data/services/middleware/auth.middleware";
-import { begin_transaction } from "../../data/services/transaction";
+import { withTransaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the attributes instance.
@@ -29,40 +27,22 @@ class Instance_attributesController {
      * @memberof Instance_attribute_controller
      * @method
      */
-    get_attribute_instance_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-        try {
-            await begin_transaction(client);
-            const sc = await Instance_attribute_connection.getByUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid
+    get_attribute_instance_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Instance_attribute_connection.getByUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid
+        );
+        if (sc instanceof AttributeInstance) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to find the attribute instance ${req.params.uuid}.`
             );
-            if (sc instanceof AttributeInstance) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to find the attribute instance ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    });
 
     /**
      * @description - Get all attribute instances of a specific class instance by its uuid
@@ -75,39 +55,20 @@ class Instance_attributesController {
      * @memberof Instance_attribute_controller
      * @method
      */
-    get_attribute_instance_for_class: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-            const sc = await Instance_attribute_connection.getAllByParentUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid
-            );
-            if (Array.isArray(sc)) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(`Failed to find the attribute instances for the class ${req.params.uuid}.`);
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
+    get_attribute_instance_for_class: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Instance_attribute_connection.getAllByParentUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid
+        );
+        if (Array.isArray(sc)) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(`Failed to find the attribute instances for the class ${req.params.uuid}.`);
         }
-    };
+    });
 
     /**
      * @description - Get all attribute instances of a specific scene instance by its uuid
@@ -120,38 +81,20 @@ class Instance_attributesController {
      * @memberof Instance_attribute_controller
      * @method
      */
-    get_attribute_instance_for_scene: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-        try {
-            await begin_transaction(client);
-            const sc = await Instance_attribute_connection.getAllByParentUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid
-            );
-            if (Array.isArray(sc)) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(`Failed to find the attribute instances for the scene ${req.params.uuid}.`);
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
+    get_attribute_instance_for_scene: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Instance_attribute_connection.getAllByParentUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid
+        );
+        if (Array.isArray(sc)) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(`Failed to find the attribute instances for the scene ${req.params.uuid}.`);
         }
-    };
+    });
 
     /**
      * @description - Modify a specific attribute instance by its uuid
@@ -163,49 +106,29 @@ class Instance_attributesController {
      * @memberof Instance_attribute_controller
      * @method
      */
-    patch_attribute_instance_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-
-            const newAttribute = AttributeInstance.fromJS(
-                req.body
-            ) as AttributeInstance;
-            const sc = await Instance_attribute_connection.update(
-                client,
-                req.params.uuid,
-                newAttribute,
-                requireUser(req).uuid
+    patch_attribute_instance_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        const newAttribute = AttributeInstance.fromJS(
+            req.body
+        ) as AttributeInstance;
+        const sc = await Instance_attribute_connection.update(
+            client,
+            req.params.uuid,
+            newAttribute,
+            requireUser(req).uuid
+        );
+        // update() answers with the AttributeInstance it wrote, never with an
+        // array: testing for one made every successful PATCH fall through to
+        // the 500 below, for the scene owner as much as for anyone else.
+        if (sc instanceof AttributeInstance) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to update the attribute instance ${req.params.uuid}.`
             );
-            // update() answers with the AttributeInstance it wrote, never with an
-            // array: testing for one made every successful PATCH fall through to
-            // the 500 below, for the scene owner as much as for anyone else.
-            if (sc instanceof AttributeInstance) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to update the attribute instance ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    });
 
     /**
      * @description - Create a new attribute instance for a specific class instance by its uuid
@@ -218,52 +141,29 @@ class Instance_attributesController {
      * @memberof Instance_attribute_controller
      * @method
      */
-    post_attribute_instance_for_class: RequestHandler = async (
-        req,
-        res,
-        next
-    ) => {
-        const client = await database_connection.getPool().connect();
-        try {
-            await begin_transaction(client);
-
-            const newAttribute: AttributeInstance | AttributeInstance[] = plainToInstance(AttributeInstance, req.body);
-            const newAttributeArray = Array.isArray(newAttribute) ? newAttribute : [newAttribute];
-            //To define the scene to be the one specified in the url
-            for (const attrToAdd of newAttributeArray) {
-                attrToAdd.set_assigned_uuid_class_instance(req.params.uuid);
-            }
-            const sc = await Instance_attribute_connection.postByParentUuid(
-                client,
-                req.params.uuid,
-                newAttribute,
-                requireUser(req).uuid
-            );
-            if (Array.isArray(sc)) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(201).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to create the attribute instance for the class ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
+    post_attribute_instance_for_class: RequestHandler = withTransaction(async (client, req) => {
+        const newAttribute: AttributeInstance | AttributeInstance[] = plainToInstance(AttributeInstance, req.body);
+        const newAttributeArray = Array.isArray(newAttribute) ? newAttribute : [newAttribute];
+        //To define the scene to be the one specified in the url
+        for (const attrToAdd of newAttributeArray) {
+            attrToAdd.set_assigned_uuid_class_instance(req.params.uuid);
         }
-    };
+        const sc = await Instance_attribute_connection.postByParentUuid(
+            client,
+            req.params.uuid,
+            newAttribute,
+            requireUser(req).uuid
+        );
+        if (Array.isArray(sc)) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to create the attribute instance for the class ${req.params.uuid}.`
+            );
+        }
+    }, { status: 201 });
 
     /**
      * @description - Create a new attribute instance for a specific scene instance by its uuid
@@ -276,53 +176,29 @@ class Instance_attributesController {
      * @memberof Instance_attribute_controller
      * @method
      */
-    post_attribute_instance_for_scene: RequestHandler = async (
-        req,
-        res,
-        next
-    ) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-
-            const newAttribute: AttributeInstance | AttributeInstance[] = plainToInstance(AttributeInstance, req.body);
-            const newAttributeArray = Array.isArray(newAttribute) ? newAttribute : [newAttribute];
-            //To define the scene to be the one specified in the url
-            for (const attrToAdd of newAttributeArray) {
-                attrToAdd.set_assigned_uuid_scene_instance(req.params.uuid);
-            }
-            const sc = await Instance_attribute_connection.postByParentUuid(
-                client,
-                req.params.uuid,
-                newAttribute,
-                requireUser(req).uuid
-            );
-            if (Array.isArray(sc)) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(201).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to create the attribute instance for the scene ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
+    post_attribute_instance_for_scene: RequestHandler = withTransaction(async (client, req) => {
+        const newAttribute: AttributeInstance | AttributeInstance[] = plainToInstance(AttributeInstance, req.body);
+        const newAttributeArray = Array.isArray(newAttribute) ? newAttribute : [newAttribute];
+        //To define the scene to be the one specified in the url
+        for (const attrToAdd of newAttributeArray) {
+            attrToAdd.set_assigned_uuid_scene_instance(req.params.uuid);
         }
-    };
+        const sc = await Instance_attribute_connection.postByParentUuid(
+            client,
+            req.params.uuid,
+            newAttribute,
+            requireUser(req).uuid
+        );
+        if (Array.isArray(sc)) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to create the attribute instance for the scene ${req.params.uuid}.`
+            );
+        }
+    }, { status: 201 });
 
     /**
      * @description - Create a new attribute instance by its uuid
@@ -335,46 +211,26 @@ class Instance_attributesController {
      * @memberof Instance_attribute_controller
      * @method
      */
-    post_attribute_instance_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-
-            const newAttribute = AttributeInstance.fromJS(
-                req.body
-            ) as AttributeInstance;
-            newAttribute.uuid = req.params.uuid;
-            const sc = await Instance_attribute_connection.postAttributesInstance(
-                client,
-                newAttribute,
-                requireUser(req).uuid
+    post_attribute_instance_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        const newAttribute = AttributeInstance.fromJS(
+            req.body
+        ) as AttributeInstance;
+        newAttribute.uuid = req.params.uuid;
+        const sc = await Instance_attribute_connection.postAttributesInstance(
+            client,
+            newAttribute,
+            requireUser(req).uuid
+        );
+        if (Array.isArray(sc)) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to create the attribute instance ${req.params.uuid}.`
             );
-            if (Array.isArray(sc)) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(201).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to create the attribute instance ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    }, { status: 201 });
 
     /**
      * @description - Delete all attribute instances for a specific class instance by its uuid
@@ -386,45 +242,22 @@ class Instance_attributesController {
      * @memberof Instance_attribute_controller
      * @method
      */
-    delete_attribute_instance_for_class: RequestHandler = async (
-        req,
-        res,
-        next
-    ) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-            const sc = await Instance_attribute_connection.deleteAllByParentUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid
+    delete_attribute_instance_for_class: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Instance_attribute_connection.deleteAllByParentUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid
+        );
+        if (Array.isArray(sc)) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Cannot delete the attribute instance for the class ${req.params.uuid}.`
             );
-            if (Array.isArray(sc)) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Cannot delete the attribute instance for the class ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    });
 
     /**
      * @description - Delete all attribute instances for a specific scene instance by its uuid
@@ -436,45 +269,22 @@ class Instance_attributesController {
      * @memberof Instance_attribute_controller
      * @method
      */
-    delete_attribute_instance_for_scene: RequestHandler = async (
-        req,
-        res,
-        next
-    ) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-            const sc = await Instance_attribute_connection.deleteAllByParentUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid
+    delete_attribute_instance_for_scene: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Instance_attribute_connection.deleteAllByParentUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid
+        );
+        if (Array.isArray(sc)) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Cannot delete the attribute instance for the scene ${req.params.uuid}.`
             );
-            if (Array.isArray(sc)) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Cannot delete the attribute instance for the scene ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    });
 
     /**
      * @description - Delete an attribute instance by its uuid
@@ -486,45 +296,22 @@ class Instance_attributesController {
      * @memberof Instance_attribute_controller
      * @method
      */
-    delete_attribute_instance_by_uuid: RequestHandler = async (
-        req,
-        res,
-        next
-    ) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-            const sc = await Instance_attribute_connection.deleteByUuid(
-                client,
-                req.params.uuid
+    delete_attribute_instance_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Instance_attribute_connection.deleteByUuid(
+            client,
+            req.params.uuid
+        );
+        if (Array.isArray(sc)) {
+            //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to delete the attribute instance ${req.params.uuid}.`
             );
-            if (Array.isArray(sc)) {
-                //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to delete the attribute instance ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    });
 }
 
 export default new Instance_attributesController();

@@ -211,7 +211,7 @@ describe("Metamodel roles tests", function () {
 
       expect(resDel).to.exist;
       expect(resDel.status).to.equal(409);
-      expect(resDel.body).to.contain(uuids.roleUuid11);
+      expect(resDel.body.error).to.contain(uuids.roleUuid11);
     });
 
     it(`Should delete the role ${uuids.roleUuid3} but not the port`, async () => {

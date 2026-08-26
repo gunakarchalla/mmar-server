@@ -1,14 +1,12 @@
 import {RequestHandler} from "express";
-import {database_connection} from "../../index";
 import {PortInstance} from "../../../mmar-global-data-structure";
 import {
     BaseError,
     HTTP500Error,
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";
-import {filter_object} from "../../data/services/middleware/object_filter";
 import Instance_port_connection from "../../data/instance/Instance_ports.connection";
 import { requireUser } from "../../data/services/middleware/auth.middleware";
-import { begin_transaction } from "../../data/services/transaction";
+import { withTransaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the port instances.
@@ -27,41 +25,22 @@ class Instance_portsController {
      * @memberof Instance_port_controller
      * @method
      */
-    get_port_instances_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-            const sc = await Instance_port_connection.getByUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid
+    get_port_instances_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Instance_port_connection.getByUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid
+        );
+        if (sc instanceof PortInstance) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to find the port instance ${req.params.uuid}.`
             );
-            if (sc instanceof PortInstance) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to find the port instance ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    });
 
     /**
      * @description - Get all the port instances of a specific scene instance by its uuid.
@@ -74,41 +53,22 @@ class Instance_portsController {
      * @memberof Instance_port_controller
      * @method
      */
-    get_port_instances_for_scene: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-            const sc = await Instance_port_connection.getAllByParentUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid
+    get_port_instances_for_scene: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Instance_port_connection.getAllByParentUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid
+        );
+        if (Array.isArray(sc)) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to find the port instances for the scene ${req.params.uuid}.`
             );
-            if (Array.isArray(sc)) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to find the port instances for the scene ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    });
 
     /**
      * @description - Modify a specific port instance by its uuid.
@@ -121,44 +81,24 @@ class Instance_portsController {
      * @memberof Instance_port_controller
      * @method
      */
-    patch_port_instance_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-
-            const newPort = PortInstance.fromJS(req.body) as PortInstance;
-            const sc = await Instance_port_connection.update(
-                client,
-                req.params.uuid,
-                newPort,
-                requireUser(req).uuid
+    patch_port_instance_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        const newPort = PortInstance.fromJS(req.body) as PortInstance;
+        const sc = await Instance_port_connection.update(
+            client,
+            req.params.uuid,
+            newPort,
+            requireUser(req).uuid
+        );
+        if (sc instanceof PortInstance) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to update the port instance ${req.params.uuid}.`
             );
-            if (sc instanceof PortInstance) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to update the port instance ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    });
 
     /**
      * @description - Create a new port instance for a specific scene instance by its uuid.
@@ -171,47 +111,27 @@ class Instance_portsController {
      * @memberof Instance_port_controller
      * @method
      */
-    post_port_instances: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-
-            const portsToAdd: PortInstance[] = [];
-            for (let i = 0; i < req.body.length; i++) {
-                portsToAdd.push(PortInstance.fromJS(req.body[i]) as PortInstance);
-                portsToAdd[i].uuid_scene_instance = req.params.uuid;
-            }
-            const sc = await Instance_port_connection.postPortsInstance(
-                client,
-                portsToAdd,
-                requireUser(req).uuid
-            );
-            if (Array.isArray(sc)) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(201).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to create the port instance for the scene ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
+    post_port_instances: RequestHandler = withTransaction(async (client, req) => {
+        const portsToAdd: PortInstance[] = [];
+        for (let i = 0; i < req.body.length; i++) {
+            portsToAdd.push(PortInstance.fromJS(req.body[i]) as PortInstance);
+            portsToAdd[i].uuid_scene_instance = req.params.uuid;
         }
-    };
+        const sc = await Instance_port_connection.postPortsInstance(
+            client,
+            portsToAdd,
+            requireUser(req).uuid
+        );
+        if (Array.isArray(sc)) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to create the port instance for the scene ${req.params.uuid}.`
+            );
+        }
+    }, { status: 201 });
 
     /**
      * @description - Delete all the port instances of a specific scene instance by its uuid.
@@ -221,40 +141,22 @@ class Instance_portsController {
      * @yield {status: 200, body: {UUID[]}} - The uuids of all the deleted objects.
      * @throws {HTTP500Error} - If the deletion of the port instances fails.
      */
-    delete_port_instances_for_scene: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-        try {
-            await begin_transaction(client);
-            const sc = await Instance_port_connection.deleteAllByParentUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid
+    delete_port_instances_for_scene: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Instance_port_connection.deleteAllByParentUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid
+        );
+        if (Array.isArray(sc)) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to delete the port instances for the scene ${req.params.uuid}.`
             );
-            if (Array.isArray(sc)) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to delete the port instances for the scene ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    });
 
     /**
      * @description - Delete a specific port instance by its uuid.
@@ -266,42 +168,23 @@ class Instance_portsController {
      * @memberof Instance_port_controller
      * @method
      */
-    delete_port_instances_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-            const sc = await Instance_port_connection.deleteByUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid
+    delete_port_instances_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Instance_port_connection.deleteByUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid
+        );
+        if (Array.isArray(sc)) {
+            //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to delete the port instance ${req.params.uuid}.`
             );
-            if (Array.isArray(sc)) {
-                //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to delete the port instance ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    });
 }
 
 export default new Instance_portsController();

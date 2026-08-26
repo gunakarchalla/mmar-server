@@ -216,7 +216,7 @@ describe("Instance sceneInstance tests", function () {
                     ],
                 });
             expect(resScene).to.exist;
-            expect(resScene.status).to.equal(200);
+            expect(resScene.status).to.equal(201);
 
             const res1 = await server
                 .post(`/instances/sceneTypes/${uuids.sceneTypeUuid2}/sceneInstances`)
@@ -278,7 +278,7 @@ describe("Instance sceneInstance tests", function () {
                     ],
                 });
             expect(resScene).to.exist;
-            expect(resScene.status).to.equal(200);
+            expect(resScene.status).to.equal(201);
 
             const res1 = await server
                 .post(`/instances/sceneTypes/${uuids.sceneTypeUuid3}/sceneInstances`)
@@ -330,7 +330,7 @@ describe("Instance sceneInstance tests", function () {
                     description: "This is a scenetype to test delete classes",
                 });
             expect(resScene).to.exist;
-            expect(resScene.status).to.equal(200);
+            expect(resScene.status).to.equal(201);
 
             await server
                 .post(`/metamodel/ports/${uuids.portUuid4}`)
@@ -397,7 +397,7 @@ describe("Instance sceneInstance tests", function () {
                     name: "Test scene type",
                 });
             expect(resScene).to.exist;
-            expect(resScene.status).to.equal(200);
+            expect(resScene.status).to.equal(201);
 
             const resRole = await server
                 .post(`/metamodel/sceneTypes/${uuids.scenetypeUuid5}/roles`)

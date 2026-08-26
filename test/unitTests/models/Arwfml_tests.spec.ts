@@ -48,7 +48,7 @@ describe("ARWFML tests", async function () {
         .set("Cookie", "authcookie=" + token)
         .send(modelData);
       expect(res1).to.exist;
-      expect(res1.status).to.equal(200);
+      expect(res1.status).to.equal(201);
     });
   };
 

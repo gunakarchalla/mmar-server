@@ -116,7 +116,7 @@ describe("Instance sceneInstance batched read", function () {
                 },
             ],
         });
-        expect(meta.status, "seeding the metamodel").to.equal(200);
+        expect(meta.status, "seeding the metamodel").to.equal(201);
 
         // A port and a role that hang off the scene type itself rather than off a
         // class. These are the two shapes the read-equivalence fixture lacks.

@@ -529,7 +529,7 @@ describe("Metamodel classes tests", function () {
         .set("Cookie", "authcookie=" + token);
       expect(res1).to.exist;
       expect(res1.status).to.equal(409);
-      expect(res1.body).to.deep.include(uuids.roleUuid2);
+      expect(res1.body.error).to.contain(uuids.roleUuid2);
     });
 
     it(`should restrict the deletion because there is an instance`, async () => {
@@ -568,7 +568,7 @@ describe("Metamodel classes tests", function () {
         .set("Cookie", "authcookie=" + token);
       expect(res1).to.exist;
       expect(res1.status).to.equal(409);
-      expect(res1.body).to.deep.include(uuids.classInstanceUuid1);
+      expect(res1.body.error).to.contain(uuids.classInstanceUuid1);
     });
   });
 });

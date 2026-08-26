@@ -1,17 +1,14 @@
 import {plainToInstance} from "class-transformer";
 import {RequestHandler} from "express";
-import {database_connection} from "../..";
 import {Relationclass} from "../../../mmar-global-data-structure";
 import {
     BaseError,
-    HTTP403NORIGHT,
-    HTTP409CONFLICT,
     HTTP500Error,
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";
 import {filter_object} from "../../data/services/middleware/object_filter";
 import Metamodel_relationclasses_connection from "../../data/meta/Metamodel_relationclasses.connection";
 import { requireUser } from "../../data/services/middleware/auth.middleware";
-import { begin_transaction } from "../../data/services/transaction";
+import { withTransaction } from "../../data/services/transaction";
 
 /**
  * @classdesc - This class is used to handle all the requests for the relationclasses.
@@ -29,39 +26,19 @@ class Metamodel_relationclassesController {
      * @memberof Metamodel_relationclasses_controller
      * @method
      */
-    get_all_relationclasses: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-            const relationClasses = await Metamodel_relationclasses_connection.getAll(
-                client,
-                requireUser(req).uuid
-            );
-            if (Array.isArray(relationClasses)) {
-                res
-                    .status(200)
-                    .json(
-                        relationClasses.map((cls) => filter_object(cls, req.query.filter))
-                    );
-            } else if (relationClasses instanceof BaseError) {
-                throw relationClasses;
-            } else {
-                throw new HTTP500Error(`Failed to retrieve relationclasses`);
-            }
-            await client.query("COMMIT");
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            client.release();
+    get_all_relationclasses: RequestHandler = withTransaction(async (client, req) => {
+        const relationClasses = await Metamodel_relationclasses_connection.getAll(
+            client,
+            requireUser(req).uuid
+        );
+        if (Array.isArray(relationClasses)) {
+            return relationClasses.map((cls) => filter_object(cls, req.query.filter));
+        } else if (relationClasses instanceof BaseError) {
+            throw relationClasses;
+        } else {
+            throw new HTTP500Error(`Failed to retrieve relationclasses`);
         }
-    };
+    });
 
     /**
      * @description - Get a specific relationclass by its UUID.
@@ -74,39 +51,20 @@ class Metamodel_relationclassesController {
      * @memberof Metamodel_relationclasses_controller
      * @method
      */
-    get_relationclass_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-            const sc = await Metamodel_relationclasses_connection.getByUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid
-            );
-            if (sc instanceof Relationclass) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(`Failed to retrieve the relationclass ${req.params.uuid}.`);
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
+    get_relationclass_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Metamodel_relationclasses_connection.getByUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid
+        );
+        if (sc instanceof Relationclass) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(`Failed to retrieve the relationclass ${req.params.uuid}.`);
         }
-    };
+    });
 
     /**
      * @description - Get all the meta relationclasses for a specific scene type by its UUID.
@@ -119,41 +77,22 @@ class Metamodel_relationclassesController {
      * @memberof Metamodel_relationclasses_controller
      * @method
      */
-    get_relationclasses_for_scene: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-            const sc = await Metamodel_relationclasses_connection.getAllByParentUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid
+    get_relationclasses_for_scene: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Metamodel_relationclasses_connection.getAllByParentUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid
+        );
+        if (Array.isArray(sc)) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to retrieve the relationclasses for the scene type ${req.params.uuid}.`
             );
-            if (Array.isArray(sc)) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to retrieve the relationclasses for the scene type ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    });
 
     /**
      * @description - Get the meta role from for a specific meta relationclass by its UUID.
@@ -166,41 +105,22 @@ class Metamodel_relationclassesController {
      * @memberof Metamodel_relationclasses_controller
      * @method
      */
-    get_rolefrom_for_relationclass: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-            const sc = await Metamodel_relationclasses_connection.getByUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid
+    get_rolefrom_for_relationclass: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Metamodel_relationclasses_connection.getByUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid
+        );
+        if (sc instanceof Relationclass) {
+            return sc.get_role_from();
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to retrieve the role from for the relationclass ${req.params.uuid}.`
             );
-            if (sc instanceof Relationclass) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc.get_role_from(), req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to retrieve the role from for the relationclass ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    });
 
     /**
      * @description - Get the meta role to for a specific meta relationclass by its UUID.
@@ -213,41 +133,22 @@ class Metamodel_relationclassesController {
      * @memberof Metamodel_relationclasses_controller
      * @method
      */
-    get_roleto_for_relationclass: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-            const sc = await Metamodel_relationclasses_connection.getByUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid
+    get_roleto_for_relationclass: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Metamodel_relationclasses_connection.getByUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid
+        );
+        if (sc instanceof Relationclass) {
+            return sc.get_role_to();
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to retrieve the role to for the relationclass ${req.params.uuid}.`
             );
-            if (sc instanceof Relationclass) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc.get_role_to(), req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to retrieve the role to for the relationclass ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    });
 
     /**
      * @description - Get all the meta roles for a specific meta relationclass by its UUID.
@@ -260,44 +161,25 @@ class Metamodel_relationclassesController {
      * @memberof Metamodel_relationclasses_controller
      * @method
      */
-    get_roles_for_relationclass: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-            const sc = await Metamodel_relationclasses_connection.getByUuid(
-                client,
-                req.params.uuid,
-                requireUser(req).uuid
+    get_roles_for_relationclass: RequestHandler = withTransaction(async (client, req) => {
+        const sc = await Metamodel_relationclasses_connection.getByUuid(
+            client,
+            req.params.uuid,
+            requireUser(req).uuid
+        );
+        if (sc instanceof Relationclass) {
+            const roles = [];
+            roles.push(sc.get_role_from());
+            roles.push(sc.get_role_to());
+            return roles;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to retrieve the roles for the relationclass ${req.params.uuid}.`
             );
-            if (sc instanceof Relationclass) {
-                const roles = [];
-                roles.push(sc.get_role_from());
-                roles.push(sc.get_role_to());
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(roles, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to retrieve the roles for the relationclass ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    });
 
     /**
      * @description - Create a new meta relationclass by its UUID.
@@ -309,44 +191,25 @@ class Metamodel_relationclassesController {
      * @memberof Metamodel_relationclasses_controller
      * @method
      */
-    post_relationclass_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-            //let newRelClass = request_to_RelationClass(req.body);
-            const newRelClass = Relationclass.fromJS(req.body) as Relationclass;
-            newRelClass.set_uuid(req.params.uuid);
-            const sc = await Metamodel_relationclasses_connection.create(
-                client,
-                newRelClass,
-                requireUser(req).uuid
+    post_relationclass_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        //let newRelClass = request_to_RelationClass(req.body);
+        const newRelClass = Relationclass.fromJS(req.body) as Relationclass;
+        newRelClass.set_uuid(req.params.uuid);
+        const sc = await Metamodel_relationclasses_connection.create(
+            client,
+            newRelClass,
+            requireUser(req).uuid
+        );
+        if (sc instanceof Relationclass) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Cannot post the meta relationclass for the scene type ${req.params.uuid}.`
             );
-            if (sc instanceof Relationclass) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(201).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Cannot post the meta relationclass for the scene type ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
         }
-    };
+    }, { status: 201 });
 
     /**
      * @description - Create a new meta relationclass for a specific scene type by its UUID.
@@ -359,44 +222,25 @@ class Metamodel_relationclassesController {
      * @memberof Metamodel_relationclasses_controller
      * @method
      */
-    post_relationclasses_for_scene: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-            const newRelClass = plainToInstance(Relationclass, req.body);
-            const sc =
-                await Metamodel_relationclasses_connection.postRelationClassesForSceneType(
-                    client,
-                    req.params.uuid,
-                    newRelClass,
-                    requireUser(req).uuid
-                );
-            if (Array.isArray(sc)) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(201).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Cannot post the meta relationclass for the scene type ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
+    post_relationclasses_for_scene: RequestHandler = withTransaction(async (client, req) => {
+        const newRelClass = plainToInstance(Relationclass, req.body);
+        const sc =
+            await Metamodel_relationclasses_connection.postRelationClassesForSceneType(
+                client,
+                req.params.uuid,
+                newRelClass,
+                requireUser(req).uuid
+            );
+        if (Array.isArray(sc)) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Cannot post the meta relationclass for the scene type ${req.params.uuid}.`
+            );
         }
-    };
+    }, { status: 201 });
 
     /**
      * @description - Modify a specific meta relationclass by its UUID.
@@ -408,54 +252,35 @@ class Metamodel_relationclassesController {
      * @memberof Metamodel_relationclasses_controller
      * @method
      */
-    patch_relationclass_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
+    patch_relationclass_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        const newRelClass = Relationclass.fromJS(req.body) as Relationclass;
 
-        try {
-            await begin_transaction(client);
-            const newRelClass = Relationclass.fromJS(req.body) as Relationclass;
-
-            const hardPatch = req.query.hardpatch === "true";
-            let sc;
-            if (hardPatch) {
-                sc = await Metamodel_relationclasses_connection.hardUpdate(
-                    client,
-                    req.params.uuid,
-                    newRelClass,
-                    requireUser(req).uuid
-                );
-            } else {
-                sc = await Metamodel_relationclasses_connection.update(
-                    client,
-                    req.params.uuid,
-                    newRelClass,
-                    requireUser(req).uuid
-                );
-            }
-
-            if (sc instanceof Relationclass) {
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(`Failed to update the meta relationclass ${req.params.uuid}`);
-            }
-        } catch (err) {
-            try {
-                await client.query("ROLLBACK");
-            } catch {
-                // The connection is already gone; the error below is the
-                // one worth reporting.
-            }
-            next(err);
-        } finally {
-            (await client).release();
+        const hardPatch = req.query.hardpatch === "true";
+        let sc;
+        if (hardPatch) {
+            sc = await Metamodel_relationclasses_connection.hardUpdate(
+                client,
+                req.params.uuid,
+                newRelClass,
+                requireUser(req).uuid
+            );
+        } else {
+            sc = await Metamodel_relationclasses_connection.update(
+                client,
+                req.params.uuid,
+                newRelClass,
+                requireUser(req).uuid
+            );
         }
-    };
+
+        if (sc instanceof Relationclass) {
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(`Failed to update the meta relationclass ${req.params.uuid}`);
+        }
+    });
 
     /**
      * @description - Delete a specific meta relationclass by its UUID.
@@ -467,39 +292,22 @@ class Metamodel_relationclassesController {
      * @memberof Metamodel_relationclasses_controller
      * @method
      */
-    delete_relationclass_by_uuid: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-        try {
-            await begin_transaction(client);
-            const deletedItems =
-                await Metamodel_relationclasses_connection.deleteByUuid(
-                    client,
-                    req.params.uuid,
-                    requireUser(req).uuid
-                );
-            if (Array.isArray(deletedItems)) {
-                //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(deletedItems, req.query.filter));
-            } else if (deletedItems instanceof BaseError) {
-                throw deletedItems;
-            } else {
-                throw new HTTP500Error(`Failed to delete the meta relationclass ${req.params.uuid}`);
-            }
-        } catch (err) {
-            await client.query("ROLLBACK");
-            if (err instanceof HTTP403NORIGHT) res.status(403).json(err.message);
-            else if (err instanceof HTTP500Error) res.status(500).json(err.message);
-            else if (err instanceof HTTP409CONFLICT)
-                res.status(409).json(err.message);
-            else next(err);
-        } finally {
-            (await client).release();
+    delete_relationclass_by_uuid: RequestHandler = withTransaction(async (client, req) => {
+        const deletedItems =
+            await Metamodel_relationclasses_connection.deleteByUuid(
+                client,
+                req.params.uuid,
+                requireUser(req).uuid
+            );
+        if (Array.isArray(deletedItems)) {
+            //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
+            return deletedItems;
+        } else if (deletedItems instanceof BaseError) {
+            throw deletedItems;
+        } else {
+            throw new HTTP500Error(`Failed to delete the meta relationclass ${req.params.uuid}`);
         }
-    };
+    });
 
     /**
      * @description - Delete all meta relationclasses for a specific scene type by its UUID.
@@ -511,42 +319,24 @@ class Metamodel_relationclassesController {
      * @memberof Metamodel_relationclasses_controller
      * @method
      */
-    delete_relationclasses_for_scene: RequestHandler = async (req, res, next) => {
-        const client = await database_connection.getPool().connect();
-
-        try {
-            await begin_transaction(client);
-            const sc =
-                await Metamodel_relationclasses_connection.deleteAllByParentUuid(
-                    client,
-                    req.params.uuid,
-                    requireUser(req).uuid
-                );
-            if (Array.isArray(sc)) {
-                //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
-                // The transaction is made durable before the client is told it succeeded:
-                // answering first left a window in which a caller could act on a 201
-                // and not yet see what it had been promised.
-                await client.query("COMMIT");
-                res.status(200).json(filter_object(sc, req.query.filter));
-            } else if (sc instanceof BaseError) {
-                throw sc;
-            } else {
-                throw new HTTP500Error(
-                    `Failed to delete the meta relationclasses for the scene type ${req.params.uuid}.`
-                );
-            }
-        } catch (err) {
-            await client.query("ROLLBACK");
-            if (err instanceof HTTP403NORIGHT) res.status(403).json(err.message);
-            else if (err instanceof HTTP500Error) res.status(500).json(err.message);
-            else if (err instanceof HTTP409CONFLICT)
-                res.status(409).json(err.message);
-            else next(err);
-        } finally {
-            (await client).release();
+    delete_relationclasses_for_scene: RequestHandler = withTransaction(async (client, req) => {
+        const sc =
+            await Metamodel_relationclasses_connection.deleteAllByParentUuid(
+                client,
+                req.params.uuid,
+                requireUser(req).uuid
+            );
+        if (Array.isArray(sc)) {
+            //The result does not contains any uuid, i.e. the metaobject is not linked to any instance
+            return sc;
+        } else if (sc instanceof BaseError) {
+            throw sc;
+        } else {
+            throw new HTTP500Error(
+                `Failed to delete the meta relationclasses for the scene type ${req.params.uuid}.`
+            );
         }
-    };
+    });
 }
 
 export default new Metamodel_relationclassesController();
