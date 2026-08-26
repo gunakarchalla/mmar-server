@@ -70,3 +70,30 @@ Three traps this caught, worth knowing before touching a read path:
 - Array order was not arbitrary. Attributes came back ordered by their `sequence` with the
   unsequenced ones first, and a join spanning many parents does not reproduce that on its
   own — it has to be stated.
+
+## Measuring a read: count statements, not scans
+
+`scene_patch_probe.js` counts what a request writes. `query_probe.js` counts what it
+*reads*, and attributes each statement to the part of the request that issued it:
+
+```bash
+node test/reset_test_database.js
+MMAR_QUERY_STACKS=1 env $(grep -v '^#' .env.test | xargs) \
+    node --require ./test/read_equivalence/pg_query_log.js ../dist/mmar-server/index.js &
+# wait for http://localhost:8000/test to answer 200
+node test/read_equivalence/query_probe.js
+```
+
+`pg_query_log.js` wraps `pg.Client.prototype.query` in the running server and writes one
+JSON line per statement. Two things it gets right that are easy to get wrong: it resolves
+`pg` next to the server's entry point, because `mmar-server/node_modules/pg` is a
+different copy of the module and patching that one logs nothing; and it raises
+`Error.stackTraceLimit`, because the default of ten frames stops short of the middleware
+that started the call.
+
+Prefer this to `sum(seq_scan)+sum(idx_scan)` whenever the question is *where* the work is.
+Those counters are index probes, so a batched query over 150 parents counts as ~150 and
+looks exactly like a per-object fan-out. Phase 4 was scoped from a scan count that made a
+one-object PATCH look like ~48,000 units of work in the write path; counted as statements,
+the write path issued 235 of the request's 13,964 and the body-verification middleware
+issued 13,729.

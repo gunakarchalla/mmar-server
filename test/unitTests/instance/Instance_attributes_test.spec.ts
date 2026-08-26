@@ -498,6 +498,47 @@ describe("Instance attributes tests", function () {
         });
     });
 
+    describe("PATCH Instance attributes", function () {
+        // The route answered 500 for everyone, the scene owner included, because the
+        // handler tested its result with Array.isArray and update() returns a single
+        // AttributeInstance. Nothing covered it, so nothing caught it.
+        it(`Should patch and return the attribute ${uuids.attributeInstance2Uuid}`, async function () {
+            const res1 = await server
+                .patch(`/instances/attributesInstances/${uuids.attributeInstance2Uuid}`)
+                .set("content-type", "application/json")
+                .set("accept", "application/json")
+                .set("Cookie", "authcookie=" + token)
+                .send({
+                    uuid: uuids.attributeInstance2Uuid,
+                    uuid_attribute: uuids.attributeUuid,
+                    assigned_uuid_scene_instance: uuids.sceneInstanceUuid,
+                    value: "patched attribute value",
+                });
+            expect(res1).to.exist;
+            expect(res1.status).to.equal(200);
+            expect(res1.body).to.deep.include({
+                uuid: uuids.attributeInstance2Uuid,
+                uuid_attribute: uuids.attributeUuid,
+                value: "patched attribute value",
+            });
+        });
+
+        // A 200 that wrote nothing would satisfy the test above on its own.
+        it("Should have persisted what the patch answered", async function () {
+            const res1 = await server
+                .get(`/instances/attributesInstances/${uuids.attributeInstance2Uuid}`)
+                .set("content-type", "application/json")
+                .set("accept", "application/json")
+                .set("Cookie", "authcookie=" + token);
+            expect(res1).to.exist;
+            expect(res1.status).to.equal(200);
+            expect(res1.body).to.deep.include({
+                uuid: uuids.attributeInstance2Uuid,
+                value: "patched attribute value",
+            });
+        });
+    });
+
     describe("DELETE Instance attributes", function () {
         it(`Should delete and return the uuid ${uuids.attributeInstanceUuid}`, async function () {
             const res1 = await server

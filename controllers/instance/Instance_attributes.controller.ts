@@ -178,7 +178,10 @@ class Instance_attributesController {
                 newAttribute,
                 requireUser(req).uuid
             );
-            if (Array.isArray(sc)) {
+            // update() answers with the AttributeInstance it wrote, never with an
+            // array: testing for one made every successful PATCH fall through to
+            // the 500 below, for the scene owner as much as for anyone else.
+            if (sc instanceof AttributeInstance) {
                 // The transaction is made durable before the client is told it succeeded:
                 // answering first left a window in which a caller could act on a 201
                 // and not yet see what it had been promised.
