@@ -10,19 +10,22 @@ import { environment } from "../../data/services/environment";
 const loginRouter = Router();
 
 /**
- * @description - Sign in is the one unauthenticated endpoint that does real work:
- * every attempt costs a bcrypt comparison, which is deliberately expensive, so
- * without a limit it serves as both a password oracle and a cheap way to saturate
- * the CPU. Failed attempts are what count; a client signing in successfully is
- * not the problem.
+ * @description - The unauthenticated endpoints that test a password: signing in,
+ * and changing one's own password by supplying the current one. Every attempt
+ * costs a bcrypt comparison, which is deliberately expensive, so without a limit
+ * they serve as both a password oracle and a cheap way to saturate the CPU.
+ * Failed attempts are what count; a client that succeeds is not the problem.
+ *
+ * A single instance, so that the endpoints share one bucket: they guess the same
+ * secret, and an allowance each would simply double the number of tries.
  */
-const signin_limiter = rateLimit({
+const credential_limiter = rateLimit({
   windowMs: environment.login_rate_limit_window_ms,
   limit: environment.login_rate_limit,
   skipSuccessfulRequests: true,
   standardHeaders: "draft-7",
   legacyHeaders: false,
-  message: { error: "Too many sign in attempts. Try again later." },
+  message: { error: "Too many attempts. Try again later." },
 });
 
 // This route renders an EJS template, which might not be directly represented in Swagger
@@ -77,7 +80,7 @@ loginRouter.post(
   }
   */
   "/",
-  signin_limiter,
+  credential_limiter,
   UsersController.signin_user
 );
 
@@ -151,8 +154,63 @@ loginRouter.post(
   }
   */
   "/signin",
-  signin_limiter,
+  credential_limiter,
   UsersController.signin_user
+);
+
+loginRouter.post(
+  /*
+  #swagger.tags = ["Login"]
+  #swagger.summary = "Change one's own password, authorised by the current one"
+  #swagger.description = "Reachable without a token: it is offered in the sign in dialog, where nobody is signed in yet. Knowing the current password is what authorises the change, and the endpoint is rate limited alongside sign in."
+  #swagger.requestBody = {
+    "description": "The login, the password in force, and the one to replace it with",
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "username": { "type": "string" },
+            "current_password": { "type": "string" },
+            "new_password": { "type": "string" }
+          },
+          "required": ["username", "current_password", "new_password"]
+        }
+      }
+    },
+    "required": true
+  }
+  #swagger.responses[200] = {
+    "description": "The user, which never carries the password",
+    "content": {
+      "application/json": {
+        "schema": { "$ref": "#/components/schemas/User" }
+      }
+    }
+  }
+  #swagger.responses[400] = {
+    "description": "A field is missing, or the new password is too long to hash",
+    "content": {
+      "application/json": {
+        "schema": { "$ref": "#/components/schemas/Error" }
+      }
+    }
+  }
+  #swagger.responses[401] = {
+    "description": "Wrong username or current password",
+    "content": {
+      "application/json": {
+        "schema": { "$ref": "#/components/schemas/Error" }
+      }
+    }
+  }
+  #swagger.responses[429] = {
+    "description": "Too many failed attempts"
+  }
+  */
+  "/password",
+  credential_limiter,
+  UsersController.change_own_password
 );
 
 loginRouter.get(

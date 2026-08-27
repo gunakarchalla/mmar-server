@@ -9,6 +9,7 @@ import { environment } from "./environment";
 export type SecurityEventName =
     | "login"
     | "token_verification"
+    | "password_change"
     | "access_grant"
     | "access_revoke"
     | "access_denied";

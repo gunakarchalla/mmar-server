@@ -5,7 +5,9 @@ import bcrypt from "bcrypt";
 import Metamodel_metaobject_connection from "./Metamodel_metaobjects.connection";
 import UsergroupsConnection from "./Usergroups.connection";
 import {queries} from "../../index";
+import {is_administrator} from "../services/authorization";
 import {
+    API401Error,
     BaseError,
     HTTP403NORIGHT,
     HTTP404Error,
@@ -19,6 +21,13 @@ import {
  */
 const NON_EXISTENT_USER_HASH =
     "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+
+/**
+ * @description - The bcrypt cost factor every password of this system is hashed
+ * with. NON_EXISTENT_USER_HASH above is a hash of this same cost, and the equal
+ * timing it gives the sign in path holds only while the two agree.
+ */
+const BCRYPT_COST = 10;
 
 /**
  * @description - The columns of a user that may leave the data layer.
@@ -172,7 +181,7 @@ class UsersConnection implements CRUD {
             }
             if (!created_metaObject) return undefined;
 
-            const hash = await bcrypt.hash(newUser.get_password(), 10);
+            const hash = await bcrypt.hash(newUser.get_password(), BCRYPT_COST);
 
             await client.query(
                 "INSERT INTO users(uuid_metaobject,username,  password) VALUES ($1, $2, $3) RETURNING uuid_metaobject, username, password",
@@ -308,6 +317,130 @@ class UsersConnection implements CRUD {
         } catch (err) {
             throw new Error(`Error hard patching user ${uuidToUpdate} : ${err}`);
         }
+    }
+
+    /**
+     * @description - Set the password of a user, on an administrator's behalf.
+     *
+     * Passwords are written only here and in changeOwnPassword below, never by
+     * update(): a user is saved by PATCHing the whole object, so accepting a
+     * password there would put the plaintext on the wire on every save of an
+     * unrelated field.
+     *
+     * Restricted to administrators, checked inside the caller's transaction so
+     * that the restriction holds for every route this is reached through. A
+     * write right on a user object does not confer the ability to take over that
+     * account.
+     *
+     * @param {PoolClient} client - The client to the database.
+     * @param {UUID} uuidToUpdate - The user whose password is being set.
+     * @param {string} newPassword - The new password, in plaintext.
+     * @param {UUID} requserUuid - The user asking, who must be an administrator.
+     * @returns {Promise<User | undefined | BaseError>} - The user, without the
+     * hash, or the error explaining the refusal.
+     */
+    async setPassword(
+        client: PoolClient,
+        uuidToUpdate: UUID,
+        newPassword: string,
+        requserUuid: UUID,
+    ): Promise<User | undefined | BaseError> {
+        try {
+            if (!(await is_administrator(client, requserUuid))) {
+                return new HTTP403NORIGHT(
+                    `The user ${requserUuid} has no right to set the password of user ${uuidToUpdate}`,
+                );
+            }
+
+            const written = await this.writePasswordHash(
+                client,
+                uuidToUpdate,
+                newPassword,
+            );
+
+            // No row means no such user, which is a 404 rather than a silent success.
+            if (!written) {
+                return new HTTP404Error(`The user ${uuidToUpdate} does not exist`);
+            }
+
+            return await this.getByUuid(client, uuidToUpdate);
+        } catch (err) {
+            throw new Error(`Error setting the password of user ${uuidToUpdate}: ${err}`);
+        }
+    }
+
+    /**
+     * @description - Change a user's own password, authorised by their current one.
+     *
+     * The only password path that does not require an administrator. Knowledge
+     * of the current password stands in for the caller's identity, which is what
+     * makes this usable without a token — it is offered while signed out. The
+     * route rate limits it for the same reason.
+     *
+     * The current password is checked with the comparison the sign in path uses,
+     * so an unknown login costs what a wrong password costs, and both are
+     * reported identically: this must not reveal which accounts exist.
+     *
+     * @param {PoolClient} client - The client to the database.
+     * @param {string} username - The login whose password is being changed.
+     * @param {string} currentPassword - The password in force, as proof of identity.
+     * @param {string} newPassword - The password to replace it with.
+     * @returns {Promise<User | undefined | BaseError>} - The user, without the
+     * hash, or the error explaining the refusal.
+     */
+    async changeOwnPassword(
+        client: PoolClient,
+        username: string,
+        currentPassword: string,
+        newPassword: string,
+    ): Promise<User | undefined | BaseError> {
+        try {
+            if (!(await this.matchPassword(client, username, currentPassword))) {
+                return new API401Error(`Wrong password or username`);
+            }
+
+            // Reached only once the current password matched, so looking the
+            // account up here cannot reveal whether it exists.
+            const user = await this.getByUsername(client, username);
+            if (!(user instanceof User)) {
+                return new API401Error(`Wrong password or username`);
+            }
+
+            const written = await this.writePasswordHash(
+                client,
+                user.get_uuid(),
+                newPassword,
+            );
+            if (!written) {
+                return new HTTP404Error(`The user ${username} does not exist`);
+            }
+
+            return await this.getByUuid(client, user.get_uuid());
+        } catch (err) {
+            throw new Error(`Error changing the password of user ${username}: ${err}`);
+        }
+    }
+
+    /**
+     * @description - Hash a password and store it. The single write that touches
+     * the password column. It performs no authorisation of its own: each caller
+     * establishes that it is entitled to the write before reaching here.
+     * @param {PoolClient} client - The client to the database.
+     * @param {UUID} uuidToUpdate - The user to write to.
+     * @param {string} newPassword - The new password, in plaintext.
+     * @returns {Promise<boolean>} - False if no such user exists.
+     */
+    private async writePasswordHash(
+        client: PoolClient,
+        uuidToUpdate: UUID,
+        newPassword: string,
+    ): Promise<boolean> {
+        const hash = await bcrypt.hash(newPassword, BCRYPT_COST);
+        const res = await client.query(
+            "UPDATE users SET password = $1 WHERE uuid_metaobject = $2",
+            [hash, uuidToUpdate],
+        );
+        return res.rowCount !== 0;
     }
 
     /**
