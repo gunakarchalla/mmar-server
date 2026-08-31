@@ -355,10 +355,23 @@ describe("Instance relationclasses tests", function () {
             name: "test relationclass instance",
             uuid_role_instance_from: uuids.roleFromInstanceUuid2,
             uuid_role_instance_to: uuids.roleToInstanceUuid2,
+            // The shape the modelling client actually writes: [from, ...bendpoints, to].
+            // The two ENDS name the objects the relation connects, and only what lies
+            // between them is a bendpoint. This used to list the bendpoint alone, which
+            // is why nothing here noticed that deleting a relation also deleted the two
+            // objects it ran between.
             line_points: [
+              {
+                UUID: uuids.classFromInstanceUuid2,
+                Point: { x: -5, y: 0, z: 0 },
+              },
               {
                 UUID: uuids.classBendpointInstanceUuid,
                 Point: { x: -3.3, y: 1.8, z: 0 },
+              },
+              {
+                UUID: uuids.classToInstanceUuid2,
+                Point: { x: 0, y: 0, z: 0 },
               },
             ],
             role_instance_from: {
@@ -391,6 +404,20 @@ describe("Instance relationclasses tests", function () {
       expect(res2.body).to.deep.include(uuids.roleFromInstanceUuid2);
       expect(res2.body).to.deep.include(uuids.roleToInstanceUuid2);
       expect(res2.body).to.deep.include(uuids.classBendpointInstanceUuid);
+
+      // The objects at the two ends are NOT the relation's to delete. Taking them
+      // destroyed the user's model: deleting one Arc removed the Place and the
+      // Transition it connected, and the arcs still hanging off those were reduced to
+      // rows the scene query can no longer see — which the next save then tried to
+      // re-create, answered with a 500.
+      expect(res2.body).to.not.deep.include(uuids.classFromInstanceUuid2);
+      expect(res2.body).to.not.deep.include(uuids.classToInstanceUuid2);
+
+      const survivors = await client.query(
+        "SELECT uuid FROM instance_object WHERE uuid = ANY($1::uuid[])",
+        [[uuids.classFromInstanceUuid2, uuids.classToInstanceUuid2]]
+      );
+      expect(survivors.rowCount).to.equal(2);
     });
 
     it(`Should delete the relationclass and the role instance`, async () => {

@@ -318,8 +318,13 @@ class Instance_relationclassesConnection implements CRUD {
         userUuid?: UUID
     ): Promise<RelationclassInstance[] | undefined | BaseError> {
         try {
+            // ON CONFLICT: the else-branch below runs precisely when the relation
+            // already exists, and "already in this scene" is then the norm rather than
+            // a fault. A plain insert raised 23505 on assigned_to_scene_pkey, which
+            // left the whole PATCH answered with an opaque 500 — so a scene holding a
+            // relation the server can no longer see could never be saved again.
             const query_connect_relclass_scenetype =
-                "insert into assigned_to_scene (uuid_class_instance, uuid_scene_instance) values ($1,$2) ";
+                "insert into assigned_to_scene (uuid_class_instance, uuid_scene_instance) values ($1,$2) on conflict do nothing ";
             const returnRelClass: Array<RelationclassInstance> = [];
 
             if (!Array.isArray(newRelClass)) newRelClass = [newRelClass];
@@ -377,6 +382,10 @@ class Instance_relationclassesConnection implements CRUD {
      * rather than the relationclass instance. The ownership therefore has to be
      * resolved here, and it has to be read before the relation is deleted, since
      * deleting it takes line_points with it.
+     *
+     * Only the INTERIOR line points are bendpoints, and only those the database
+     * confirms are bendpoint class instances are returned — the two ends of the line
+     * are the objects the relation connects and must outlive it.
      * @param {PoolClient} client - The client to the database.
      * @param {UUID} relationclassInstanceUuid - The relation to inspect.
      * @returns {Promise<UUID[]>} - The uuids of its bendpoint class instances.
@@ -391,8 +400,16 @@ class Instance_relationclassesConnection implements CRUD {
         );
         const points: string[] = res.rows[0]?.line_points ?? [];
 
+        // line_points is [from, ...bendpoints, to]: the FIRST and LAST entries name the
+        // objects the relation connects, not bendpoints. Reading the whole array made
+        // this method answer with the relation's two endpoints, and deleteByUuid then
+        // deleted them — so removing one Arc took the Place and the Transition it ran
+        // between with it, and the arcs hanging off those cascaded down to rows the
+        // scene query can no longer see.
+        const interior = points.slice(1, -1);
+
         const uuids: UUID[] = [];
-        for (const point of points) {
+        for (const point of interior) {
             try {
                 const parsed = typeof point === "string" ? JSON.parse(point) : point;
                 const uuid = parsed?.UUID ?? parsed?.uuid;
@@ -401,7 +418,19 @@ class Instance_relationclassesConnection implements CRUD {
                 // A line point that is not a JSON document names no bendpoint.
             }
         }
-        return uuids;
+        if (uuids.length === 0) return [];
+
+        // Position alone is not proof. A class instance is only deleted here if the
+        // database agrees it is a bendpoint, so a malformed or reordered line_points
+        // can never cost the user a modelled object.
+        const confirmed = await client.query(
+            `SELECT uuid_instance_object
+             FROM class_instance
+             WHERE uuid_instance_object = ANY ($1::uuid[])
+               AND uuid_relationclass_bendpoint IS NOT NULL`,
+            [uuids]
+        );
+        return confirmed.rows.map((row) => row.uuid_instance_object as UUID);
     }
 
     async deleteByUuid(

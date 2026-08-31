@@ -375,10 +375,13 @@ class Instance_classesConnection implements CRUD {
                 const createdClass = await this.create(client, currentClass, userUuid);
                 if (createdClass instanceof ClassInstance) {
                     if (sceneInstanceUUID) {
+                        // Attaching a class instance to a scene it is already in is
+                        // not a failure; see the note in postRelationClassInstance.
                         await client.query(
                             `
                                 INSERT INTO assigned_to_scene (uuid_class_instance, uuid_scene_instance)
-                                VALUES ($1, $2);`,
+                                VALUES ($1, $2)
+                                ON CONFLICT DO NOTHING;`,
                             [createdClass.get_uuid(), sceneInstanceUUID]
                         );
                     }
