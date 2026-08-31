@@ -34,7 +34,10 @@ export async function applyRules(
  *
  * Two cases accept without testing, because there is no constraint to apply
  * rather than because the value satisfies one: an attribute whose type states no
- * regex, and an instance carrying no value at all.
+ * regex, and an instance carrying no value at all. The latter covers the sentinel
+ * strings the modeling clients store for an unset attribute ("not defined",
+ * "undefined", "") as well as a real null/undefined - see `numerise` in
+ * mmar-modeling-client-react/src/resources/services/format.ts.
  * @category Rule
  * @param client The database connection client
  * @param attributeToTest The attribute to test the value
@@ -51,6 +54,13 @@ export async function regexExValidator(
 
     const value = attributeToTest.get_value();
     if (value === null || value === undefined) return true;
+    const normalized = typeof value === "string" ? value.trim() : value;
+    if (
+        normalized === "" ||
+        normalized === "not defined" ||
+        normalized === "undefined"
+    )
+        return true;
 
     // The flags are the ones this rule was written with. Note that "m" makes the
     // anchors match per line, so a multi-line value satisfies a "^...$" regex as

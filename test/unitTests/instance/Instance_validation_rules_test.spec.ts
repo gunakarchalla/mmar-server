@@ -189,6 +189,20 @@ describe("Instance validation rules", function () {
             );
             expect(res.status).to.equal(200);
         });
+
+        // The modeling clients store one of these sentinel strings for an unset
+        // attribute, so the regex must not be applied to them.
+        ["not defined", "undefined", "", "   "].forEach((sentinel) => {
+            it(`accepts the unset sentinel ${JSON.stringify(sentinel)}`, async function () {
+                const res = await patch(
+                    scene_with({
+                        uuid_attribute: uuids.digitsAttributeUuid,
+                        value: sentinel,
+                    })
+                );
+                expect(res.status).to.equal(200);
+            });
+        });
     });
 
     describe("metaObjectExists", function () {
