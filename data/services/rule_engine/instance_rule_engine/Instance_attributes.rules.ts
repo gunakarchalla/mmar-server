@@ -65,11 +65,35 @@ export async function regexExValidator(
     // The flags are the ones this rule was written with. Note that "m" makes the
     // anchors match per line, so a multi-line value satisfies a "^...$" regex as
     // long as one of its lines does; that is the existing rule, not a new one.
-    const sc = new RegExp(regexFromDb, "gmi");
+    const sc = new RegExp(unwrapRegexLiteral(regexFromDb), "gmi");
     if (String(value).match(sc) !== null) {
         return true;
     }
     throw new HTTP403Constrain(
         `The rule error was fired for the attribute ${attributeToTest.uuid}: ${value} does not match the regex ${sc}`
     );
+}
+
+/**
+ * @description - The metamodel stores a meta attribute type's regex as a bare
+ * pattern (`^(TCP|UDP)$`). The metamodeling client's RegEx field is free text,
+ * so values are sometimes entered - or round-tripped through serialization - as a
+ * JavaScript regex literal instead: `/^(TCP|UDP)$/gim`, or a half-mangled
+ * `/^(TCP|UDP)$` that kept only its leading slash. Fed straight to `new RegExp`
+ * those slashes become literal characters the value can never contain, so every
+ * instance is refused with a 403. This strips that wrapper back to the pattern.
+ * @param {string} raw - The stored `regex_value`.
+ * @returns {string} - The pattern, without any surrounding literal syntax.
+ */
+export function unwrapRegexLiteral(raw: string): string {
+    const pattern = raw.trim();
+    // A well-formed literal: /pattern/ or /pattern/flags. Flags are dropped - the
+    // validator applies its own fixed "gmi".
+    const literal = pattern.match(/^\/(.+)\/[dgimsuy]*$/);
+    if (literal) return literal[1];
+    // A literal whose trailing "/flags" was lost, leaving "/^...". A pattern that
+    // truly begins by matching a slash then asserts start-of-line can never hold,
+    // so treating the leading slash as a mistake is safe.
+    if (pattern.startsWith("/^")) return pattern.slice(1);
+    return pattern;
 }

@@ -41,6 +41,10 @@ describe("Instance validation rules", function () {
         digitsAttributeTypeUuid: uuidv4(),
         freeAttributeUuid: uuidv4(),
         freeAttributeTypeUuid: uuidv4(),
+        wrappedAttributeUuid: uuidv4(),
+        wrappedAttributeTypeUuid: uuidv4(),
+        slashAttributeUuid: uuidv4(),
+        slashAttributeTypeUuid: uuidv4(),
         sceneInstanceUuid: uuidv4(),
     };
 
@@ -133,6 +137,30 @@ describe("Instance validation rules", function () {
                                     default_value: "",
                                 },
                             },
+                            {
+                                // regex entered as a full JS literal, /pattern/flags
+                                uuid: uuids.wrappedAttributeUuid,
+                                name: "protocol_wrapped",
+                                attribute_type: {
+                                    uuid: uuids.wrappedAttributeTypeUuid,
+                                    name: "ProtocolWrapped",
+                                    pre_defined: true,
+                                    default_value: "not defined",
+                                    regex_value: "/^(tcp|udp|https?)$/gim",
+                                },
+                            },
+                            {
+                                // regex that kept only its leading slash
+                                uuid: uuids.slashAttributeUuid,
+                                name: "protocol_slash",
+                                attribute_type: {
+                                    uuid: uuids.slashAttributeTypeUuid,
+                                    name: "ProtocolSlash",
+                                    pre_defined: true,
+                                    default_value: "not defined",
+                                    regex_value: "/^(tcp|udp|https?)$",
+                                },
+                            },
                         ],
                         ports: [
                             {
@@ -201,6 +229,27 @@ describe("Instance validation rules", function () {
                     })
                 );
                 expect(res.status).to.equal(200);
+            });
+        });
+
+        // A regex stored as a JS literal (/pattern/flags) or with a stray leading
+        // slash must be unwrapped, not applied verbatim - otherwise the slash is a
+        // literal character no value can match and every instance gets a 403.
+        [
+            {name: "a /pattern/flags literal", uuid: () => uuids.wrappedAttributeUuid},
+            {name: "a stray leading slash", uuid: () => uuids.slashAttributeUuid},
+        ].forEach(({name, uuid}) => {
+            it(`matches a value against ${name}`, async function () {
+                const ok = await patch(
+                    scene_with({uuid_attribute: uuid(), value: "HTTP"})
+                );
+                expect(ok.status).to.equal(200);
+
+                const bad = await patch(
+                    scene_with({uuid_attribute: uuid(), value: "carrier pigeon"})
+                );
+                expect(bad.status).to.equal(403);
+                expect(bad.body.error).to.contain("does not match the regex");
             });
         });
     });
