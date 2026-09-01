@@ -55,10 +55,12 @@ http_server.disable("x-powered-by");
 // only those origins are accepted and cookies are allowed to travel to them.
 // Left unset, any origin may call the API but credentials are refused, which is
 // what a browser already enforces for a wildcard origin.
+// TEMPORARY: CORS is opened to reflect any origin while still allowing
+// credentials. This echoes back the caller's Origin header, so every site can
+// call the API with cookies. Revert to the environment.cors_origins allow-list
+// before this goes anywhere near production.
 http_server.use(
-    environment.cors_origins.length > 0
-        ? cors({origin: environment.cors_origins, credentials: true})
-        : cors()
+    cors({ origin: true, credentials: true })
 );
 
 // This is used to enable the compression and avoid some errors related to compression.
