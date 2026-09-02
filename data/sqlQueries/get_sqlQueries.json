@@ -270,7 +270,7 @@
     },
     {
       "name": "get_attributes_table_from_attribute_uuid",
-      "query": "select * from attribute_instance where table_attribute_reference = $1 order by table_row"
+      "query": "select * from attribute_instance where table_attribute_reference = $1 order by table_row, uuid_attribute"
     },
     {
       "name": "get_relationclass_if_role_from_or_to",

@@ -128,7 +128,7 @@ class Instance_attributesConnection implements CRUD {
                  FROM instance_object io
                           JOIN attribute_instance ai ON ai.uuid_instance_object = io.uuid
                  WHERE ai.table_attribute_reference = ANY ($1::uuid[])
-                 ORDER BY ai.table_row`,
+                 ORDER BY ai.table_row, ai.uuid_attribute`,
                 [frontier]
             );
             if (cells.rowCount === 0) break;
