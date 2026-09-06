@@ -4,7 +4,9 @@ import type { PoolConfig } from "pg";
 // The environment has to be loaded here rather than relying on the call in
 // index.ts: ES module imports are hoisted, so this module can be evaluated
 // (transitively, through the routes) before index.ts runs its own dotenv.config().
-dotenv.config();
+// quiet: dotenv 17 prints an "injected env (n) from .env" banner with a randomised
+// tip to stdout on every load, where 16 was silent. The server's stdout is its log.
+dotenv.config({ quiet: true });
 
 /**
  * @description - The shortest secret accepted for signing tokens. A shorter key
