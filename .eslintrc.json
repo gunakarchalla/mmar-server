@@ -34,6 +34,9 @@
       ],
       "env": {
         "mocha": true
+      },
+      "rules": {
+        "@typescript-eslint/no-unused-expressions": "off"
       }
     }
   ]
