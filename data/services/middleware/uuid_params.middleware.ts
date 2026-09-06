@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Request, Router } from "express";
 import { HTTP400Error } from "./error_handling/standard_errors.middleware";
 
 /**
@@ -41,4 +41,32 @@ export function validate_uuid_params(router: Router): void {
             );
         });
     }
+}
+
+/**
+ * @description - Route parameters as this server actually receives them.
+ *
+ * Express 5 types `req.params` as `{ [name: string]: string | string[] }`,
+ * because path-to-regexp 8 hands back an array for a *repeated* parameter
+ * (`:x*`, `:x+`). No route in this server declares one — every path here uses a
+ * plain `:name` — so a value is always a single string. This is the one place
+ * that says so, rather than each of the ~160 reads asserting it separately.
+ */
+export type RouteParams = { [name: string]: string };
+
+/**
+ * @description - A request whose route parameters are known to be single values.
+ */
+export type RouteRequest = Request<RouteParams>;
+
+/**
+ * @description - Read the route parameters of a request as single strings.
+ *
+ * For the handlers that are not wrapped by `withTransaction`, which already
+ * hands its body a {@link RouteRequest}.
+ * @param {Request} req - The request to read the parameters of.
+ * @returns {RouteParams} - The parameters, each a single string.
+ */
+export function route_params(req: Request): RouteParams {
+    return req.params as RouteParams;
 }

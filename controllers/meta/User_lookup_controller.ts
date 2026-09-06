@@ -1,4 +1,5 @@
 import {RequestHandler} from "express";
+import {route_params} from "../../data/services/middleware/uuid_params.middleware";
 import {HTTP404Error} from "../../data/services/middleware/error_handling/standard_errors.middleware";
 import {getUserByUsername} from "../../data/meta/User_lookup.connection";
 
@@ -17,9 +18,10 @@ class User_lookup_controller {
             #swagger.responses[200] = { "description": "Successful operation" }
             #swagger.responses[404] = { "description": "User not found" }
             */
-            const user = await getUserByUsername(req.params.username);
+            const username = route_params(req).username;
+            const user = await getUserByUsername(username);
             if (!user) {
-                return next(new HTTP404Error(`User with username '${req.params.username}' not found`));
+                return next(new HTTP404Error(`User with username '${username}' not found`));
             }
             return res.status(200).json(user);
         } catch (err) {

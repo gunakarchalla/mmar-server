@@ -2,6 +2,7 @@ import {RequestHandler} from "express";
 import {RoleInstance, UUID} from "../../../../../mmar-global-data-structure";
 import {PoolClient} from "pg";
 import {with_client} from "../../database_connection";
+import {route_params} from "../../middleware/uuid_params.middleware";
 import {applyDeletionRules, applyRules} from "./Instance_roles.rules";
 
 /**
@@ -56,7 +57,7 @@ export const verif_role_instance_deletion: RequestHandler = async (
   res,
   next
 ) => {
-  await verif_inner_role_instance_deletion(req.params.uuid);
+  await verif_inner_role_instance_deletion(route_params(req).uuid);
   next();
 };
 
