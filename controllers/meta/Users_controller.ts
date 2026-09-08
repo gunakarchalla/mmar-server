@@ -9,6 +9,7 @@ import {
 } from "../../data/services/middleware/error_handling/standard_errors.middleware";
 import {record_security_event} from "../../data/services/security_audit.service";
 import { requireUser } from "../../data/services/middleware/auth.middleware";
+import { sign_user_token } from "../../data/services/token.service";
 import { withTransaction } from "../../data/services/transaction";
 import { environment } from "../../data/services/environment";
 
@@ -286,7 +287,7 @@ class Users_controller {
             throw new HTTP500Error(`User could not be logged in`);
         }
 
-        const token = user.generate_token();
+        const token = sign_user_token(user);
         res.cookie("authcookie", token, {
             // The cookie expires with the token it carries.
             maxAge: environment.token_expire_ms,

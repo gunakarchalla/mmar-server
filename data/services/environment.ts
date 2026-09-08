@@ -19,7 +19,7 @@ const JWT_SECRET_MIN_LENGTH = 32;
  * @description - Read a mandatory environment variable and fail fast if it is missing.
  * The value is returned verbatim, without any normalisation, so that a secret
  * read here is byte-identical to the one used everywhere else (for example when
- * signing a token in User.generate_token()).
+ * signing a token in sign_user_token()).
  * @param {string} name - The name of the environment variable.
  * @returns {string} - The value of the environment variable.
  * @throws {Error} - If the variable is undefined or empty.
