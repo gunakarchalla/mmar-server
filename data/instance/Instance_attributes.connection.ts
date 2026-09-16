@@ -6,6 +6,7 @@ import Instance_objects_connection from "./Instance_objects.connection";
 import Metamodel_common_functions from "../meta/Metamodel_common_functions.connection";
 import Instance_rolesConnection from "./Instance_roles.connection";
 import {BaseError, HTTP403NORIGHT} from "../services/middleware/error_handling/standard_errors.middleware";
+import {attribute_table_columns} from "../services/rule_engine/instance_rule_engine/Metamodel_probe";
 
 /**
  * @description - This is the class that handles the CRUD operations for the AttributeInstances.
@@ -120,15 +121,22 @@ class Instance_attributesConnection implements CRUD {
 
         for (const row of rows) built.push([row, take(row)]);
 
-        // Descend the table nesting one level at a time.
+        // Descend the table nesting one level at a time. Cells come in table order - by
+        // row, then by the sequence of their column in the table's attribute type - which
+        // add_table_attributes keeps per table (see Instance_tables in gds).
         let frontier = built.map(([, attribute]) => attribute.get_uuid());
         while (frontier.length > 0) {
             const cells = await client.query(
                 `SELECT io.*, ai.*
                  FROM instance_object io
                           JOIN attribute_instance ai ON ai.uuid_instance_object = io.uuid
+                          JOIN attribute_instance tbl ON tbl.uuid_instance_object = ai.table_attribute_reference
+                          JOIN attribute tbl_attribute ON tbl_attribute.uuid_metaobject = tbl.uuid_attribute
+                          LEFT JOIN has_table_attribute col
+                                    ON col.uuid_attribute_type = tbl_attribute.attribute_type_uuid
+                                        AND col.uuid_attribute = ai.uuid_attribute
                  WHERE ai.table_attribute_reference = ANY ($1::uuid[])
-                 ORDER BY ai.table_row, ai.uuid_attribute`,
+                 ORDER BY ai.table_row, col.sequence, ai.uuid_attribute`,
                 [frontier]
             );
             if (cells.rowCount === 0) break;
@@ -435,8 +443,23 @@ class Instance_attributesConnection implements CRUD {
                 await this.getByUuid(client, attrUuidToUpdate)
             ) as AttributeInstance;
 
-            const tableAttrs = newAttributeInstance.get_table_attributes();
-            if (tableAttrs && tableAttrs.length > 0) {
+            const tableAttrs = newAttributeInstance.get_table_attributes() ?? [];
+
+            // Writing a table replaces its cells (see Instance_tables in gds): a stored cell
+            // that is no longer sent was removed, with its row or by an undo, and goes.
+            // Deleted first, so a new cell can take the row and column of a removed one.
+            // A nested table in a removed cell goes with it, by the foreign key's cascade.
+            const tableColumns = await attribute_table_columns(client, current_attr.get_uuid_attribute());
+            if (tableColumns.length > 0) {
+                const sentCells = new Set(tableAttrs.map((cell) => cell.uuid));
+                for (const storedCell of current_attr.get_table_attributes() ?? []) {
+                    if (!sentCells.has(storedCell.get_uuid())) {
+                        await Instance_objects_connection.deleteByUuid(client, storedCell.get_uuid(), userUuid);
+                    }
+                }
+            }
+
+            if (tableAttrs.length > 0) {
                 for (const cellToUpdateRaw of tableAttrs) {
                     const cellToUpdate = AttributeInstance.fromJS(
                         cellToUpdateRaw

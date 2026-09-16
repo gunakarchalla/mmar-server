@@ -202,6 +202,38 @@ describe("get_collection_difference only reports what a write would change", () 
         expect(modified.map((o) => o.get_uuid())).to.deep.equal(["c-1"]);
     });
 
+    it("reports a table that lost a row, because writing a table replaces its cells", () => {
+        // A class's attributes merge, so a missing attribute is not a difference; a
+        // table's cells are replaced, so a missing cell is one (see Instance_tables).
+        const with_rows = (rows: number) => {
+            const table = attribute("t-1", "");
+            for (let row = 0; row < rows; row++) {
+                const cell = attribute(`cell-${row}`, `v${row}`);
+                cell.table_row = row;
+                cell.table_attribute_reference = "t-1";
+                table.table_attributes.push(cell);
+            }
+            return node("c-1", "same", [table]);
+        };
+        const {modified} = diff_classes([with_rows(1)], [with_rows(2)]);
+        expect(modified.map((o) => o.get_uuid())).to.deep.equal(["c-1"]);
+        expect(diff_classes([with_rows(2)], [with_rows(2)]).modified).to.be.empty;
+    });
+
+    it("reports a table whose rows were reordered", () => {
+        const with_order = (first: number) => {
+            const table = attribute("t-1", "");
+            [first, 1 - first].forEach((row, index) => {
+                const cell = attribute(`cell-${index}`, `v${index}`);
+                cell.table_row = row;
+                table.table_attributes.push(cell);
+            });
+            return node("c-1", "same", [table]);
+        };
+        const {modified} = diff_classes([with_order(1)], [with_order(0)]);
+        expect(modified.map((o) => o.get_uuid())).to.deep.equal(["c-1"]);
+    });
+
     it("treats a null incoming column as no change, because the UPDATE coalesces it", () => {
         // update_object_instance writes coalesce($n, column): a null keeps what is
         // stored, so it can never be a difference.

@@ -2,7 +2,7 @@
  * @module instance/common
  */
 import { PoolClient } from "pg";
-import { UUID } from "../../../../../mmar-global-data-structure";
+import { TableColumn, UUID } from "../../../../../mmar-global-data-structure";
 import { memoised } from "../../database_connection";
 
 /**
@@ -56,6 +56,15 @@ const REGEX =
     "AND a.uuid_metaobject = $1";
 
 /**
+ * @description - The columns of the table a meta attribute's type describes, in
+ * table order. A type that is not a table has none.
+ */
+const TABLE_COLUMNS =
+    "SELECT hta.uuid_attribute, hta.sequence FROM attribute a, has_table_attribute hta " +
+    "WHERE hta.uuid_attribute_type = a.attribute_type_uuid AND a.uuid_metaobject = $1 " +
+    "ORDER BY hta.sequence";
+
+/**
  * @description - Whether a meta object of the given kind exists.
  * @param {PoolClient} client - The client to the database.
  * @param {MetaKind} kind - Which kind of meta object the uuid must name.
@@ -93,5 +102,27 @@ export async function attribute_regex(
         const res = await client.query(REGEX, [attributeUuid]);
         if (res.rowCount !== 1) return null;
         return (res.rows[0].regex_value as string | null) ?? null;
+    });
+}
+
+/**
+ * @description - The columns of the table a meta attribute's type describes, in the
+ * shape the table helpers of mmar-global-data-structure read.
+ * @param {PoolClient} client - The client to the database.
+ * @param {UUID} attributeUuid - The meta attribute.
+ * @returns {Promise<TableColumn[]>} - The columns in table order; empty when the
+ * attribute is not a table.
+ * @throws {Error} - If the lookup itself fails.
+ */
+export async function attribute_table_columns(
+    client: PoolClient,
+    attributeUuid: UUID
+): Promise<TableColumn[]> {
+    return await memoised(`table_columns:${attributeUuid}`, async () => {
+        const res = await client.query(TABLE_COLUMNS, [attributeUuid]);
+        return res.rows.map((row) => ({
+            attribute: { uuid: row.uuid_attribute as UUID },
+            sequence: row.sequence as number,
+        }));
     });
 }

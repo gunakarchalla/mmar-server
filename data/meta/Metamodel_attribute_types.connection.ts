@@ -521,6 +521,19 @@ class Metamodel_attribute_typesConnection implements CRUD {
           "DELETE FROM has_table_attribute where uuid_attribute = $1 and uuid_attribute_type =$2",
           [column.get_attribute().get_uuid(), newAttributeType.get_uuid()],
         );
+        // The column's cells in every table of this type go with it: a cell outside the
+        // columns of its table breaks the table rules (see Instance_tables in gds). The
+        // rows stay numbered as they were, and nested tables in the cells cascade.
+        await client.query(
+          `DELETE FROM instance_object
+           WHERE uuid IN (SELECT cell.uuid_instance_object
+                          FROM attribute_instance cell
+                                   JOIN attribute_instance tbl ON tbl.uuid_instance_object = cell.table_attribute_reference
+                                   JOIN attribute tbl_attribute ON tbl_attribute.uuid_metaobject = tbl.uuid_attribute
+                          WHERE cell.uuid_attribute = $1
+                            AND tbl_attribute.attribute_type_uuid = $2)`,
+          [column.get_attribute().get_uuid(), newAttributeType.get_uuid()],
+        );
       }
 
       return await this.getByUuid(client, attrTypeUuidToUpdate, userUuid);
