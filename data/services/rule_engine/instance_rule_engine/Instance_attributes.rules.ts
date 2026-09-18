@@ -1,7 +1,7 @@
 /**
  * @module instance/attribute
  */
-import {AttributeInstance, table_violations} from "../../../../../mmar-global-data-structure";
+import {AttributeInstance, table_violations, value_matches_pattern} from "../../../../../mmar-global-data-structure";
 import {HTTP403Constrain} from "../../middleware/error_handling/standard_errors.middleware";
 import {metaObjectExists} from "./Instance_commons.rules";
 import {PoolClient} from "pg";
@@ -34,9 +34,17 @@ export async function applyRules(
  * the operator: a value that does not match its type's regex is now refused with
  * 403 where it used to be stored.
  *
- * Two cases accept without testing, because there is no constraint to apply
- * rather than because the value satisfies one: an attribute whose type states no
- * regex, and an instance carrying no value at all.
+ * How the regex is read - without flags, and against the whole value - lives in
+ * `value_matches_pattern` in mmar-global-data-structure, which the modeling client
+ * and the metamodeling client apply to the same values. Two cases accept without
+ * testing, because there is no constraint to apply rather than because the value
+ * satisfies one: an attribute whose type states no regex, and a field the request
+ * did not send at all, which the write keeps as it is stored.
+ *
+ * An EMPTY value is not one of them. It is the value an attribute holds until
+ * someone fills it in, and whether that is allowed is what the attribute type's
+ * regex says: a type that accepts "" leaves its attributes optional, one that does
+ * not requires a value.
  * @category Rule
  * @param client The database connection client
  * @param attributeToTest The attribute to test the value
@@ -52,17 +60,10 @@ export async function regexExValidator(
     if (regexFromDb === null) return true;
 
     const value = attributeToTest.get_value();
-    if (value === null || value === undefined) return true;
+    if (value_matches_pattern(value, regexFromDb)) return true;
 
-    // The flags are the ones this rule was written with. Note that "m" makes the
-    // anchors match per line, so a multi-line value satisfies a "^...$" regex as
-    // long as one of its lines does; that is the existing rule, not a new one.
-    const sc = new RegExp(regexFromDb, "gmi");
-    if (String(value).match(sc) !== null) {
-        return true;
-    }
     throw new HTTP403Constrain(
-        `The rule error was fired for the attribute ${attributeToTest.uuid}: ${value} does not match the regex ${sc}`
+        `The rule error was fired for the attribute ${attributeToTest.uuid}: ${JSON.stringify(value ?? "")} does not match the regex ${regexFromDb}`
     );
 }
 

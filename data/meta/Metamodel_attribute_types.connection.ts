@@ -9,6 +9,7 @@ import Metamodel_common_functions from "./Metamodel_common_functions.connection"
 import Metamodel_attributes_connection from "./Metamodel_attributes.connection";
 import {ColumnStructure} from "../../../mmar-global-data-structure/models/meta/Metamodel_columns.structure";
 import {BaseError, HTTP403NORIGHT,} from "../services/middleware/error_handling/standard_errors.middleware";
+import {attribute_type_pattern_rule} from "../services/rule_engine/meta_rule_engine/Metamodel_attributes.rules";
 
 /**
  * @description - This is the class that handles the CRUD operations for the Meta Attribute type.
@@ -379,6 +380,11 @@ class Metamodel_attribute_typesConnection implements CRUD {
     userUuid?: UUID,
     fromHardUpdate?: boolean,
   ): Promise<AttributeType | undefined | BaseError> {
+    // create() finishes by calling update(), so both ways of writing a pattern pass
+    // here. Before the try, so the refusal keeps its 403 - see the same note in
+    // Metamodel_attributes.connection.update.
+    attribute_type_pattern_rule(newAttributeType);
+
     try {
       const query_update_attributeType = queries.getQuery_post(
         "update_attributeType",
