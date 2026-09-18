@@ -1,13 +1,8 @@
 import { RequestHandler } from "express";
+import { verif_metamodel_body } from "./Metamodel_attributes.rules";
 
-export const verif_scenetype_body: RequestHandler = async (req, res, next) => {
-  //console.log("Middleware scenetype body checker");
-  //TODO implement the rule here
-  // eslint-disable-next-line no-constant-condition
-  if (true) {
-    //console.log(req.body);
-    next();
-  } else {
-    res.status(400).send("Invalid payload provided !");
-  }
-};
+/**
+ * A scene type carries its own attributes and its classes with theirs - which is how a
+ * whole metamodel is imported - so the metamodel attribute rules apply to the whole body.
+ */
+export const verif_scenetype_body: RequestHandler = verif_metamodel_body;

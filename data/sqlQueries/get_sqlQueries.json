@@ -270,7 +270,7 @@
     },
     {
       "name": "get_attributes_table_from_attribute_uuid",
-      "query": "select * from attribute_instance where table_attribute_reference = $1 order by table_row"
+      "query": "select ai.* from attribute_instance ai join attribute_instance tbl on tbl.uuid_instance_object = ai.table_attribute_reference join attribute tbl_attribute on tbl_attribute.uuid_metaobject = tbl.uuid_attribute left join has_table_attribute col on col.uuid_attribute_type = tbl_attribute.attribute_type_uuid and col.uuid_attribute = ai.uuid_attribute where ai.table_attribute_reference = $1 order by ai.table_row, col.sequence, ai.uuid_attribute"
     },
     {
       "name": "get_relationclass_if_role_from_or_to",

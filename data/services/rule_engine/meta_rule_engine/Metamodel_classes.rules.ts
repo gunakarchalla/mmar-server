@@ -1,11 +1,8 @@
 import { RequestHandler } from "express";
+import { verif_metamodel_body } from "./Metamodel_attributes.rules";
 
-export const verif_class_body: RequestHandler = async (req, res, next) => {
-  //TODO implement the rule here
-  // eslint-disable-next-line no-constant-condition
-  if (true) {
-    next();
-  } else {
-    res.status(400).send("Invalid payload provided !");
-  }
-};
+/**
+ * A class carries its attributes and its ports' attributes, so saving one writes them:
+ * the metamodel attribute rules apply to the whole body.
+ */
+export const verif_class_body: RequestHandler = verif_metamodel_body;

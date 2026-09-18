@@ -13,7 +13,7 @@
     "test": "mocha --exit -r reflect-metadata -r ts-node/register test/unitTests/**/*.spec.ts",
     "swagger": "node ./config/swagger.mjs",
     "tjs": "node ./config/tjs.mjs",
-    "test:unit": "mocha --exit -r reflect-metadata -r ts-node/register test/unitTests/Auth_middleware.spec.ts test/unitTests/Transaction_context.spec.ts test/unitTests/Security.spec.ts test/unitTests/Collection_difference.spec.ts",
+    "test:unit": "mocha --exit -r reflect-metadata -r ts-node/register test/unitTests/Auth_middleware.spec.ts test/unitTests/Transaction_context.spec.ts test/unitTests/Security.spec.ts test/unitTests/Collection_difference.spec.ts test/unitTests/Table_structure.spec.ts",
     "lint": "eslint --ext .ts .",
     "lint:fix": "eslint --ext .ts . --fix",
     "test:reset": "node test/reset_test_database.js",

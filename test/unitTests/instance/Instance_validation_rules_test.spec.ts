@@ -115,11 +115,15 @@ describe("Instance validation rules", function () {
                             {
                                 uuid: uuids.digitsAttributeUuid,
                                 name: "digits_only",
+                                // The default belongs to the ATTRIBUTE, and a type that
+                                // wants digits refuses an attribute that has none: the
+                                // metamodel rules would refuse this scene type, since
+                                // every instance of the attribute starts out holding it.
+                                default_value: "0",
                                 attribute_type: {
                                     uuid: uuids.digitsAttributeTypeUuid,
                                     name: "DigitsOnly",
                                     pre_defined: true,
-                                    default_value: "0",
                                     regex_value: "^[0-9]+$",
                                 },
                             },

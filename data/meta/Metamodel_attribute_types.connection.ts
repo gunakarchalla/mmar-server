@@ -9,6 +9,7 @@ import Metamodel_common_functions from "./Metamodel_common_functions.connection"
 import Metamodel_attributes_connection from "./Metamodel_attributes.connection";
 import {ColumnStructure} from "../../../mmar-global-data-structure/models/meta/Metamodel_columns.structure";
 import {BaseError, HTTP403NORIGHT,} from "../services/middleware/error_handling/standard_errors.middleware";
+import {attribute_type_pattern_rule} from "../services/rule_engine/meta_rule_engine/Metamodel_attributes.rules";
 
 /**
  * @description - This is the class that handles the CRUD operations for the Meta Attribute type.
@@ -379,6 +380,11 @@ class Metamodel_attribute_typesConnection implements CRUD {
     userUuid?: UUID,
     fromHardUpdate?: boolean,
   ): Promise<AttributeType | undefined | BaseError> {
+    // create() finishes by calling update(), so both ways of writing a pattern pass
+    // here. Before the try, so the refusal keeps its 403 - see the same note in
+    // Metamodel_attributes.connection.update.
+    attribute_type_pattern_rule(newAttributeType);
+
     try {
       const query_update_attributeType = queries.getQuery_post(
         "update_attributeType",
@@ -519,6 +525,19 @@ class Metamodel_attribute_typesConnection implements CRUD {
       for (const column of columnsRemoved) {
         await client.query(
           "DELETE FROM has_table_attribute where uuid_attribute = $1 and uuid_attribute_type =$2",
+          [column.get_attribute().get_uuid(), newAttributeType.get_uuid()],
+        );
+        // The column's cells in every table of this type go with it: a cell outside the
+        // columns of its table breaks the table rules (see Instance_tables in gds). The
+        // rows stay numbered as they were, and nested tables in the cells cascade.
+        await client.query(
+          `DELETE FROM instance_object
+           WHERE uuid IN (SELECT cell.uuid_instance_object
+                          FROM attribute_instance cell
+                                   JOIN attribute_instance tbl ON tbl.uuid_instance_object = cell.table_attribute_reference
+                                   JOIN attribute tbl_attribute ON tbl_attribute.uuid_metaobject = tbl.uuid_attribute
+                          WHERE cell.uuid_attribute = $1
+                            AND tbl_attribute.attribute_type_uuid = $2)`,
           [column.get_attribute().get_uuid(), newAttributeType.get_uuid()],
         );
       }
