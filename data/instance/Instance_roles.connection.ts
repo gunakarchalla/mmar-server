@@ -66,6 +66,47 @@ class Instance_rolesConnection implements CRUD {
     }
 
     /**
+     * @description - Which of these roles point at something that no longer exists.
+     *
+     * A scene stays open while its references are deleted in another tab, or by another
+     * user. The database removed those references along with their targets, see
+     * clear_attribute_reference() in init.sql, so a copy read before that must not write
+     * them back: the role's foreign key would fail, and the whole save with it.
+     * @param {PoolClient} client - The client to the database.
+     * @param {RoleInstance[]} roles - The roles to check.
+     * @returns {Promise<Set<UUID>>} - The uuids of the roles whose target is gone.
+     */
+    async getRolesWithDeletedTarget(
+        client: PoolClient,
+        roles: RoleInstance[]
+    ): Promise<Set<UUID>> {
+        const targetOf = (role: RoleInstance): UUID | null | undefined =>
+            role.uuid_has_reference_class_instance ??
+            role.uuid_has_reference_relationclass_instance ??
+            role.uuid_has_reference_port_instance ??
+            role.uuid_has_reference_scene_instance ??
+            role.uuid_has_reference_attribute_instance;
+
+        const targets = roles.map(targetOf).filter((target) => target);
+        if (targets.length === 0) return new Set();
+
+        try {
+            const res = await client.query(
+                "SELECT uuid FROM instance_object WHERE uuid = ANY ($1::uuid[])",
+                [targets]
+            );
+            const existing = new Set(res.rows.map((row) => row.uuid));
+            return new Set(
+                roles
+                    .filter((role) => targetOf(role) && !existing.has(targetOf(role)))
+                    .map((role) => role.uuid)
+            );
+        } catch (err) {
+            throw new Error(`Error checking the targets of the roles: ${err}`);
+        }
+    }
+
+    /**
      * @description - This function gets the role by the uuid.
      * @param {PoolClient} client - The client to the database.
      * @param {UUID} roleUuid - The uuid of the role to get.

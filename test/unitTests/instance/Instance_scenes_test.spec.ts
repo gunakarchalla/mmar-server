@@ -41,6 +41,20 @@ describe("Instance sceneInstance tests", function () {
         roleInstanceUuid5: uuidv4(),
         sceneInstanceUuid5: uuidv4(),
         sceneInstanceUpsertUuid: uuidv4(),
+        sceneTypeUuid6: uuidv4(),
+        classUuid6: uuidv4(),
+        classInstanceUuid6: uuidv4(),
+        sceneInstanceUuid6: uuidv4(),
+        secondSceneInstanceUuid6: uuidv4(),
+        sceneTypeUuid7: uuidv4(),
+        attributeUuid7: uuidv4(),
+        attributeTypeUuid7: uuidv4(),
+        roleUuid7: uuidv4(),
+        roleInstanceUuid7: uuidv4(),
+        sceneInstanceUuid7: uuidv4(),
+        attributeInstanceUuid7: uuidv4(),
+        targetSceneInstanceUuid7: uuidv4(),
+        targetAttributeInstanceUuid7: uuidv4(),
     };
 
     before(async () => {
@@ -456,6 +470,233 @@ describe("Instance sceneInstance tests", function () {
             expect(resDel.status).to.equal(200);
             expect(resDel.body).to.deep.include(uuids.roleInstanceUuid5);
             expect(resDel.body).to.deep.include(uuids.sceneInstanceUuid5);
+        });
+
+        it("should delete the scene and the instances of its non reusable classes", async () => {
+            const resScene = await server
+                .post("/metamodel/sceneTypes")
+                .set("content-type", "application/json")
+                .set("accept", "application/json")
+                .set("Cookie", "authcookie=" + token)
+                .send({
+                    uuid: uuids.sceneTypeUuid6,
+                    name: "Test scenetype delete classes",
+                    description: "This is a scenetype to test delete classes",
+                    classes: [
+                        {
+                            uuid: uuids.classUuid6,
+                            name: "test meta class",
+                            is_reusable: false,
+                            is_abstract: false,
+                            geometry: "",
+                        },
+                    ],
+                });
+            expect(resScene).to.exist;
+            expect(resScene.status).to.equal(201);
+
+            const res1 = await server
+                .post(`/instances/sceneTypes/${uuids.sceneTypeUuid6}/sceneInstances`)
+                .set("content-type", "application/json")
+                .set("accept", "application/json")
+                .set("Cookie", "authcookie=" + token)
+                .send({
+                    uuid: uuids.sceneInstanceUuid6,
+                    uuid_scene_type: uuids.sceneTypeUuid6,
+                    name: "BPMN Diagram - test instance",
+                    class_instances: [
+                        {
+                            uuid: uuids.classInstanceUuid6,
+                            uuid_class: uuids.classUuid6,
+                            name: "test class from",
+                        },
+                    ],
+                });
+            expect(res1).to.exist;
+            expect(res1.status).to.equal(201);
+
+            const res2 = await server
+                .delete(`/instances/sceneInstances/${uuids.sceneInstanceUuid6}`)
+                .set("content-type", "application/json")
+                .set("accept", "application/json")
+                .set("Cookie", "authcookie=" + token);
+            expect(res2).to.exist;
+            expect(res2.status).to.equal(200);
+            expect(res2.body).to.deep.include(uuids.sceneInstanceUuid6);
+            expect(res2.body).to.deep.include(uuids.classInstanceUuid6);
+
+            const leftovers = await client.query(
+                "SELECT 1 FROM instance_object WHERE uuid = $1",
+                [uuids.classInstanceUuid6]
+            );
+            expect(leftovers.rowCount).to.equal(0);
+        });
+
+        it("should bring the classes back when a deleted scene is added again", async () => {
+            const res1 = await server
+                .patch(`/instances/sceneInstances/${uuids.sceneInstanceUuid6}`)
+                .set("content-type", "application/json")
+                .set("accept", "application/json")
+                .set("Cookie", "authcookie=" + token)
+                .send({
+                    uuid: uuids.sceneInstanceUuid6,
+                    uuid_scene_type: uuids.sceneTypeUuid6,
+                    name: "BPMN Diagram - test instance",
+                    class_instances: [
+                        {
+                            uuid: uuids.classInstanceUuid6,
+                            uuid_class: uuids.classUuid6,
+                            name: "test class from",
+                        },
+                    ],
+                });
+            expect(res1).to.exist;
+            expect(res1.status).to.equal(200);
+            expect(res1.body.class_instances.map((c: { uuid: string }) => c.uuid)).to.deep.equal([
+                uuids.classInstanceUuid6,
+            ]);
+        });
+
+        it("should keep a class instance until the last scene holding it is deleted", async () => {
+            const res1 = await server
+                .post(`/instances/sceneTypes/${uuids.sceneTypeUuid6}/sceneInstances`)
+                .set("content-type", "application/json")
+                .set("accept", "application/json")
+                .set("Cookie", "authcookie=" + token)
+                .send({
+                    uuid: uuids.secondSceneInstanceUuid6,
+                    uuid_scene_type: uuids.sceneTypeUuid6,
+                    name: "BPMN Diagram - second test instance",
+                });
+            expect(res1).to.exist;
+            expect(res1.status).to.equal(201);
+
+            await client.query(
+                "INSERT INTO assigned_to_scene (uuid_class_instance, uuid_scene_instance) VALUES ($1, $2)",
+                [uuids.classInstanceUuid6, uuids.secondSceneInstanceUuid6]
+            );
+
+            const res2 = await server
+                .delete(`/instances/sceneInstances/${uuids.sceneInstanceUuid6}`)
+                .set("content-type", "application/json")
+                .set("accept", "application/json")
+                .set("Cookie", "authcookie=" + token);
+            expect(res2).to.exist;
+            expect(res2.status).to.equal(200);
+            expect(res2.body).to.not.deep.include(uuids.classInstanceUuid6);
+
+            const res3 = await server
+                .delete(`/instances/sceneInstances/${uuids.secondSceneInstanceUuid6}`)
+                .set("content-type", "application/json")
+                .set("accept", "application/json")
+                .set("Cookie", "authcookie=" + token);
+            expect(res3).to.exist;
+            expect(res3.status).to.equal(200);
+            expect(res3.body).to.deep.include(uuids.classInstanceUuid6);
+        });
+
+        it("should delete the role of a reference attribute and leave what it references", async () => {
+            const resScene = await server
+                .post("/metamodel/sceneTypes")
+                .set("content-type", "application/json")
+                .set("accept", "application/json")
+                .set("Cookie", "authcookie=" + token)
+                .send({
+                    uuid: uuids.sceneTypeUuid7,
+                    name: "Test scenetype delete references",
+                    description: "This is a scenetype to test delete references",
+                    attributes: [
+                        {
+                            uuid: uuids.attributeUuid7,
+                            name: "Name",
+                            description: "Name of the element",
+                            attribute_type: {
+                                uuid: uuids.attributeTypeUuid7,
+                                name: "String",
+                                pre_defined: true,
+                                default_value: "This is a string",
+                                regex_value: "^.*$",
+                            },
+                        },
+                    ],
+                });
+            expect(resScene).to.exist;
+            expect(resScene.status).to.equal(201);
+
+            const resRole = await server
+                .post(`/metamodel/sceneTypes/${uuids.sceneTypeUuid7}/roles`)
+                .set("content-type", "application/json")
+                .set("accept", "application/json")
+                .set("Cookie", "authcookie=" + token)
+                .send([
+                    {
+                        uuid: uuids.roleUuid7,
+                        name: "role scene type ref",
+                        scenetype_references: [
+                            {
+                                uuid: uuids.sceneTypeUuid7,
+                                min: 1,
+                                max: 1,
+                            },
+                        ],
+                    },
+                ]);
+            expect(resRole).to.exist;
+            expect(resRole.status).to.equal(201);
+
+            const scenes = [
+                [uuids.sceneInstanceUuid7, uuids.attributeInstanceUuid7],
+                [uuids.targetSceneInstanceUuid7, uuids.targetAttributeInstanceUuid7],
+            ];
+            for (const [sceneInstanceUuid, attributeInstanceUuid] of scenes) {
+                const res = await server
+                    .post(`/instances/sceneTypes/${uuids.sceneTypeUuid7}/sceneInstances`)
+                    .set("content-type", "application/json")
+                    .set("accept", "application/json")
+                    .set("Cookie", "authcookie=" + token)
+                    .send({
+                        uuid: sceneInstanceUuid,
+                        uuid_scene_type: uuids.sceneTypeUuid7,
+                        name: "BPMN Diagram - test instance",
+                        attribute_instances: [
+                            {
+                                uuid: attributeInstanceUuid,
+                                uuid_attribute: uuids.attributeUuid7,
+                                value: "Start",
+                            },
+                        ],
+                    });
+                expect(res).to.exist;
+                expect(res.status).to.equal(201);
+            }
+
+            // The attribute of the first scene references the attribute of the second.
+            await client.query("INSERT INTO instance_object (uuid) VALUES ($1)", [uuids.roleInstanceUuid7]);
+            await client.query(
+                `INSERT INTO role_instance (uuid_instance_object, uuid_role, uuid_has_reference_attribute_instance)
+                 VALUES ($1, $2, $3)`,
+                [uuids.roleInstanceUuid7, uuids.roleUuid7, uuids.targetAttributeInstanceUuid7]
+            );
+            await client.query(
+                "UPDATE attribute_instance SET role_instance_from = $1 WHERE uuid_instance_object = $2",
+                [uuids.roleInstanceUuid7, uuids.attributeInstanceUuid7]
+            );
+
+            const resDel = await server
+                .delete(`/instances/sceneInstances/${uuids.sceneInstanceUuid7}`)
+                .set("content-type", "application/json")
+                .set("accept", "application/json")
+                .set("Cookie", "authcookie=" + token);
+            expect(resDel).to.exist;
+            expect(resDel.status).to.equal(200);
+            expect(resDel.body).to.deep.include(uuids.roleInstanceUuid7);
+            expect(resDel.body).to.not.deep.include(uuids.targetAttributeInstanceUuid7);
+
+            const target = await client.query(
+                "SELECT 1 FROM attribute_instance WHERE uuid_instance_object = $1",
+                [uuids.targetAttributeInstanceUuid7]
+            );
+            expect(target.rowCount).to.equal(1);
         });
     });
 });

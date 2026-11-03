@@ -1,5 +1,5 @@
 import {PoolClient} from "pg";
-import {AttributeInstance, RoleInstance, UUID,} from "../../../mmar-global-data-structure";
+import {AttributeInstance, remove_table_row, RoleInstance, UUID,} from "../../../mmar-global-data-structure";
 import {queries} from "../../index";
 import {CRUD} from "../common/crud.interface";
 import Instance_objects_connection from "./Instance_objects.connection";
@@ -376,6 +376,40 @@ class Instance_attributesConnection implements CRUD {
     }
 
     /**
+     * @description - Take out of a table being written the rows that only hold a
+     * reference to something deleted since the sender read the table, by the same rule
+     * as clear_attribute_reference() in init.sql. A row that holds anything else stays,
+     * and update() clears the reference in it.
+     * @param {PoolClient} client - The client to the database.
+     * @param {AttributeInstance} table - The table being written. Changed in place.
+     */
+    private async removeRowsOfDeletedReferences(
+        client: PoolClient,
+        table: AttributeInstance
+    ): Promise<void> {
+        const cells = table.get_table_attributes() ?? [];
+        const deleted = await Instance_rolesConnection.getRolesWithDeletedTarget(
+            client,
+            cells.flatMap((cell) => cell.role_instance_from ?? [])
+        );
+        if (deleted.size === 0) return;
+
+        const holdsDeletedReference = (cell: AttributeInstance) =>
+            deleted.has(cell.role_instance_from?.uuid);
+        const isEmpty = (cell: AttributeInstance) =>
+            !cell.value && !cell.role_instance_from && !cell.table_attributes?.length;
+
+        const rows = new Set(cells.filter(holdsDeletedReference).map((cell) => cell.table_row));
+        // Bottom up: removing a row renumbers the rows below it.
+        for (const row of [...rows].sort((a, b) => b - a)) {
+            const rowCells = cells.filter((cell) => cell.table_row === row);
+            if (rowCells.every((cell) => holdsDeletedReference(cell) || isEmpty(cell))) {
+                remove_table_row(table, row);
+            }
+        }
+    }
+
+    /**
      * @description - This function update an attribute instance.
      * @param {PoolClient} client - The client to the database.
      * @param {AttributeInstance} newAttributeInstance - The attribute instance to update.
@@ -412,7 +446,15 @@ class Instance_attributesConnection implements CRUD {
             if (!updated_obj) return undefined;
 
 
-            const roleInstance = newAttributeInstance.get_role_instance_from();
+            let roleInstance: RoleInstance | undefined = newAttributeInstance.get_role_instance_from();
+            if (roleInstance) {
+                const deleted = await Instance_rolesConnection.getRolesWithDeletedTarget(client, [roleInstance]);
+                if (deleted.size > 0) {
+                    roleInstance = undefined;
+                    newAttributeInstance.set_value("");
+                }
+            }
+
             let returnRoles;
             if (roleInstance) {
                 returnRoles = await Instance_rolesConnection.postRolesInstance(client, RoleInstance.fromJS(roleInstance) as RoleInstance, userUuid);
@@ -443,6 +485,7 @@ class Instance_attributesConnection implements CRUD {
                 await this.getByUuid(client, attrUuidToUpdate)
             ) as AttributeInstance;
 
+            await this.removeRowsOfDeletedReferences(client, newAttributeInstance);
             const tableAttrs = newAttributeInstance.get_table_attributes() ?? [];
 
             // Writing a table replaces its cells (see Instance_tables in gds): a stored cell
