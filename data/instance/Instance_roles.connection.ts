@@ -66,15 +66,15 @@ class Instance_rolesConnection implements CRUD {
     }
 
     /**
-     * @description - Which of these roles point at something that no longer exists.
+     * @description - Which of these role instances point at something that no longer exists.
      *
-     * A scene stays open while its references are deleted in another tab, or by another
-     * user. The database removed those references along with their targets, see
+     * A scene instance stays open while what it references is deleted in another tab, or
+     * by another user. The database cleared those references when their targets went, see
      * clear_attribute_reference() in init.sql, so a copy read before that must not write
-     * them back: the role's foreign key would fail, and the whole save with it.
+     * them back: the role instance's foreign key would fail, and the whole save with it.
      * @param {PoolClient} client - The client to the database.
-     * @param {RoleInstance[]} roles - The roles to check.
-     * @returns {Promise<Set<UUID>>} - The uuids of the roles whose target is gone.
+     * @param {RoleInstance[]} roles - The role instances to check.
+     * @returns {Promise<Set<UUID>>} - The uuids of the role instances whose target is gone.
      */
     async getRolesWithDeletedTarget(
         client: PoolClient,

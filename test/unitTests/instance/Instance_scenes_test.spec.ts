@@ -209,7 +209,7 @@ describe("Instance sceneInstance tests", function () {
             expect(res1.body).to.deep.include(uuids.sceneInstanceUuid);
         });
 
-        it("should delete the scene and unlink the class", async () => {
+        it("should delete the scene and its class instance, also when the class is reusable", async () => {
             const resScene = await server
                 .post("/metamodel/sceneTypes")
                 .set("content-type", "application/json")
@@ -262,7 +262,7 @@ describe("Instance sceneInstance tests", function () {
             expect(res2).to.exist;
             expect(res2.status).to.equal(200);
             expect(res2.body).to.deep.include(uuids.sceneInstanceUuid2);
-            expect(res2.body).to.not.deep.include(uuids.classInstanceUuid2);
+            expect(res2.body).to.deep.include(uuids.classInstanceUuid2);
         });
 
         it("should delete the scene and the attribute", async () => {

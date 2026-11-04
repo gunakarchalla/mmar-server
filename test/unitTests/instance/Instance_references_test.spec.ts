@@ -26,8 +26,8 @@ interface StoredScene {
 
 /**
  * What happens to a reference when the object it points at is deleted, whichever scene
- * either of them is in: the reference goes with it, and a copy of the scene read before
- * the delete can still be saved without bringing it back.
+ * either of them is in: the reference is cleared, a table cell keeps its row, and a copy
+ * of the scene read before the delete can still be saved without bringing it back.
  */
 describe("Instance references to deleted objects", function () {
     const server = chai.request(API_URL);
@@ -102,8 +102,10 @@ describe("Instance references to deleted objects", function () {
     const attribute = (body: StoredScene, uuid: string) =>
         body.attribute_instances.find((candidate) => candidate.uuid === uuid) as StoredAttribute;
 
+    /** The one-column table as [row, value, whether the cell still holds a role instance]. */
     const rowsOfList = (body: StoredScene) =>
-        attribute(body, uuids.listInstanceUuid).table_attributes.map((cell) => [cell.table_row, cell.value]);
+        attribute(body, uuids.listInstanceUuid).table_attributes
+            .map((cell) => [cell.table_row, cell.value, Boolean(cell.role_instance_from)]);
 
     let copyReadBeforeTheDelete: StoredScene;
 
@@ -246,7 +248,11 @@ describe("Instance references to deleted objects", function () {
         expect(referencingScene.status).to.equal(200);
 
         copyReadBeforeTheDelete = await scene(uuids.referencingSceneUuid);
-        expect(rowsOfList(copyReadBeforeTheDelete)).to.deep.equal([[0, "target 0"], [1, "target 1"], [2, "target 2"]]);
+        expect(rowsOfList(copyReadBeforeTheDelete)).to.deep.equal([
+            [0, "target 0", true],
+            [1, "target 1", true],
+            [2, "target 2", true],
+        ]);
     });
 
     after(async () => {
@@ -263,14 +269,15 @@ describe("Instance references to deleted objects", function () {
             expect(res.status).to.equal(200);
         });
 
-        it("removes a table row that held nothing else, and moves the rows below it up", async () => {
+        it("clears a table cell that referenced it, and keeps its row", async () => {
             expect(rowsOfList(await scene(uuids.referencingSceneUuid))).to.deep.equal([
-                [0, "target 1"],
-                [1, "target 2"],
+                [0, "", false],
+                [1, "target 1", true],
+                [2, "target 2", true],
             ]);
         });
 
-        it("keeps a row that holds something else, and clears the reference in it", async () => {
+        it("clears the reference and leaves the rest of its row", async () => {
             const {table_attributes: cells} = attribute(await scene(uuids.referencingSceneUuid), uuids.wideInstanceUuid);
             const reference = cells.find((cell) => cell.uuid === uuids.wideReferenceCellUuid);
             const note = cells.find((cell) => cell.uuid === uuids.wideNoteCellUuid);
@@ -291,14 +298,18 @@ describe("Instance references to deleted objects", function () {
             const res = await saveScene(copyReadBeforeTheDelete);
             expect(res.status).to.equal(200);
 
-            expect(rowsOfList(res.body)).to.deep.equal([[0, "target 1"], [1, "target 2"]]);
+            expect(rowsOfList(res.body)).to.deep.equal([
+                [0, "", false],
+                [1, "target 1", true],
+                [2, "target 2", true],
+            ]);
             expect(attribute(res.body, uuids.plainInstanceUuid).value).to.equal("");
 
-            const stale = await client.query(
-                "SELECT 1 FROM attribute_instance WHERE uuid_instance_object = $1",
+            const stored = await client.query(
+                "SELECT value, role_instance_from FROM attribute_instance WHERE uuid_instance_object = $1",
                 [listCell[0]]
             );
-            expect(stale.rowCount).to.equal(0);
+            expect(stored.rows).to.deep.equal([{value: "", role_instance_from: null}]);
         });
 
         it("leaves the wide table as it was after that save", async () => {
@@ -318,15 +329,23 @@ describe("Instance references to deleted objects", function () {
             expect(res.status).to.equal(200);
         });
 
-        it("removes the references to everything in it", async () => {
-            expect(rowsOfList(await scene(uuids.referencingSceneUuid))).to.deep.equal([]);
+        it("clears the references to everything in it, and keeps the rows", async () => {
+            expect(rowsOfList(await scene(uuids.referencingSceneUuid))).to.deep.equal([
+                [0, "", false],
+                [1, "", false],
+                [2, "", false],
+            ]);
         });
 
         it("still saves a copy read before the delete", async () => {
             const res = await saveScene(copyReadBeforeTheDelete);
 
             expect(res.status).to.equal(200);
-            expect(rowsOfList(res.body)).to.deep.equal([]);
+            expect(rowsOfList(res.body)).to.deep.equal([
+                [0, "", false],
+                [1, "", false],
+                [2, "", false],
+            ]);
         });
     });
 });
