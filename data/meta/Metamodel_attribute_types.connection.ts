@@ -8,7 +8,7 @@ import Metamodel_rolesConnection from "./Metamodel_roles.connection";
 import Metamodel_common_functions from "./Metamodel_common_functions.connection";
 import Metamodel_attributes_connection from "./Metamodel_attributes.connection";
 import {ColumnStructure} from "../../../mmar-global-data-structure/models/meta/Metamodel_columns.structure";
-import {BaseError, HTTP403NORIGHT,} from "../services/middleware/error_handling/standard_errors.middleware";
+import {BaseError, HTTP403NORIGHT, HTTP500Error,} from "../services/middleware/error_handling/standard_errors.middleware";
 import {attribute_type_pattern_rule} from "../services/rule_engine/meta_rule_engine/Metamodel_attributes.rules";
 
 /**
@@ -421,28 +421,41 @@ class Metamodel_attribute_typesConnection implements CRUD {
       ]);
 
       if (newAttributeType.get_role()) {
+        // The role is what makes this a reference type, so a role that could not be
+        // written fails the attribute type with it. Thrown rather than returned: the
+        // attribute owning this type is written by callers that ignore what they get
+        // back, and a scene type import would otherwise report success with the role
+        // missing or incomplete.
+        let savedRole: Role | undefined | BaseError;
         if (current_attrType.get_role()) {
           if (fromHardUpdate) {
-            await Metamodel_rolesConnection.hardUpdate(
+            savedRole = await Metamodel_rolesConnection.hardUpdate(
               client,
               newAttributeType.get_role().get_uuid(),
               newAttributeType.get_role(),
               userUuid,
             );
           } else {
-            await Metamodel_rolesConnection.update(
+            savedRole = await Metamodel_rolesConnection.update(
               client,
               newAttributeType.get_role().get_uuid(),
               newAttributeType.get_role(),
               userUuid,
             );
           }
+          if (savedRole instanceof BaseError) throw savedRole;
         } else {
-          await Metamodel_rolesConnection.create(
+          savedRole = await Metamodel_rolesConnection.create(
             client,
             newAttributeType.get_role(),
             userUuid,
           );
+          if (savedRole instanceof BaseError) throw savedRole;
+          if (!(savedRole instanceof Role)) {
+            throw new HTTP500Error(
+              `The role ${newAttributeType.get_role().get_uuid()} of the attribute type ${attrTypeUuidToUpdate} could not be created.`,
+            );
+          }
         }
         const updateQuery =
           "UPDATE role SET uuid_attribute_type=coalesce($1,uuid_attribute_type) WHERE uuid_metaobject = $2";
@@ -474,6 +487,9 @@ class Metamodel_attribute_typesConnection implements CRUD {
 
       return await this.getByUuid(client, attrTypeUuidToUpdate, userUuid);
     } catch (err) {
+      // A refusal raised on purpose (the role above) keeps its status when the
+      // attribute type is written through its own route.
+      if (err instanceof BaseError) throw err;
       throw new Error(
         `Error updating the attribute type ${attrTypeUuidToUpdate}: ${err}`,
       );

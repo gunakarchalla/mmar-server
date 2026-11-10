@@ -6,12 +6,83 @@ import Metamodel_metaobject_connection from "./Metamodel_metaobjects.connection"
 import {CRUD} from "../common/crud.interface";
 import Metamodel_references_connection from "./Metamodel_references.connection";
 import Metamodel_common_functions from "./Metamodel_common_functions.connection";
-import Metamodel_common_functionsController from "./Metamodel_common_functions.connection";
 import {
   HTTP404Error,
   BaseError,
   HTTP403NORIGHT,
 } from "../services/middleware/error_handling/standard_errors.middleware";
+
+/**
+ * @description - The references of a role that must name an existing meta object when
+ * they are written, and the table the foreign key of each points at.
+ *
+ * Relation class references are not listed on purpose. Their foreign key is
+ * DEFERRABLE INITIALLY DEFERRED, so a role may name a relation class that the same
+ * transaction creates later: a relation class's roles are written before its own row
+ * in `relationclass`, and a metamodel may reference a relation class further down the
+ * file. The database checks them at commit, and fails the whole write if one is still
+ * missing.
+ */
+const CHECKED_REFERENCES: ReadonlyArray<{
+  kind: string;
+  references: (role: Role) => { uuid: UUID }[] | null | undefined;
+  table: string;
+}> = [
+  { kind: "class", references: (role) => role.class_references, table: "class" },
+  { kind: "scene type", references: (role) => role.scenetype_references, table: "scene_type" },
+  { kind: "port", references: (role) => role.port_references, table: "port" },
+  { kind: "attribute", references: (role) => role.attribute_references, table: "attribute" },
+];
+
+/**
+ * @description - Refuse a role that references a class, scene type, port or attribute
+ * which does not exist, naming every missing target.
+ *
+ * Each target is looked up in the table its foreign key points at, so a reference that
+ * passes here can be written. A missing target used to be skipped: the role was saved
+ * without it, the remaining references after it were skipped too, and the 404 that
+ * described it was returned from inside a helper whose result nobody read. Importing a
+ * scene type whose attribute references the classes of a scene type not yet imported
+ * therefore succeeded and left a reference attribute that could reference nothing.
+ *
+ * Thrown rather than returned: a role is written from inside the writes of an
+ * attribute type and of a relation class, and the layers above those do not look at
+ * what they get back, so a returned error vanishes there. A thrown one aborts the
+ * transaction, whichever route it came from. It runs before the callers' try blocks,
+ * so a role written through its own route keeps the 404; reached through a scene type
+ * import it is wrapped by the connection layer and answered with a 500, the message
+ * staying in the server log.
+ * @param {PoolClient} client - The client to the database.
+ * @param {Role} role - The role about to be written.
+ * @throws {HTTP404Error} - If any referenced target does not exist.
+ */
+async function assert_references_exist(client: PoolClient, role: Role): Promise<void> {
+  const missing: string[] = [];
+
+  for (const { kind, references, table } of CHECKED_REFERENCES) {
+    const uuids = [...new Set((references(role) ?? []).map((reference) => reference.uuid))];
+    if (uuids.length === 0) continue;
+
+    // table is interpolated because a table name cannot be a bind parameter. It is
+    // safe only because it comes from the frozen list above, never from the request.
+    const found = await client.query<{ uuid: UUID }>(
+      `SELECT uuid_metaobject AS uuid FROM public.${table} WHERE uuid_metaobject = ANY($1::uuid[])`,
+      [uuids],
+    );
+    const existing = new Set(found.rows.map((row) => row.uuid));
+    for (const uuid of uuids) {
+      if (!existing.has(uuid)) missing.push(`${kind} ${uuid}`);
+    }
+  }
+
+  if (missing.length > 0) {
+    const name = role.name ? `"${role.name}" (${role.uuid})` : role.uuid;
+    throw new HTTP404Error(
+      `The role ${name} references ${missing.length} meta object(s) that do not exist: ` +
+        `${missing.join(", ")}. Create them first, for example by importing the scene type that defines them.`,
+    );
+  }
+}
 
 /**
  * @description - This is the class that handles the CRUD operations for the Meta roles.
@@ -328,6 +399,8 @@ class Metamodel_rolesConnection implements CRUD {
     newRole: Role,
     userUuid?: UUID,
   ): Promise<Role | undefined | BaseError> {
+    await assert_references_exist(client, newRole);
+
     try {
       const updateQueries = {
         class_reference:
@@ -373,21 +446,11 @@ class Metamodel_rolesConnection implements CRUD {
       // Update references in parallel
       const updateTasks = [];
 
+      // The targets were checked by assert_references_exist before the try.
       for (const reference of newRole.get_class_reference()) {
-        if (
-          await Metamodel_common_functionsController.doesMetaObjectAlreadyExists(
-            client,
-            reference.uuid,
-          )
-        ) {
-          updateTasks.push(
-            handleReferenceUpdate(reference, updateQueries.class_reference),
-          );
-        } else {
-          return new HTTP404Error(
-            `Error: the class ${reference.uuid} does not exist`,
-          );
-        }
+        updateTasks.push(
+          handleReferenceUpdate(reference, updateQueries.class_reference),
+        );
       }
 
       for (const reference of newRole.get_scenetype_reference()) {
@@ -439,6 +502,8 @@ class Metamodel_rolesConnection implements CRUD {
     newRole: Role,
     userUuid?: UUID,
   ): Promise<Role | undefined | BaseError> {
+    await assert_references_exist(client, newRole);
+
     try {
       const insertQueries = {
         role: "insert into role (uuid_metaobject) values ($1)",
@@ -475,50 +540,41 @@ class Metamodel_rolesConnection implements CRUD {
 
       const createTasks: Promise<QueryResult>[] = [];
 
-      const handleReferenceCreation = async (
-        references: ClassReference[],
+      // The targets were checked by assert_references_exist before the try; the
+      // relation class references are left to their deferred foreign key.
+      const handleReferenceCreation = (
+        references: ClassReference[] | null | undefined,
         query: string,
       ) => {
-        for (const reference of references) {
-          if (
-            await Metamodel_common_functionsController.doesMetaObjectAlreadyExists(
-              client,
+        for (const reference of references ?? []) {
+          createTasks.push(
+            client.query(query, [
+              reference.min,
+              reference.max,
+              created_metaObject.uuid,
               reference.uuid,
-            )
-          ) {
-            createTasks.push(
-              client.query(query, [
-                reference.min,
-                reference.max,
-                created_metaObject.uuid,
-                reference.uuid,
-              ]),
-            );
-          } else {
-            return new HTTP404Error(
-              `Error: the class ${reference.uuid} does not exist`,
-            );
-          }
+            ]),
+          );
         }
       };
 
-      await handleReferenceCreation(
+      handleReferenceCreation(
         newRole.get_class_reference(),
         insertQueries.class_reference,
       );
-      await handleReferenceCreation(
+      handleReferenceCreation(
         newRole.get_scenetype_reference(),
         insertQueries.scenetype_reference,
       );
-      await handleReferenceCreation(
+      handleReferenceCreation(
         newRole.get_port_reference(),
         insertQueries.port_reference,
       );
-      await handleReferenceCreation(
+      handleReferenceCreation(
         newRole.get_relationclass_reference(),
         insertQueries.relationclass_reference,
       );
-      await handleReferenceCreation(
+      handleReferenceCreation(
         newRole.attribute_references,
         insertQueries.attribute_reference,
       );
