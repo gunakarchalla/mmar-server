@@ -20,8 +20,7 @@ interface Baseline {
  * that specialises them — a class row hangs off a metaobject, a class instance off
  * an instance_object — so removing these two removes the rest.
  */
-const OWNED_TABLES = ["instance_object", "metaobject"] as const;
-type OwnedTable = (typeof OWNED_TABLES)[number];
+type OwnedTable = "instance_object" | "metaobject";
 
 export class TestEnvironmentSetup {
   private static instance: TestEnvironmentSetup;
@@ -99,7 +98,7 @@ export class TestEnvironmentSetup {
    * are retried on the next pass; the loop ends when a whole pass achieves
    * nothing, which is either success or a genuine cycle.
    * @param {PoolClient} client - The client to the database.
-   * @param {OwnedTable} table - The table to clean. Not user input: see OWNED_TABLES.
+   * @param {OwnedTable} table - The table to clean. Not user input: see OwnedTable.
    * @param {Set<string>} keep - The uuids that were there before.
    * @returns {Promise<string[]>} - The uuids that could not be removed.
    */

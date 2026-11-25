@@ -197,25 +197,25 @@ class Instance_scenesConnection implements CRUD {
                 created_instanceObject.get_uuid(),
                 newScene.get_attribute_instances(),
                 userUuid
-            ),
-                await Instance_port_connection.postPortsInstance(
-                    client,
-                    newScene.get_port_instances()
-                ),
-                await Instance_class_connection.postClassInstances(
-                    client,
-                    newScene.get_class_instances(),
-                    created_instanceObject.get_uuid()
-                ),
-                await Instance_relationclass_connection.postRelationClassInstance(
-                    client,
-                    newScene.get_relationclass_instances(),
-                    created_instanceObject.get_uuid()
-                ),
-                await Instance_role_connection.postRolesInstance(
-                    client,
-                    newScene.get_role_instances()
-                );
+            );
+            await Instance_port_connection.postPortsInstance(
+                client,
+                newScene.get_port_instances()
+            );
+            await Instance_class_connection.postClassInstances(
+                client,
+                newScene.get_class_instances(),
+                created_instanceObject.get_uuid()
+            );
+            await Instance_relationclass_connection.postRelationClassInstance(
+                client,
+                newScene.get_relationclass_instances(),
+                created_instanceObject.get_uuid()
+            );
+            await Instance_role_connection.postRolesInstance(
+                client,
+                newScene.get_role_instances()
+            );
 
             await this.update(
                 client,

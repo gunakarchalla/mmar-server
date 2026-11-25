@@ -7,6 +7,7 @@ import Metamodel_attribute_types_connection from "./Metamodel_attribute_types.co
 import Metamodel_common_functions from "./Metamodel_common_functions.connection";
 import {BaseError, HTTP403NORIGHT,} from "../services/middleware/error_handling/standard_errors.middleware";
 import {readable_uuids} from "../services/authorization";
+import {attribute_values_rule} from "../services/rule_engine/meta_rule_engine/Metamodel_attributes.rules";
 
 /**
  * @description - This is the class that handles the CRUD operations for the Meta Attribute.
@@ -384,6 +385,14 @@ class Metamodel_attributesConnection implements CRUD {
     newAttribute: Attribute,
     userUuid?: UUID,
   ): Promise<Attribute | undefined | BaseError> {
+    // Every write of an attribute ends here - create() finishes by calling update(),
+    // and a class, port, scene type or table-bearing attribute type saves the
+    // attributes hanging off it through updateForParentUuid - so this is the one place
+    // the values rule has to hold. It runs before the try: the catch below wraps
+    // anything thrown into an Error carrying the raw database message, which the error
+    // handler answers with an opaque 500 rather than the 403 this is.
+    await attribute_values_rule(client, attrUuidToUpdate, newAttribute);
+
     try {
       const query_update_attribute =
         "UPDATE attribute set multi_valued= coalesce($1, multi_valued), default_value=coalesce($2, default_value), facets=coalesce($3, facets), min=coalesce($4, min), max=coalesce($5, max), attribute_type_uuid = coalesce($6, attribute_type_uuid) where uuid_metaobject = $7 ";

@@ -1,7 +1,10 @@
 import { NextFunction, Request, RequestHandler, Response } from "express";
 import * as jwt from "jsonwebtoken";
-import type { UUID } from "../../../../mmar-global-data-structure";
-import { environment } from "../environment";
+import {
+    is_auth_token_payload,
+    verify_user_token,
+} from "../token.service";
+import type { AuthTokenPayload } from "../token.service";
 import {
     log_authentication_failure,
     record_security_event,
@@ -14,17 +17,12 @@ import {
 import { is_administrator_standalone } from "../authorization";
 
 /**
- * @description - The payload carried by a JSON web token issued by this server.
- * It mirrors what User.generate_token() signs.
+ * @description - The payload the authenticated user is exposed as. It is
+ * defined alongside the signing in token.service, so that what this middleware
+ * trusts and what the server issues cannot describe different things, and
+ * re-exported here because this is where it reaches a request.
  */
-export interface AuthTokenPayload extends jwt.JwtPayload {
-    /** @description - The uuid of the authenticated user. */
-    uuid: UUID;
-    /** @description - The login of the authenticated user. */
-    username: string;
-    /** @description - Whether the authenticated user is the administrator. */
-    isAdmin: boolean;
-}
+export type { AuthTokenPayload };
 
 declare global {
     // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -38,25 +36,6 @@ declare global {
             user?: AuthTokenPayload;
         }
     }
-}
-
-/**
- * @description - Narrow a verified token payload to the payload this server issues.
- * A token can be validly signed and still not describe a user, so the claims the
- * controllers rely on are checked before they are trusted.
- * @param {string | jwt.JwtPayload} payload - The payload returned by jwt.verify.
- * @returns {boolean} - True if the payload describes an authenticated user.
- */
-function is_auth_token_payload(
-    payload: string | jwt.JwtPayload
-): payload is AuthTokenPayload {
-    return (
-        typeof payload === "object" &&
-        payload !== null &&
-        typeof payload.uuid === "string" &&
-        typeof payload.username === "string" &&
-        typeof payload.isAdmin === "boolean"
-    );
 }
 
 /**
@@ -108,12 +87,7 @@ export const authenticate_token: RequestHandler = (
     // downstream into a misleading "Invalid token" 401.
     let payload: string | jwt.JwtPayload;
     try {
-        // The accepted algorithm is pinned to the one used to sign. Leaving it
-        // open lets a caller choose the algorithm their forged token is verified
-        // with, which is the basis of every "alg" confusion attack.
-        payload = jwt.verify(token, environment.jwt_secret, {
-            algorithms: ["HS256"],
-        });
+        payload = verify_user_token(token);
     } catch (err) {
         if (err instanceof jwt.TokenExpiredError) {
             log_authentication_failure(req, "token_expired", token, {

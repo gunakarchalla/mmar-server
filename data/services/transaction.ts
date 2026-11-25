@@ -1,8 +1,9 @@
 import { PoolClient } from "pg";
-import { Request, RequestHandler, Response } from "express";
+import { RequestHandler, Response } from "express";
 import { current_user } from "./request_context";
 import { database_connection } from "./database_connection";
 import { filter_object } from "./middleware/object_filter";
+import { RouteRequest } from "./middleware/uuid_params.middleware";
 
 /**
  * @description - Open a transaction and tell the database who is acting.
@@ -51,7 +52,7 @@ export type HandlerResult = unknown;
  * A failing ROLLBACK is also contained: it used to throw out of the catch block
  * and take next(err) with it, so the request hung instead of failing.
  *
- * @param {(client: PoolClient, req: Request, res: Response) => Promise<HandlerResult>} run -
+ * @param {(client: PoolClient, req: RouteRequest, res: Response) => Promise<HandlerResult>} run -
  * The body of the handler. It may set headers or cookies on the response, but it
  * must not send it.
  * @param {{status?: number}} options - The status to answer with, 200 by default.
@@ -60,7 +61,7 @@ export type HandlerResult = unknown;
 export function withTransaction(
     run: (
         client: PoolClient,
-        req: Request,
+        req: RouteRequest,
         res: Response
     ) => Promise<HandlerResult>,
     options: { status?: number } = {}
@@ -69,7 +70,8 @@ export function withTransaction(
         const client = await database_connection.getInstance().getPool().connect();
         try {
             await begin_transaction(client);
-            const result = await run(client, req, res);
+            // Narrowed rather than asserted per call site: see RouteRequest.
+            const result = await run(client, req as RouteRequest, res);
             await client.query("COMMIT");
 
             if (!res.headersSent) {

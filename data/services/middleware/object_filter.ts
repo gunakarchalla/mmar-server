@@ -5,7 +5,7 @@ import {JSONPath} from 'jsonpath-plus';
 /**
  * @description - This function is used to apply the filter to the object before sending it.
  * @param {| MetaObject | ObjectInstance | MetaObject[] | ObjectInstance[] | string[] | Rule | Rule[]} sc - The object to filter.
- * @param {string | ParsedQs | string[] | ParsedQs[] | undefined} filter - The filter to apply comming from the ulr (/?filter=[a,b,c])
+ * @param {ParsedQs[string]} filter - The filter to apply comming from the ulr (/?filter=[a,b,c]). This is the type of a single query value, whatever shape the query parser gave it; only a plain string is acted on.
  * @returns {unknown} - The filtered object.
  * @throws {Error} - If there is an error in the filter.
  * @method
@@ -15,7 +15,7 @@ export function filter_object(
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 sc,
-filter: string | ParsedQs | string[] | ParsedQs[] | undefined
+filter: ParsedQs[string]
 ): unknown {
     try {
         if (filter && typeof filter === "string") {

@@ -5,6 +5,7 @@ import {HTTP404Error, HTTP403Constrain,} from "../middleware/error_handling/stan
 import {applyRules_ocl} from "./Metamodel_ocl";
 import {applyRules_jsonRulesEngine} from "./Metamodel_jsonRulesEngine";
 import Metamodel_common_functions from "../../meta/Metamodel_common_functions.connection";
+import {route_params} from "../middleware/uuid_params.middleware";
 
 export const custom_rules_object_instance_body: RequestHandler = async (
     req,
@@ -12,20 +13,21 @@ export const custom_rules_object_instance_body: RequestHandler = async (
     next
 ) => {
     try {
+        const uuid = route_params(req).uuid;
         let engineSelection;
         if (req.query.engine !== undefined) engineSelection = req.query.engine.toString();
 
         const res_rules = await custom_rules_inner_object_instance_body(
-            req.params.uuid,
+            uuid,
             engineSelection
         );
         if (res_rules.state) {
             res.status(200).send(
-                `The object instance with the uuid: ${req.params.uuid}, does comply to all the rules: ${res_rules.passed}`
+                `The object instance with the uuid: ${uuid}, does comply to all the rules: ${res_rules.passed}`
             );
         } else {
             throw new HTTP403Constrain(
-                `The object instance with the uuid: ${req.params.uuid}, does not meet the rules: ${res_rules.failed}.`
+                `The object instance with the uuid: ${uuid}, does not meet the rules: ${res_rules.failed}.`
             );
         }
         // The response is already sent, so the chain ends here: calling next()

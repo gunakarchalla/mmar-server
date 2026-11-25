@@ -3,7 +3,6 @@ import { BaseError, HttpStatusCode } from "./standard_errors.middleware";
 import { record_security_event } from "../../security_audit.service";
 import { environment } from "../../environment";
 import * as winston from "winston";
-import { LogCallback } from "winston";
 
 /**
  * @description - What a client is told when the server hit a problem it does not
@@ -148,19 +147,19 @@ class Logger {
     winston.addColors(customLevels.colors);
   }
 
-  trace(msg: string, meta?: LogCallback) {
+  trace(msg: string, meta?: unknown) {
     this.logger.log("trace", msg, meta);
   }
 
-  debug(msg: string, meta?: LogCallback) {
+  debug(msg: string, meta?: unknown) {
     this.logger.debug(msg, meta);
   }
 
-  info(msg: string, meta?: LogCallback) {
+  info(msg: string, meta?: unknown) {
     this.logger.info(msg, meta);
   }
 
-  warn(msg: string, meta?: LogCallback) {
+  warn(msg: string, meta?: unknown) {
     this.logger.warn(msg, meta);
   }
 
@@ -168,7 +167,7 @@ class Logger {
     this.logger.error(msg, meta);
   }
 
-  fatal(msg: string, meta?: LogCallback) {
+  fatal(msg: string, meta?: unknown) {
     this.logger.log("fatal", msg, meta);
   }
 }

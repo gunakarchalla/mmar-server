@@ -66,7 +66,7 @@ class Metamodel_filesConnection implements CRUD {
 
             return createdFile;
 
-        } catch (error) {
+        } catch (_error) {
             throw new Error(`Error creating the file.`);
         }
     }
@@ -114,7 +114,7 @@ class Metamodel_filesConnection implements CRUD {
                 return_file = File.fromJS(res.rows[0]) as File;
             }
             return return_file;
-        } catch (error) {
+        } catch (_error) {
             throw new Error(`Error getting the file with uuid ${uuidToGet}.`);
         }
     }
@@ -147,7 +147,7 @@ class Metamodel_filesConnection implements CRUD {
                 return_file = File.fromJS(res.rows[0]) as File;
             }
             return return_file;
-        } catch (error) {
+        } catch (_error) {
             throw new Error(`Error getting the file with name ${name}.`);
         }
     }
@@ -180,7 +180,7 @@ class Metamodel_filesConnection implements CRUD {
             await client.query(query, [newFile.data, newFile.type, uuidToUpdate]);
 
             return await this.getByUuid(client, uuidToUpdate, userUuid);
-        } catch (error) {
+        } catch (_error) {
             throw new Error(`Error updating the file with uuid ${uuidToUpdate}.`);
         }
     }
@@ -214,7 +214,7 @@ class Metamodel_filesConnection implements CRUD {
             await client.query(query, [newFile.data, newFile.type, uuidToUpdate]);
 
             return await this.getByUuid(client, uuidToUpdate, userUuid);
-        } catch (error) {
+        } catch (_error) {
             throw new Error(`Error updating the file with uuid ${uuidToUpdate}.`);
         }
     }

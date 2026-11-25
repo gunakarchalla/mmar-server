@@ -32,7 +32,7 @@ the git history and must be treated as compromised wherever this code was ever d
 | `TOKEN_EXPIRE_TIME` | no | Lifetime of an issued token (`30m`, `8h`, or a number of seconds), `8h` by default. There is no revocation list, so this is also how long a leaked token stays usable. |
 | `HTTPPORT` | no | Port of the server, `8000` by default. |
 | `NODE_ENV` | no | `development` enables verbose logging and drops the `secure` flag on the auth cookie so it works over plain HTTP. Anything else is treated as production. |
-| `CORS_ORIGINS` | no | Comma separated browser origins allowed to call the API. The API accepts cookie authentication, so it cannot be left open to every origin when this is set; unset means same-origin only. |
+| `CORS_ORIGINS` | no | Comma separated browser origins allowed to call the API, which are then also allowed to send the auth cookie. Left unset, any origin may call the API but credentials are refused — set it in any deployment that authenticates with the cookie. |
 | `TRUST_PROXY_HOPS` | no | Number of reverse proxies in front of the server, `0` by default. Set it so that `req.ip` is the real client, which the rate limiter and the audit trail both depend on. |
 | `MAX_UPLOAD_BYTES` | no | Largest uploaded file accepted, `16 MiB` by default. |
 
@@ -123,9 +123,10 @@ lost: that situation is reported on stderr, where the container log picks it up.
 ### Attribution of the data changes
 
 `logging.t_history` records every change to `metaobject` and `instance_object` through a
-database trigger. Its `who` column holds the *database* role, and since every connection of
-the pool authenticates as the same role, it cannot tell the platform users apart. The
-`uuid_user` column answers that question.
+database trigger. It used to carry a `who` column defaulting to `CURRENT_USER`, which could
+not tell the platform users apart: the trigger is `SECURITY DEFINER`, so every row recorded
+the owner of the function rather than the role that connected. That column was dropped, and
+`uuid_user` answers the question it was meant to answer.
 
 The identity is carried from the request down to the trigger like this:
 
@@ -292,12 +293,26 @@ npm run test:db     # reset, then run the full suite
 ```
 
 Point the suite at a database of its own by putting its settings in `.env.test`, with a
-`PGDATABASE` ending in `_test` — `test/reset_test_database.js` refuses to drop anything
-else, so it cannot be aimed at the development database by accident.
+`PGDATABASE` ending in `_test`. That file is **not** in the repository, and without it both
+`npm run test:reset` and `npm test` fall back to `.env` — so create it before running
+either.
 
-`npm test` drives the real API against a real database, so it needs both up: see
-`.github/workflows/ci.yml`, which loads `mmar-database/init.sql` into a throwaway
-PostgreSQL, starts the server and runs the suite the same way.
+Only `test:reset` is guarded: `test/reset_test_database.js` refuses to drop a database
+whose name does not end in `_test`, so it cannot be aimed at the development database by
+accident. **`npm test` carries no such guard.** It connects with whatever `PGDATABASE`
+resolves to and `TestEnvironmentSetup` sweeps rows on every `tearDown`, so running it
+against `.env` exercises and prunes the development database.
+
+`npm test` drives the real API against a real database, so it needs both up: load
+`mmar-database/init.sql` into a PostgreSQL of its own, point `.env.test` at it, start the
+server against that same database, then run the suite. Both halves must agree — the specs
+check through the API *and* read the database directly, so a server still pointed at the
+development database fails them for the wrong reason.
+
+Run the suite **inside the API server's own container**. The specs hardcode
+`const API_URL = "http://localhost:8000"`, which resolves only where the server itself
+runs; from a client container, use the compose hostname `mmar-server:8000` instead — the
+client repositories' `*.integration.test.ts` files do.
 
 Run it against a **fresh** database. `TestEnvironmentSetup` records which rows exist before
 the first spec runs and every `tearDown` removes everything created since, so a spec no

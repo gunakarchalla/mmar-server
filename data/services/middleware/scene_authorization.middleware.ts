@@ -4,6 +4,7 @@ import type { UUID } from "../../../../mmar-global-data-structure";
 import { queries } from "../../../index";
 import { with_client } from "../database_connection";
 import { requireUser } from "./auth.middleware";
+import { route_params } from "./uuid_params.middleware";
 import { HTTP403NORIGHT } from "./error_handling/standard_errors.middleware";
 
 /**
@@ -99,7 +100,7 @@ export function authorize_instance_object(
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
             const user = requireUser(req);
-            const objectUuid = req.params[param];
+            const objectUuid = route_params(req)[param];
 
             await with_client(undefined, async (client) => {
                 const sceneUuid = await owning_scene_instance(client, objectUuid);
@@ -141,7 +142,7 @@ export function authorize_scene_instance(
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
             const user = requireUser(req);
-            const sceneUuid = req.params[param];
+            const sceneUuid = route_params(req)[param];
 
             await with_client(undefined, async (client) => {
                 // A scene that does not exist is left to the handler, which answers

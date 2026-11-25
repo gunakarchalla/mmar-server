@@ -4,7 +4,9 @@ import type { PoolConfig } from "pg";
 // The environment has to be loaded here rather than relying on the call in
 // index.ts: ES module imports are hoisted, so this module can be evaluated
 // (transitively, through the routes) before index.ts runs its own dotenv.config().
-dotenv.config();
+// quiet: dotenv 17 prints an "injected env (n) from .env" banner with a randomised
+// tip to stdout on every load, where 16 was silent. The server's stdout is its log.
+dotenv.config({ quiet: true });
 
 /**
  * @description - The shortest secret accepted for signing tokens. A shorter key
@@ -17,7 +19,7 @@ const JWT_SECRET_MIN_LENGTH = 32;
  * @description - Read a mandatory environment variable and fail fast if it is missing.
  * The value is returned verbatim, without any normalisation, so that a secret
  * read here is byte-identical to the one used everywhere else (for example when
- * signing a token in User.generate_token()).
+ * signing a token in sign_user_token()).
  * @param {string} name - The name of the environment variable.
  * @returns {string} - The value of the environment variable.
  * @throws {Error} - If the variable is undefined or empty.
